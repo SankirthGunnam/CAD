@@ -1,23 +1,40 @@
-# pin.py
-from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem
-from PySide6.QtGui import QBrush, QColor
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QGraphicsItem, QGraphicsRectItem, QGraphicsLineItem
+from PySide6.QtGui import QBrush, QColor, QPen
+from PySide6.QtCore import QPointF
 
-class Pin(QGraphicsEllipseItem):
-    def __init__(self, name, x, y, radius=6):
-        super().__init__(-radius, -radius, 2 * radius, 2 * radius)
+
+class Pin(QGraphicsItem):
+    def __init__(self, parent=None, name="Pin", pos=QPointF(0, 0)):
+        super().__init__(parent)
         self.name = name
+        self.setPos(pos)
         self.connected_pins = []
-        self.setBrush(QBrush(QColor('red')))
-        self.setPos(x, y)
-        self.setAcceptHoverEvents(True)
-        self.setFlag(QGraphicsEllipseItem.ItemIsSelectable, True)
 
-        # Add text for pin name
-        # self.text_item = QGraphicsTextItem(name, self)
-        # self.text_item.setDefaultTextColor(Qt.black)
-        # self.text_item.setPos(-radius, -radius - 12)
+        # Pin Appearance
+        self.pad_size = 10
+        self.pin_length = 20
+
+        self.pad = QGraphicsRectItem(
+            0, -self.pad_size / 2, self.pad_size, self.pad_size, self
+        )
+        self.pad.setBrush(QBrush(QColor(255, 100, 100)))
+        self.pad.setPen(QPen(QColor(0, 0, 0)))
+
+        self.line = QGraphicsLineItem(
+            self.pad_size / 2, 0, self.pad_size / 2, self.pin_length, self
+        )
+        self.line.setPen(QPen(QColor(0, 0, 0)))
 
     def add_connection(self, pin):
         if pin not in self.connected_pins:
             self.connected_pins.append(pin)
+
+    def remove_connection(self, pin):
+        if pin in self.connected_pins:
+            self.connected_pins.remove(pin)
+
+    def boundingRect(self):
+        return self.childrenBoundingRect()
+
+    def paint(self, painter, option, widget=None):
+        pass

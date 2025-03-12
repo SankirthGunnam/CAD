@@ -1,0 +1,46 @@
+dark_theme = """
+QMainWindow {
+    background-color: #121212;
+    padding: 10px;
+}
+
+QToolBar {
+    background-color: #1e1e1e;
+    border: none;
+    border-radius: 10px;
+    padding: 5px;
+    alignment: center;
+}
+
+QPushButton {
+    background-color: #2e2e2e;
+    color: #ffffff;
+    border: 1px solid #3e3e3e;
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+QPushButton:hover {
+    background-color: #3e3e3e;
+}
+
+QPushButton:pressed {
+    background-color: #555555;
+}
+
+QGraphicsView {
+    border: none;
+    background-color: #121212;
+    padding: 10px;
+}
+
+QGraphicsItem {
+    color: #ffffff;
+}
+
+QGraphicsItem:selected {
+    border: 1px solid #ffffff;
+}
+"""
+
+# Apply with: app.setStyleSheet(dark_theme)

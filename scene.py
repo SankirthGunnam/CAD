@@ -1,4 +1,6 @@
-from PySide6.QtWidgets import QGraphicsScene
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsRectItem, QGraphicsTextItem
+from PySide6.QtCore import Qt
+
 
 from connection import Connection
 from chip import Chip
@@ -25,3 +27,14 @@ class RFScene(QGraphicsScene):
         else:
             self.selected_pin = None
         super().mousePressEvent(event)
+
+    def addComponent(self, component_type, pos):
+        item = QGraphicsRectItem(0, 0, 60, 40)
+        item.setPos(pos)
+        item.setFlags(
+            QGraphicsRectItem.ItemIsMovable | QGraphicsRectItem.ItemIsSelectable
+        )
+        self.addItem(item)
+        text = QGraphicsTextItem(component_type, item)
+        text.setDefaultTextColor(Qt.white)
+        text.setPos(10, 10)
