@@ -3,7 +3,6 @@ from PySide6.QtGui import QBrush, QColor, QPen
 from PySide6.QtCore import QRectF, QPointF, Qt
 
 from src.models.chip import ChipModel
-from .pin import Pin
 
 
 class Chip(QGraphicsItem):
@@ -14,6 +13,7 @@ class Chip(QGraphicsItem):
         self.model = model
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.ItemSendsScenePositionChanges)
 
         # Create visual rectangle
         self._rect = QGraphicsRectItem(0, 0, model.width, model.height, self)
@@ -23,17 +23,6 @@ class Chip(QGraphicsItem):
         # Create name label
         self._name_item = QGraphicsTextItem(model.name, self)
         self._update_name_position()
-
-        # Create pin widgets
-        self._pins = []
-        self._create_pins()
-
-    def _create_pins(self) -> None:
-        """Create pin widgets for each pin in the model"""
-        for pin in self.model.pins:
-            pin_widget = Pin(pin, self)
-            pin_widget.setPos(pin.x, pin.y)
-            self._pins.append(pin_widget)
 
     def _update_name_position(self) -> None:
         """Update the position of the name label"""
@@ -51,9 +40,15 @@ class Chip(QGraphicsItem):
         """Paint method required by QGraphicsItem"""
         pass  # Actual painting is done by child items
 
-    def mouseMoveEvent(self, event) -> None:
-        """Handle mouse move events"""
-        super().mouseMoveEvent(event)
-        # Update pin positions
-        for pin in self._pins:
-            pin.update()
+    def itemChange(self, change, value):
+        """Handle item changes"""
+        if change == QGraphicsItem.ItemPositionChange:
+            # Update model position when chip moves
+            new_pos = value
+            self.model.position = (new_pos.x(), new_pos.y())
+
+            # Update scene if available
+            if self.scene():
+                self.scene().update()
+
+        return super().itemChange(change, value)

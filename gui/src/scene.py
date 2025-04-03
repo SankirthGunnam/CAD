@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QGraphicsScene
 from PySide6.QtCore import Qt, QPointF
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from src.models.connection import Connection
 from src.models.pin import Pin
@@ -18,6 +18,7 @@ class RFScene(QGraphicsScene):
         self.temp_connection = None
         self.start_pin = None
         self._mouse_pos = QPointF(0, 0)
+        self._pins: Dict[Pin, PinComponent] = {}  # Map model pins to their widgets
 
     @property
     def mouse_pos(self) -> QPointF:
@@ -26,24 +27,32 @@ class RFScene(QGraphicsScene):
     def add_component(self, component):
         """Add a component to the scene"""
         self.addItem(component)
+        # Create pin widgets for the component
+        if isinstance(component, Chip):
+            for pin in component.model.pins:
+                if pin not in self._pins:
+                    pin_widget = PinComponent(pin, self)
+                    self._pins[pin] = pin_widget
 
     def remove_component(self, component) -> None:
         """Remove a component and its connections from the scene"""
-        # Remove all connections
-        for pin in component.model.pins:
-            for connection in pin.connections[
-                :
-            ]:  # Create a copy to avoid modification during iteration
-                connection.remove()
+        # Remove all connections and pin widgets
+        if isinstance(component, Chip):
+            for pin in component.model.pins:
+                # Remove connections
+                for connection in pin.connections[
+                    :
+                ]:  # Create a copy to avoid modification during iteration
+                    connection.remove()
+                # Remove pin widget
+                if pin in self._pins:
+                    self.removeItem(self._pins[pin])
+                    del self._pins[pin]
         self.removeItem(component)
 
     def get_components(self) -> List[Chip]:
         """Get all components in the scene"""
-        components = []
-        for item in self.items():
-            if isinstance(item, Chip):
-                components.append(item)
-        return components
+        return [item for item in self.items() if isinstance(item, Chip)]
 
     def mousePressEvent(self, event):
         """Handle mouse press events"""
