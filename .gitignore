@@ -1,0 +1,14 @@
+# But not these files
+!*.py
+!requirements.txt
+
+# Ignore common OS and editor files
+*.pyc
+*.pyo
+__pycache__/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.log
+.venv/
