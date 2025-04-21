@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QGraphicsItem, QGraphicsTextItem, QGraphicsRectIte
 from PySide6.QtGui import QBrush, QColor, QPen
 from PySide6.QtCore import QRectF, QPointF, Qt
 
-from src.models.chip import ChipModel
+from apps.RBM.BCF.src.models.chip import ChipModel
 
 
 class Chip(QGraphicsItem):

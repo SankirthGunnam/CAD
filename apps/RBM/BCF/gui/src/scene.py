@@ -2,11 +2,13 @@ from PySide6.QtWidgets import QGraphicsScene
 from PySide6.QtCore import Qt, QPointF
 from typing import Optional, List, Dict
 
-from src.models.connection import Connection
-from src.models.pin import Pin
-from gui.custom_widgets.components.chip import Chip
-from gui.custom_widgets.components.pin import Pin as PinComponent
-from gui.custom_widgets.components.connection import Connection as ConnectionComponent
+from apps.RBM.BCF.src.models.connection import Connection
+from apps.RBM.BCF.src.models.pin import Pin
+from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
+from apps.RBM.BCF.gui.custom_widgets.components.pin import Pin as PinComponent
+from apps.RBM.BCF.gui.custom_widgets.components.connection import (
+    Connection as ConnectionComponent,
+)
 
 
 class RFScene(QGraphicsScene):

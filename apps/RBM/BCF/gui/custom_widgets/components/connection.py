@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QGraphicsPathItem
 from PySide6.QtGui import QPainterPath, QPen, QColor
 from PySide6.QtCore import Qt, QPointF
 
-from src.models.connection import Connection as ConnectionModel
+from apps.RBM.BCF.src.models.connection import Connection as ConnectionModel
 from .pin import Pin
 
 

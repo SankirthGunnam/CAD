@@ -1,0 +1,229 @@
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QToolBar, QMessageBox
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt, QObject, Signal, Slot, QThread, QMetaObject
+from typing import Dict, Any, Callable, Optional
+import threading
+from queue import Queue
+
+from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
+from apps.RBM.BCF.gui.src.scene import RFScene
+from apps.RBM.BCF.gui.src.view import RFView
+from apps.RBM.BCF.src.models.chip import ChipModel
+from apps.RBM.BCF.src.RCC.core_controller import RCCState
+
+
+class GUIController(QWidget):
+    """Main GUI controller for the RF CAD application"""
+
+    # Define GUI Events (blocking)
+    EVENT_CREATE = "create"
+    EVENT_LOAD = "load"
+    EVENT_BUILD = "build"
+    EVENT_SAVE = "save"
+    EVENT_EXPORT = "export"
+
+    # Define signals
+    show_error_signal = Signal(str)
+    show_success_signal = Signal(str)
+    add_chip_signal = Signal(ChipModel)
+    process_blocking_event_signal = Signal(str, dict)
+
+    def __init__(self, rdb_manager, core_controller, parent=None):
+        super().__init__(parent)
+        self.rdb_manager = rdb_manager
+        self.core_controller = core_controller
+
+        # Event handling
+        self.gui_event_callbacks: Dict[str, Callable] = {}  # For GUI events
+        self.non_gui_event_callbacks: Dict[str, Callable] = {}  # For non-GUI events
+        self.blocking_events: Dict[str, bool] = {
+            self.EVENT_CREATE: True,
+            self.EVENT_LOAD: True,
+            self.EVENT_BUILD: True,
+            self.EVENT_SAVE: True,
+            self.EVENT_EXPORT: False,
+        }
+        self.event_queue = Queue()
+        self.event_thread = None
+
+        # Create layout
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Create scene and view
+        self.scene = RFScene()
+        self.view = RFView(self.scene)
+        self.view.setSceneRect(-1000, -1000, 2000, 2000)  # Set a large scene rect
+        self.view.setBackgroundBrush(Qt.darkGray)  # Set background color
+
+        # Create toolbar
+        self.create_toolbar()
+        layout.addWidget(self.toolbar)
+        layout.addWidget(self.view)
+
+        # Connect signals
+        self.show_error_signal.connect(self._show_error_message)
+        self.show_success_signal.connect(self._show_success_message)
+        self.add_chip_signal.connect(self._add_chip_to_scene)
+        self.process_blocking_event_signal.connect(self._process_blocking_event)
+
+        # Start event processing thread
+        self.start_event_processor()
+
+        # Register event callbacks
+        self.register_gui_event(self.EVENT_CREATE, self.add_chip)
+
+    def register_gui_event(self, event_name: str, callback: Callable):
+        """Register a callback for a GUI event (blocking)"""
+        self.gui_event_callbacks[event_name] = callback
+
+    def register_non_gui_event(self, event_name: str, callback: Callable):
+        """Register a callback for a non-GUI event (non-blocking)"""
+        self.non_gui_event_callbacks[event_name] = callback
+
+    def start_event_processor(self):
+        """Start the event processing thread"""
+        self.event_thread = threading.Thread(target=self._process_events, daemon=True)
+        self.event_thread.start()
+
+    def _process_events(self):
+        """Process events from the queue"""
+        while True:
+            event = self.event_queue.get()
+            event_name, data, is_blocking = event
+
+            if is_blocking:
+                # GUI events must be processed in main thread
+                self.process_blocking_event_signal.emit(event_name, data)
+            else:
+                # Non-GUI events can be processed in worker thread
+                if event_name in self.non_gui_event_callbacks:
+                    self.non_gui_event_callbacks[event_name](data)
+                else:
+                    print(
+                        f"Warning: No handler registered for non-GUI event: {event_name}"
+                    )
+
+    def _process_blocking_event(self, event_name: str, data: Dict[str, Any]):
+        """Process a GUI event in the main thread"""
+        try:
+            if event_name in self.gui_event_callbacks:
+                func = self.gui_event_callbacks[event_name]
+                reply = func(data)
+                self.handle_reply(event_name, reply)
+            else:
+                print(f"Warning: No handler registered for GUI event: {event_name}")
+        except Exception as e:
+            self.show_error(f"Error processing {event_name}: {str(e)}")
+
+    def handle_reply(self, event_name: str, reply: Dict[str, Any]):
+        """Handle replies from event processing"""
+        if reply.get("status") == "success":
+            self.show_success(f"{event_name} completed successfully")
+        else:
+            self.show_error(
+                f"{event_name} failed: {reply.get('message', 'Unknown error')}"
+            )
+
+    def send_event(self, event_name: str, data: Dict[str, Any] = None):
+        """Send an event to be processed"""
+        if data is None:
+            data = {}
+
+        print("send event called")
+        is_blocking = self.blocking_events.get(event_name, False)
+        self.event_queue.put((event_name, data, is_blocking))
+
+    def create_toolbar(self):
+        """Create the main toolbar"""
+        self.toolbar = QToolBar()
+        self.toolbar.setMovable(False)
+
+        # Add actions
+        actions = [
+            ("Create", self.EVENT_CREATE),
+            ("Load", self.EVENT_LOAD),
+            ("Build", self.EVENT_BUILD),
+            ("Save", self.EVENT_SAVE),
+            ("Export", self.EVENT_EXPORT),
+        ]
+
+        for name, event in actions:
+            action = QAction(name, self)
+            action.triggered.connect(lambda checked, e=event: self.send_event(e))
+            self.toolbar.addAction(action)
+
+    def show_error(self, message: str):
+        """Show error message"""
+        print(message)
+        self.show_error_signal.emit(message)
+
+    def _show_error_message(self, message: str):
+        """Show error message in the main thread"""
+        QMessageBox.critical(self, "Error", message)
+
+    def show_success(self, message: str):
+        """Show success message"""
+        self.show_success_signal.emit(message)
+
+    def _show_success_message(self, message: str):
+        """Show success message in the main thread"""
+        QMessageBox.information(self, "Success", message)
+
+    def get_status(self) -> Dict[str, Any]:
+        """Get current status of the GUI controller"""
+        return {
+            "status": "running",
+            "event_queue_size": self.event_queue.qsize(),
+            "active_threads": threading.active_count(),
+        }
+
+    def recover(self):
+        """Recover from error state"""
+        # Clear event queue
+        while not self.event_queue.empty():
+            self.event_queue.get()
+
+        # Restart event processor if needed
+        if not self.event_thread or not self.event_thread.is_alive():
+            self.start_event_processor()
+
+    def add_chip(self, *args, **kwargs):
+        print("add chip called", args, kwargs)
+        """Add a new chip to the scene and database"""
+        # Check if we can start building
+        if self.core_controller.current_state != RCCState.IDLE:
+            error_msg = f"Cannot add chip: Core controller is in {self.core_controller.current_state.name} state"
+            print(error_msg)
+            self.show_error(error_msg)
+            return
+
+        try:
+            # Create the chip model in the current thread
+            chip_model = ChipModel(name="Sample Chip", width=100, height=100)
+            chip_model.add_pin(0, 50, "Input")
+            chip_model.add_pin(100, 50, "Output")
+
+            # Add to database
+            self.rdb_manager.add_chip(chip_model)
+
+            # Emit signal to add chip to scene in main thread
+            self.add_chip_signal.emit(chip_model)
+
+            return {"status": "success", "message": "Chip added successfully"}
+
+        except Exception as e:
+            error_msg = f"Error adding chip: {e}"
+            self.core_controller._set_error(str(e))
+            print(error_msg)
+            return {"status": "error", "message": error_msg}
+
+    def _add_chip_to_scene(self, chip_model: ChipModel):
+        """Add a chip widget to the scene in the main thread"""
+        try:
+            chip_widget = Chip(chip_model)
+            self.scene.add_component(chip_widget)
+        except Exception as e:
+            print(f"Error adding chip widget: {e}")
+            self.show_error_signal.emit(f"Error adding chip widget: {e}")

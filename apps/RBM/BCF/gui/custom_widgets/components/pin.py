@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QGraphicsItem
 from PySide6.QtGui import QPainter, QPen, QColor, QBrush, QTransform
 from PySide6.QtCore import Qt, QRectF, QPointF
 
-from src.models.pin import Pin as PinModel
+from apps.RBM.BCF.src.models.pin import Pin as PinModel
 
 
 class Pin(QGraphicsItem):

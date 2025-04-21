@@ -1,0 +1,21 @@
+version: '1.0'
+
+containers:
+  bcf:
+    name: bcf-container
+    type: application
+    source: apps/RBM/BCF
+    dependencies:
+      - PySide6>=6.5.0
+      - numpy>=1.24.0
+      - pandas>=2.0.0
+    environment:
+      PYTHONPATH: ${PYTHONPATH}:${PWD}/apps/RBM/BCF
+    commands:
+      run: python run.py
+    volumes:
+      - source: ${PWD}/apps/RBM/BCF
+        target: /app
+    ports:
+      - 8080:8080
+    display: true 
