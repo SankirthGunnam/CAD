@@ -6,8 +6,8 @@ import threading
 from queue import Queue
 
 from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
-from apps.RBM.BCF.gui.src.scene import RFScene
-from apps.RBM.BCF.gui.src.view import RFView
+from SDTS.apps.RBM.BCF.gui.src.visual.scene import RFScene
+from SDTS.apps.RBM.BCF.gui.src.visual.view import RFView
 from apps.RBM.BCF.src.models.chip import ChipModel
 from apps.RBM.BCF.src.RCC.core_controller import RCCState
 

@@ -45,11 +45,8 @@ class RBMMain(QWidget):
         self.rcc_thread.start()
         self.rdb_thread.start()
 
-        # Initialize the database
-        self.db_interface = init_database()
-
         # Initialize controllers in their respective threads
-        self.rdb_manager = RDBManager(self.db_interface)
+        self.rdb_manager = RDBManager()
         self.rdb_manager.moveToThread(self.rdb_thread)
 
         self.core_controller = CoreController(self.rdb_manager)

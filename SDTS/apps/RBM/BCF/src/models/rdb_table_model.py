@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex
-from .rdb_manager import RDBManager
+from ..RDB.rdb_manager import RDBManager
 
 
 class RDBTableModel(QAbstractTableModel):

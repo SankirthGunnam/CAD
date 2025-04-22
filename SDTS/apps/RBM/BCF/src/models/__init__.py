@@ -1,5 +1,5 @@
-"""Core business logic models for RF CAD Tool"""
+"""RDB Models package"""
 
-"""BCF models package"""
+from .rdb_table_model import RDBTableModel
 
-# This file makes the directory a Python package
+__all__ = ["RDBTableModel", "ChipModel", "PinModel"]

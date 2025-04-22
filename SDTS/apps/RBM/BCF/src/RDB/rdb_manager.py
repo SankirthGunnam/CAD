@@ -2,6 +2,8 @@ from PySide6.QtCore import QObject, Signal
 from typing import Dict, Any, List, Optional, Type, Protocol
 import json
 import logging
+from .database_interface import DatabaseInterface
+from .json_db import JSONDatabase
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -26,15 +28,16 @@ class DatabaseInterface(Protocol):
 
 
 class RDBManager(QObject):
-    """RDB Manager that acts as a wrapper between MVC Models and the database"""
+    """Manager class that provides a clean interface for database operations"""
 
     # Signals for database events
-    data_changed = Signal(str)  # Signal when data changes (table_name)
+    data_changed = Signal(str)  # Signal emits the path that changed
     error_occurred = Signal(str)  # Signal when error occurs (error_message)
 
-    def __init__(self, db_interface: DatabaseInterface):
+    def __init__(self, db_file: str = "device_config.json"):
         super().__init__()
-        self.db = db_interface
+        self.db: DatabaseInterface = JSONDatabase(db_file)
+        self.db.data_changed.connect(self._on_data_changed)
         self._connect()
 
     def _connect(self) -> None:
@@ -175,3 +178,45 @@ class RDBManager(QObject):
     def __del__(self):
         """Cleanup when the object is destroyed"""
         self.db.disconnect()
+
+    def _on_data_changed(self, path: str) -> None:
+        """Handle database changes"""
+        self.data_changed.emit(path)
+
+    def get_value(self, path: str) -> Any:
+        """Get value at specified path"""
+        return self.db.get_value(path)
+
+    def set_value(self, path: str, value: Any) -> bool:
+        """Set value at specified path"""
+        return self.db.set_value(path, value)
+
+    def get_table(self, path: str) -> List[Dict]:
+        """Get table data at specified path"""
+        return self.db.get_table(path)
+
+    def set_table(self, path: str, rows: List[Dict]) -> bool:
+        """Set table data at specified path"""
+        return self.db.set_table(path, rows)
+
+    def get_row(self, path: str, row_index: int) -> Optional[Dict]:
+        """Get specific row from table"""
+        return self.db.get_row(path, row_index)
+
+    def set_row(self, path: str, row_index: int, row_data: Dict) -> bool:
+        """Set specific row in table"""
+        return self.db.set_row(path, row_index, row_data)
+
+    def add_row(self, path: str, row_data: Dict) -> bool:
+        """Add new row to table"""
+        return self.db.add_row(path, row_data)
+
+    def delete_row(self, path: str, row_index: int) -> bool:
+        """Delete row from table"""
+        return self.db.delete_row(path, row_index)
+
+    def get_model(self, path: str, columns: List[Dict[str, str]]) -> "RDBTableModel":
+        """Create a Qt model for the specified table"""
+        from ..models.rdb_table_model import RDBTableModel
+
+        return RDBTableModel(self, path, columns)
