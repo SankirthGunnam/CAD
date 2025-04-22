@@ -206,7 +206,7 @@ class GUIController(QWidget):
             chip_model.add_pin(100, 50, "Output")
 
             # Add to database
-            self.rdb_manager.add_chip(chip_model)
+            # self.rdb_manager.add_chip(chip_model)
 
             # Emit signal to add chip to scene in main thread
             self.add_chip_signal.emit(chip_model)
