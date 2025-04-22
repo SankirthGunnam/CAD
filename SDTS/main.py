@@ -1,12 +1,27 @@
 import sys
 import os
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Add the current directory to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+logger.debug(f"Added {current_dir} to Python path")
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel
 
-from apps.RBM.BCF.src.RBM_Main import RBMMain
+logger.debug("Imported Qt modules")
+
+try:
+    from apps.RBM.BCF.src.RBM_Main import RBMMain
+
+    logger.debug("Imported RBMMain")
+except Exception as e:
+    logger.error(f"Error importing RBMMain: {e}")
+    raise
 
 
 class SDTSMainWindow(QMainWindow):
@@ -17,17 +32,27 @@ class SDTSMainWindow(QMainWindow):
         self.setWindowTitle("SDTS - Schematic Design Tool Suite")
         self.setMinimumSize(1200, 800)
 
-        # Create RBM main window
-        self.rbm = RBMMain(self)
-        self.setCentralWidget(self.rbm)
+        try:
+            # Create RBM main window
+            self.rbm = RBMMain(self)
+            self.setCentralWidget(self.rbm)
+            logger.debug("Created RBM main window")
+        except Exception as e:
+            logger.error(f"Error creating RBM main window: {e}")
+            raise
 
 
 def main():
     """Main entry point for the SDTS application"""
-    app = QApplication(sys.argv)
-    window = SDTSMainWindow()
-    window.show()
-    sys.exit(app.exec())
+    try:
+        app = QApplication(sys.argv)
+        window = SDTSMainWindow()
+        window.show()
+        logger.debug("Showing main window")
+        sys.exit(app.exec())
+    except Exception as e:
+        logger.error(f"Error in main: {e}")
+        raise
 
 
 if __name__ == "__main__":

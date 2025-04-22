@@ -5,7 +5,7 @@ from PySide6.QtCore import QObject, Signal
 from .database_interface import DatabaseInterface
 
 
-class JSONDatabase(QObject, DatabaseInterface):
+class JSONDatabase(QObject):
     """JSON database manager that implements DatabaseInterface"""
 
     data_changed = Signal(str)  # Signal emits the path that changed
@@ -160,3 +160,22 @@ class JSONDatabase(QObject, DatabaseInterface):
             del table[row_index]
             return self.set_table(path, table)
         return False
+
+    def create_tables(self) -> None:
+        """Create database tables"""
+        # For JSON database, we just need to ensure the basic structure exists
+        if not self.data:
+            self.data = {
+                "config": {
+                    "device": {"settings": [], "properties": {}},
+                    "band": {"settings": [], "properties": {}},
+                    "board": {"settings": [], "properties": {}},
+                    "rcc": {"settings": [], "properties": {}},
+                }
+            }
+            self._save_db()
+
+    def rollback(self) -> None:
+        """Rollback changes"""
+        # For JSON database, we just reload from file
+        self._load_db()

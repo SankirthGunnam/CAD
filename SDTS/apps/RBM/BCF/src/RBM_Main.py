@@ -9,142 +9,139 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QTabWidget,
     QStackedWidget,
+    QTableView,
 )
 from PySide6.QtCore import QObject, Signal, Slot, QThread
 
-from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
-from apps.RBM.BCF.src.RCC.core_controller import CoreController
-from apps.RBM.BCF.gui.src.gui_controller import GUIController
-from apps.RBM.BCF.gui.src.styles import load_stylesheet
-from apps.RBM.BCF.src.views.chip_table_view import ChipTableView
-from apps.RBM.BCF.src.models.chip_table_model import ChipTableModel
-from apps.RBM.BCF.src.init_db import init_database
+from .RDB.rdb_manager import RDBManager
+from .RDB.paths import DEVICE_SETTINGS, BAND_CONFIG, BOARD_CONFIG, RCC_CONFIG
 
 
 class RBMMain(QWidget):
     """Main controller that coordinates all application entities"""
 
     # Signals for communication between controllers
-    core_event_signal = Signal(dict)  # Signal to send events to RCC
-    rcc_reply_signal = Signal(dict)  # Signal to receive replies from RCC
-    gui_event_signal = Signal(dict)  # Signal to send events to GUI
-    db_event_signal = Signal(dict)  # Signal to send events to RDB
+    data_changed = Signal(str)  # Signal when data changes (path)
+    error_occurred = Signal(str)  # Signal when error occurs (error_message)
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Initialize event queues
-        self.event_queue = PriorityQueue()  # For prioritized events
-        self.gui_events = Queue()  # For GUI events
-        self.rcc_events = Queue()  # For RCC events
-        self.rdb_events = Queue()  # For RDB events
-
-        # Initialize threads for RCC and RDB
-        self.rcc_thread = QThread()
-        self.rdb_thread = QThread()
-        self.rcc_thread.start()
-        self.rdb_thread.start()
-
-        # Initialize controllers in their respective threads
+        # Initialize RDB Manager
         self.rdb_manager = RDBManager()
-        self.rdb_manager.moveToThread(self.rdb_thread)
-
-        self.core_controller = CoreController(self.rdb_manager)
-        self.core_controller.moveToThread(self.rcc_thread)
-
-        # Connect signals
-        self.core_event_signal.connect(self.handle_core_event)
-        self.rcc_reply_signal.connect(self.handle_rcc_reply)
-
-        # Initialize GUI controller (stays in main thread)
-        self.gui_controller = GUIController(self.rdb_manager, self.core_controller)
+        self.rdb_manager.data_changed.connect(self._on_data_changed)
+        self.rdb_manager.error_occurred.connect(self._on_error)
 
         # Create layout
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Add gui_controller to layout
-        layout.addWidget(self.gui_controller)
+        # Create tab widget
+        self.tab_widget = QTabWidget()
+        layout.addWidget(self.tab_widget)
 
-        # Event history for tracking
-        self.event_history: List[Dict[str, Any]] = []
+        # Setup tabs
+        self.setup_device_tab()
+        self.setup_band_tab()
+        self.setup_board_tab()
+        self.setup_rcc_tab()
 
-    def setup_bcf_tool(self):
-        """Setup the BCF tool tab"""
-        pass
+    def setup_device_tab(self):
+        """Setup the device configuration tab"""
+        device_widget = QWidget()
+        device_layout = QVBoxLayout(device_widget)
 
-    def setup_cad_tool(self):
-        """Setup the CAD tool tab"""
-        pass
+        # Create device settings table
+        device_columns = [
+            {"name": "Device Name", "key": "name"},
+            {"name": "Function Type", "key": "function_type"},
+            {"name": "Interface Type", "key": "interface_type"},
+            {"name": "MIPI Channel", "key": "interface.mipi.channel"},
+            {"name": "GPIO Pin", "key": "interface.gpio.pin"},
+            {"name": "USID", "key": "config.usid"},
+            {"name": "Product ID", "key": "config.product_id"},
+            {"name": "Manufacturer ID", "key": "config.manufacturer_id"},
+        ]
 
-    def start_controllers(self):
-        """Start RCC and RDB threads (GUI runs in main thread)"""
-        self.rcc_thread.start()
-        self.rdb_thread.start()
+        device_model = self.rdb_manager.get_model(DEVICE_SETTINGS, device_columns)
+        device_table = QTableView()
+        device_table.setModel(device_model)
+        device_layout.addWidget(device_table)
 
-    def stop_controllers(self):
-        """Stop RCC and RDB threads"""
-        self.rcc_thread.quit()
-        self.rdb_thread.quit()
-        self.rcc_thread.wait()
-        self.rdb_thread.wait()
+        self.tab_widget.addTab(device_widget, "Device Settings")
 
-    @Slot(dict)
-    def handle_core_event(self, event: dict):
-        """Handle events sent to RCC"""
-        self.event_history.append({"type": "core_event", "event": event})
-        self.core_controller.process_event(event)
+    def setup_band_tab(self):
+        """Setup the band configuration tab"""
+        band_widget = QWidget()
+        band_layout = QVBoxLayout(band_widget)
 
-    @Slot(dict)
-    def handle_rcc_reply(self, reply: dict):
-        """Handle replies from RCC"""
-        self.event_history.append({"type": "rcc_reply", "reply": reply})
-        # Process reply based on status
-        if reply.get("status") == "success":
-            self.process_successful_reply(reply)
-        else:
-            self.process_failed_reply(reply)
+        # Create band settings table
+        band_columns = [
+            {"name": "Band", "key": "band"},
+            {"name": "Power", "key": "power"},
+            {"name": "Status", "key": "status"},
+        ]
 
-    def process_successful_reply(self, reply: dict):
-        """Process successful replies from RCC"""
-        # Implement logic for successful replies
-        pass
+        band_model = self.rdb_manager.get_model(BAND_CONFIG, band_columns)
+        band_table = QTableView()
+        band_table.setModel(band_model)
+        band_layout.addWidget(band_table)
 
-    def process_failed_reply(self, reply: dict):
-        """Process failed replies from RCC"""
-        # Implement error handling and recovery
-        pass
+        self.tab_widget.addTab(band_widget, "Band Settings")
 
-    def get_controller_status(self) -> Dict[str, Any]:
-        """Get current status of all controllers"""
-        return {
-            "gui_status": self.gui_controller.get_status(),
-            "rcc_status": self.core_controller.get_status(),
-            "rdb_status": self.rdb_manager.get_status(),
-        }
+    def setup_board_tab(self):
+        """Setup the board configuration tab"""
+        board_widget = QWidget()
+        board_layout = QVBoxLayout(board_widget)
 
-    def get_event_history(self) -> List[Dict[str, Any]]:
-        """Get the complete event history"""
-        return self.event_history
+        # Create board settings table
+        board_columns = [
+            {"name": "Setting", "key": "name"},
+            {"name": "Value", "key": "value"},
+        ]
 
-    def recover_controller(self, controller_name: str):
-        """Recover a failed controller"""
-        if controller_name == "gui":
-            self.gui_controller.recover()
-        elif controller_name == "rcc":
-            self.core_controller.recover()
-        elif controller_name == "rdb":
-            self.rdb_manager.recover()
+        board_model = self.rdb_manager.get_model(BOARD_CONFIG, board_columns)
+        board_table = QTableView()
+        board_table.setModel(board_model)
+        board_layout.addWidget(board_table)
+
+        self.tab_widget.addTab(board_widget, "Board Settings")
+
+    def setup_rcc_tab(self):
+        """Setup the RCC configuration tab"""
+        rcc_widget = QWidget()
+        rcc_layout = QVBoxLayout(rcc_widget)
+
+        # Create RCC settings table
+        rcc_columns = [
+            {"name": "Setting", "key": "name"},
+            {"name": "Value", "key": "value"},
+        ]
+
+        rcc_model = self.rdb_manager.get_model(RCC_CONFIG, rcc_columns)
+        rcc_table = QTableView()
+        rcc_table.setModel(rcc_model)
+        rcc_layout.addWidget(rcc_table)
+
+        self.tab_widget.addTab(rcc_widget, "RCC Settings")
+
+    def _on_data_changed(self, path: str):
+        """Handle data changes"""
+        self.data_changed.emit(path)
+
+    def _on_error(self, error_message: str):
+        """Handle errors"""
+        self.error_occurred.emit(error_message)
 
     def showEvent(self, event):
-        """Start controllers when window is shown"""
+        """Connect to database when window is shown"""
         super().showEvent(event)
-        self.start_controllers()
+        self.rdb_manager.connect()
 
     def closeEvent(self, event):
-        """Cleanup when the window is closed"""
-        self.stop_controllers()
+        """Disconnect from database when window is closed"""
+        self.rdb_manager.disconnect()
         super().closeEvent(event)
 
 
