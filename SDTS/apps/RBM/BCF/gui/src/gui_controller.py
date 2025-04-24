@@ -1,4 +1,15 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QToolBar, QMessageBox
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QStackedWidget,
+    QToolBar,
+    QMessageBox,
+    QMainWindow,
+    QDockWidget,
+    QLabel,
+)
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt, QObject, Signal, Slot, QThread, QMetaObject
 from typing import Dict, Any, Callable, Optional
@@ -6,14 +17,16 @@ import threading
 from queue import Queue
 
 from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
-from apps.RBM.BCF.gui.src.visual.scene import RFScene
-from apps.RBM.BCF.gui.src.visual.view import RFView
+from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
+from apps.RBM.BCF.gui.src.visual_bcf.view import RFView
 from apps.RBM.BCF.src.models.chip import ChipModel
 from apps.RBM.BCF.src.RCC.core_controller import RCCState
+from .visual_bcf.visual_bcf_manager import VisualBCFManager
+from .legacy_bcf.legacy_bcf_manager import LegacyBCFManager
 
 
-class GUIController(QWidget):
-    """Main GUI controller for the RF CAD application"""
+class GUIController(QMainWindow):
+    """Main controller for RBM GUI that manages both visual and legacy BCF interfaces"""
 
     # Define GUI Events (blocking)
     EVENT_CREATE = "create"
@@ -27,11 +40,40 @@ class GUIController(QWidget):
     show_success_signal = Signal(str)
     add_chip_signal = Signal(ChipModel)
     process_blocking_event_signal = Signal(str, dict)
+    data_changed = Signal(dict)
+    error_occurred = Signal(str)
 
-    def __init__(self, rdb_manager, core_controller, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self.rdb_manager = rdb_manager
-        self.core_controller = core_controller
+        self.setWindowTitle("RBM GUI Controller")
+        self.setMinimumSize(1000, 800)
+
+        # Create stacked widget as central widget
+        self.stacked_widget = QStackedWidget()
+        self.setCentralWidget(self.stacked_widget)
+
+        # Create and add both managers
+        self.legacy_manager = LegacyBCFManager()
+        self.visual_manager = VisualBCFManager()
+
+        self.stacked_widget.addWidget(self.legacy_manager)
+        self.stacked_widget.addWidget(self.visual_manager)
+
+        # Set initial mode
+        self.current_mode = "legacy"
+        self.stacked_widget.setCurrentWidget(self.legacy_manager)
+
+        # Create proper toolbar
+        self.create_toolbar()
+
+        # Create dock widgets
+        self.setup_dock_widgets()
+
+        # Connect signals
+        self.legacy_manager.data_changed.connect(self._on_data_changed)
+        self.visual_manager.data_changed.connect(self._on_data_changed)
+        self.legacy_manager.error_occurred.connect(self._on_error)
+        self.visual_manager.error_occurred.connect(self._on_error)
 
         # Event handling
         self.gui_event_callbacks: Dict[str, Callable] = {}  # For GUI events
@@ -45,28 +87,6 @@ class GUIController(QWidget):
         }
         self.event_queue = Queue()
         self.event_thread = None
-
-        # Create layout
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        # Create scene and view
-        self.scene = RFScene()
-        self.view = RFView(self.scene)
-        self.view.setSceneRect(-1000, -1000, 2000, 2000)  # Set a large scene rect
-        self.view.setBackgroundBrush(Qt.darkGray)  # Set background color
-
-        # Create toolbar
-        self.create_toolbar()
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.view)
-
-        # Connect signals
-        self.show_error_signal.connect(self._show_error_message)
-        self.show_success_signal.connect(self._show_success_message)
-        self.add_chip_signal.connect(self._add_chip_to_scene)
-        self.process_blocking_event_signal.connect(self._process_blocking_event)
 
         # Start event processing thread
         self.start_event_processor()
@@ -136,22 +156,28 @@ class GUIController(QWidget):
         self.event_queue.put((event_name, data, is_blocking))
 
     def create_toolbar(self):
-        """Create the main toolbar"""
-        self.toolbar = QToolBar()
-        self.toolbar.setMovable(False)
+        """Create the main toolbar with mode switch and other actions"""
+        self.toolbar = QToolBar("Main Toolbar")
+        self.addToolBar(self.toolbar)
 
-        # Add actions
+        # Mode switch action
+        self.mode_action = QAction("Switch to Visual Mode", self)
+        self.mode_action.setCheckable(True)
+        self.mode_action.triggered.connect(self._on_mode_toggle)
+        self.toolbar.addAction(self.mode_action)
+
+        # Add other actions
         actions = [
-            ("Create", self.EVENT_CREATE),
-            ("Load", self.EVENT_LOAD),
-            ("Build", self.EVENT_BUILD),
-            ("Save", self.EVENT_SAVE),
-            ("Export", self.EVENT_EXPORT),
+            ("Create", self._on_create),
+            ("Load", self._on_load),
+            ("Build", self._on_build),
+            ("Save", self._on_save),
+            ("Export", self._on_export),
         ]
 
-        for name, event in actions:
+        for name, callback in actions:
             action = QAction(name, self)
-            action.triggered.connect(lambda checked, e=event: self.send_event(e))
+            action.triggered.connect(callback)
             self.toolbar.addAction(action)
 
     def show_error(self, message: str):
@@ -227,3 +253,99 @@ class GUIController(QWidget):
         except Exception as e:
             print(f"Error adding chip widget: {e}")
             self.show_error_signal.emit(f"Error adding chip widget: {e}")
+
+    def _on_mode_toggle(self, checked: bool):
+        """Handle mode toggle button click"""
+        try:
+            if checked:
+                self.current_mode = "visual"
+                self.mode_action.setText("Switch to Legacy Mode")
+                self.stacked_widget.setCurrentWidget(self.visual_manager)
+                self.legacy_properties_dock.hide()
+                self.visual_properties_dock.show()
+            else:
+                self.current_mode = "legacy"
+                self.mode_action.setText("Switch to Visual Mode")
+                self.stacked_widget.setCurrentWidget(self.legacy_manager)
+                self.visual_properties_dock.hide()
+                self.legacy_properties_dock.show()
+        except Exception as e:
+            self.error_occurred.emit(f"Error switching modes: {str(e)}")
+
+    def _on_data_changed(self, data: dict):
+        """Handle data changes from either manager"""
+        try:
+            # Update the other manager if needed
+            if self.current_mode == "legacy":
+                self.visual_manager.update_scene(data)
+            else:
+                self.legacy_manager.update_table(data)
+
+            # Emit signal
+            self.data_changed.emit(data)
+        except Exception as e:
+            self.error_occurred.emit(f"Error handling data change: {str(e)}")
+
+    def _on_error(self, message: str):
+        """Handle errors from either manager"""
+        QMessageBox.critical(self, "Error", message)
+        self.error_occurred.emit(message)
+
+    def update_data(self, data: dict):
+        """Update both managers with new data"""
+        try:
+            self.legacy_manager.update_table(data)
+            self.visual_manager.update_scene(data)
+        except Exception as e:
+            self.error_occurred.emit(f"Error updating data: {str(e)}")
+
+    def setup_dock_widgets(self):
+        """Setup dock widgets for both modes"""
+        # Legacy mode docks
+        self.legacy_properties_dock = QDockWidget("Properties", self)
+        self.legacy_properties_dock.setWidget(self.legacy_manager.control_dock.widget())
+        self.addDockWidget(Qt.RightDockWidgetArea, self.legacy_properties_dock)
+
+        # Visual mode docks
+        self.visual_properties_dock = QDockWidget("Properties", self)
+        self.visual_properties_dock.setWidget(self.visual_manager.control_dock.widget())
+        self.visual_properties_dock.hide()  # Initially hidden
+
+        # Add visual docks
+        self.addDockWidget(Qt.RightDockWidgetArea, self.visual_properties_dock)
+
+    def showEvent(self, event):
+        """Connect to database when window is shown"""
+        super().showEvent(event)
+        # Add any initialization code here
+
+    def closeEvent(self, event):
+        """Clean up when window is closed"""
+        # Add any cleanup code here
+        super().closeEvent(event)
+
+    # Action handlers
+    def _on_create(self):
+        """Handle create action"""
+        # TODO: Implement create functionality
+        pass
+
+    def _on_load(self):
+        """Handle load action"""
+        # TODO: Implement load functionality
+        pass
+
+    def _on_build(self):
+        """Handle build action"""
+        # TODO: Implement build functionality
+        pass
+
+    def _on_save(self):
+        """Handle save action"""
+        # TODO: Implement save functionality
+        pass
+
+    def _on_export(self):
+        """Handle export action"""
+        # TODO: Implement export functionality
+        pass

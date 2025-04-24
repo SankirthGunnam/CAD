@@ -11,7 +11,13 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 logger.debug(f"Added {current_dir} to Python path")
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QStackedWidget,
+    QToolBar,
+)
+from PySide6.QtGui import QAction
 
 logger.debug("Imported Qt modules")
 
@@ -32,10 +38,26 @@ class SDTSMainWindow(QMainWindow):
         self.setWindowTitle("SDTS - Schematic Design Tool Suite")
         self.setMinimumSize(1200, 800)
 
+        # Create stacked widget
+        self.stacked_widget = QStackedWidget()
+        self.setCentralWidget(self.stacked_widget)
+
+        # Create toolbar
+        self.toolbar = QToolBar("Tools")
+        self.addToolBar(self.toolbar)
+
         try:
             # Create RBM main window
-            self.rbm = RBMMain(self)
-            self.setCentralWidget(self.rbm)
+            self.rbm = RBMMain()
+            self.stacked_widget.addWidget(self.rbm)
+
+            # Add RBM action to toolbar
+            rbm_action = QAction("RBM", self)
+            rbm_action.triggered.connect(
+                lambda: self.stacked_widget.setCurrentWidget(self.rbm)
+            )
+            self.toolbar.addAction(rbm_action)
+
             logger.debug("Created RBM main window")
         except Exception as e:
             logger.error(f"Error creating RBM main window: {e}")
