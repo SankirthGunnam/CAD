@@ -10,18 +10,32 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 from PySide6.QtCore import Qt, Signal, QAbstractItemModel, QModelIndex
-from PySide6.QtGui import QColor, QIcon
+from PySide6.QtGui import QColor, QIcon, QFont
 from typing import Dict, Any, Optional, List, Union
 
 
 class TreeItem:
     """Internal class to represent tree items"""
 
-    def __init__(self, key: str, value: Any, parent=None):
-        self.parent_item = parent
-        self.key = key
-        self.value = value
-        self.child_items = []
+    def __init__(self, name, parent=None):
+        self.name = name
+        self.children = []
+        self.parent = parent
+        self.icon = None
+        self.font = QFont()
+
+    def append_child(self, child):
+        self.children.append(child)
+        child.parent = self
+
+    def child(self, row):
+        return self.children[row] if 0 <= row < len(self.children) else None
+
+    def child_count(self):
+        return len(self.children)
+
+    def row(self):
+        return self.parent.children.index(self) if self.parent else 0
 
 
 class TreeModel(QAbstractItemModel):
@@ -29,114 +43,80 @@ class TreeModel(QAbstractItemModel):
 
     def __init__(self, data: Dict[str, Any], parent=None):
         super().__init__(parent)
-        self.root_item = TreeItem("Root", None)
-        self.setup_model_data(data)
+        self.root = TreeItem("Root")
+        self._build_tree(self.root, data)
 
-    def setup_model_data(self, data: Dict[str, Any]):
-        """Initialize the model with data"""
-        for key, value in data.items():
+    def _build_tree(self, parent_node, tree_dict):
+        for key, value in tree_dict.items():
+            child_node = TreeItem(key)
+            # 🎨 Customize font and icon
+            font = QFont()
+            font.setBold(True if not parent_node.parent else False)
+            child_node.font = font
+            child_node.icon = (
+                QIcon.fromTheme("folder")
+                if isinstance(value, dict)
+                else QIcon.fromTheme("text-x-generic")
+            )
+            parent_node.append_child(child_node)
+
             if isinstance(value, dict):
-                # Create parent item
-                parent_item = TreeItem(key, None, self.root_item)
-                self.root_item.child_items.append(parent_item)
+                self._build_tree(child_node, value)
+            if isinstance(value, set):
+                for item in value:
+                    temp_node = TreeItem(item)
+                    temp_node.parent = child_node
+                    child_node.append_child(temp_node)
 
-                # Add children
-                for child_key, child_value in value.items():
-                    child_item = TreeItem(child_key, child_value, parent_item)
-                    parent_item.child_items.append(child_item)
-
-    def index(
-        self, row: int, column: int, parent: QModelIndex = QModelIndex()
-    ) -> QModelIndex:
-        """Create an index for the given row and column under the parent"""
+    def index(self, row, column, parent=QModelIndex()):
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
-        if not parent.isValid():
-            parent_item = self.root_item
-        else:
-            parent_item = parent.internalPointer()
-
-        child_item = parent_item.child_items[row]
-        if child_item:
-            return self.createIndex(row, column, child_item)
+        parent_node = self.get_node(parent)
+        child_node = parent_node.child(row)
+        if child_node:
+            return self.createIndex(row, column, child_node)
         return QModelIndex()
 
-    def parent(self, index: QModelIndex) -> QModelIndex:
-        """Return the parent of the given index"""
-        if not index.isValid():
+    def parent(self, index):
+        node = self.get_node(index)
+        if not node or not node.parent or node.parent == self.root:
             return QModelIndex()
+        return self.createIndex(node.parent.row(), 0, node.parent)
 
-        child_item = index.internalPointer()
-        parent_item = child_item.parent_item
+    def rowCount(self, parent=QModelIndex()):
+        node = self.get_node(parent)
+        return node.child_count()
 
-        if parent_item == self.root_item:
-            return QModelIndex()
-
-        return self.createIndex(
-            parent_item.child_items.index(child_item), 0, parent_item
-        )
-
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
-        """Return the number of rows under the given parent"""
-        if parent.column() > 0:
-            return 0
-
-        if not parent.isValid():
-            parent_item = self.root_item
-        else:
-            parent_item = parent.internalPointer()
-
-        return len(parent_item.child_items)
-
-    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
-        """Return the number of columns"""
+    def columnCount(self, parent=QModelIndex()):
         return 1
 
-    def data(self, index: QModelIndex, role: int = Qt.DisplayRole) -> Any:
-        """Return the data for the given role and index"""
-        if not index.isValid():
+    def data(self, index, role=Qt.DisplayRole):
+        node = self.get_node(index)
+        if not node:
             return None
 
-        item = index.internalPointer()
-
         if role == Qt.DisplayRole:
-            return item.key
-
-        elif role == Qt.BackgroundRole:
-            if item.value:
-                colors = {
-                    "Band": QColor(200, 230, 255),  # Light blue
-                    "Board": QColor(255, 230, 200),  # Light orange
-                    "RCC": QColor(230, 255, 200),  # Light green
-                }
-                return colors.get(item.value, QColor(255, 255, 255))
-
-        elif role == Qt.UserRole:
-            return item.value
-
+            return node.name
+        elif role == Qt.FontRole:
+            return node.font
+        elif role == Qt.DecorationRole:
+            return node.icon
         return None
 
-    def setData(self, index: QModelIndex, value: Any, role: int = Qt.EditRole) -> bool:
-        """Set the data for the given role and index"""
-        if not index.isValid():
-            return False
-
+    def setData(self, index, value, role=Qt.EditRole):
+        node = self.get_node(index)
         if role == Qt.EditRole:
-            item = index.internalPointer()
-            item.value = value
+            node.name = value
             self.dataChanged.emit(index, index)
             return True
-
         return False
 
-    def headerData(
-        self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole
-    ) -> Any:
-        """Return the header data"""
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return "Components"
-        return None
+    def flags(self, index):
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+
+    def get_node(self, index):
+        return index.internalPointer() if index.isValid() else self.root
 
 
 class LegacyBCFManager(QWidget):
@@ -168,9 +148,14 @@ class LegacyBCFManager(QWidget):
 
         # Define component structure
         self.component_structure = {
-            "Bands": {"Band 1": "Band", "Band 2": "Band", "Band 3": "Band"},
-            "Boards": {"Board 1": "Board", "Board 2": "Board", "Board 3": "Board"},
-            "RCCs": {"RCC 1": "RCC", "RCC 2": "RCC", "RCC 3": "RCC"},
+            "Animals": {
+                "Mammals": {"Dog", "Cat"},
+                "Reptiles": {"Snake", "Lizard"},
+            },
+            "Plants": {
+                "Trees": {"Oak", "Pine"},
+                "Flowers": {"Rose", "Lily"},
+            },
         }
 
         # Create and set model
@@ -226,11 +211,11 @@ class LegacyBCFManager(QWidget):
         try:
             item = index.internalPointer()
             if (
-                item.parent_item and item.parent_item != self.tree_model.root_item
+                item.parent and item.parent != self.tree_model.root
             ):  # Only handle leaf items
                 # Switch to table view
                 self.stacked_widget.setCurrentIndex(0)
-                self.data_changed.emit({"component": item.key, "type": item.value})
+                self.data_changed.emit({"component": item.name, "type": item.name})
             else:
                 # Switch to placeholder for group items
                 self.stacked_widget.setCurrentIndex(1)
