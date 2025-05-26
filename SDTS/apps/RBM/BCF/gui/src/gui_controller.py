@@ -303,12 +303,12 @@ class GUIController(QMainWindow):
         """Setup dock widgets for both modes"""
         # Legacy mode docks
         self.legacy_properties_dock = QDockWidget("Properties", self)
-        self.legacy_properties_dock.setWidget(self.legacy_manager.control_dock.widget())
+        # self.legacy_properties_dock.setWidget(self.legacy_manager.control_dock.widget())
         self.addDockWidget(Qt.RightDockWidgetArea, self.legacy_properties_dock)
 
         # Visual mode docks
         self.visual_properties_dock = QDockWidget("Properties", self)
-        self.visual_properties_dock.setWidget(self.visual_manager.control_dock.widget())
+        # self.visual_properties_dock.setWidget(self.visual_manager.control_dock.widget())
         self.visual_properties_dock.hide()  # Initially hidden
 
         # Add visual docks
