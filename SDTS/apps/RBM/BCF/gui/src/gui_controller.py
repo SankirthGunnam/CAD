@@ -42,6 +42,9 @@ class GUIController(QMainWindow):
     process_blocking_event_signal = Signal(str, dict)
     data_changed = Signal(dict)
     error_occurred = Signal(str)
+    build_requested = Signal(dict)  # Signal when build is requested
+    configure_requested = Signal(dict)  # Signal when configuration is requested
+    export_requested = Signal(dict)  # Signal when export is requested
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -327,25 +330,20 @@ class GUIController(QMainWindow):
     # Action handlers
     def _on_create(self):
         """Handle create action"""
-        # TODO: Implement create functionality
-        pass
+        self.send_event(self.EVENT_CREATE, {})
 
     def _on_load(self):
         """Handle load action"""
-        # TODO: Implement load functionality
-        pass
+        self.send_event(self.EVENT_LOAD, {})
 
     def _on_build(self):
         """Handle build action"""
-        # TODO: Implement build functionality
-        pass
+        self.build_requested.emit({"mode": self.current_mode})
 
     def _on_save(self):
         """Handle save action"""
-        # TODO: Implement save functionality
-        pass
+        self.send_event(self.EVENT_SAVE, {})
 
     def _on_export(self):
         """Handle export action"""
-        # TODO: Implement export functionality
-        pass
+        self.export_requested.emit({"mode": self.current_mode})
