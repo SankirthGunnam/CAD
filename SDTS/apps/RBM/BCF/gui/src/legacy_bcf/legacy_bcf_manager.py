@@ -2,16 +2,25 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-    QTableWidget,
-    QTableWidgetItem,
     QDockWidget,
     QTreeView,
-    QStackedWidget,
+    QTabWidget,
     QLabel,
 )
 from PySide6.QtCore import Qt, Signal, QAbstractItemModel, QModelIndex
 from PySide6.QtGui import QColor, QIcon, QFont
 from typing import Dict, Any, Optional, List, Union
+import importlib
+import os
+import sys
+
+# Add the necessary paths to sys.path
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+
+from .views.base_view import BaseView
+from apps.RBM.BCF.src.controllers.base_controller import BaseController
+from apps.RBM.BCF.src.models.base_model import BaseModel
 
 
 class TreeItem:
@@ -23,6 +32,7 @@ class TreeItem:
         self.parent = parent
         self.icon = None
         self.font = QFont()
+        self.view_type = None  # Store the type of view to load
 
     def append_child(self, child):
         self.children.append(child)
@@ -49,7 +59,13 @@ class TreeModel(QAbstractItemModel):
     def _build_tree(self, parent_node, tree_dict):
         for key, value in tree_dict.items():
             child_node = TreeItem(key)
-            # 🎨 Customize font and icon
+            # Set view type based on the value
+            if isinstance(value, dict):
+                child_node.view_type = "table"  # Default view type
+            else:
+                child_node.view_type = value  # Use the value as view type
+
+            # Customize font and icon
             font = QFont()
             font.setBold(True if not parent_node.parent else False)
             child_node.font = font
@@ -62,11 +78,6 @@ class TreeModel(QAbstractItemModel):
 
             if isinstance(value, dict):
                 self._build_tree(child_node, value)
-            if isinstance(value, set):
-                for item in value:
-                    temp_node = TreeItem(item)
-                    temp_node.parent = child_node
-                    child_node.append_child(temp_node)
 
     def index(self, row, column, parent=QModelIndex()):
         if not self.hasIndex(row, column, parent):
@@ -102,25 +113,16 @@ class TreeModel(QAbstractItemModel):
             return node.font
         elif role == Qt.DecorationRole:
             return node.icon
+        elif role == Qt.UserRole:
+            return node.view_type
         return None
-
-    def setData(self, index, value, role=Qt.EditRole):
-        node = self.get_node(index)
-        if role == Qt.EditRole:
-            node.name = value
-            self.dataChanged.emit(index, index)
-            return True
-        return False
-
-    def flags(self, index):
-        return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
 
     def get_node(self, index):
         return index.internalPointer() if index.isValid() else self.root
 
 
 class LegacyBCFManager(QWidget):
-    """Legacy BCF Manager that provides a table-based interface"""
+    """Legacy BCF Manager that provides a dynamic tab-based interface"""
 
     # Signals
     data_changed = Signal(dict)
@@ -129,8 +131,12 @@ class LegacyBCFManager(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Legacy BCF Manager")
+        self.setup_ui()
+        self.load_views()
+        self.setup_tree()
 
-        # Create main layout
+    def setup_ui(self):
+        """Setup the main UI components"""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -145,66 +151,61 @@ class LegacyBCFManager(QWidget):
         # Create tree view
         self.tree_view = QTreeView()
         self.tree_view.setHeaderHidden(True)
-
-        # Define component structure
-        self.component_structure = {
-            "Animals": {
-                "Mammals": {"Dog", "Cat"},
-                "Reptiles": {"Snake", "Lizard"},
-            },
-            "Plants": {
-                "Trees": {"Oak", "Pine"},
-                "Flowers": {"Rose", "Lily"},
-            },
-        }
-
-        # Create and set model
-        self.tree_model = TreeModel(self.component_structure)
-        self.tree_view.setModel(self.tree_model)
         self.tree_dock.setWidget(self.tree_view)
 
-        # Create stacked widget for center area
-        self.stacked_widget = QStackedWidget()
-
-        # Create table widget for the first page
-        self.table = QTableWidget()
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["ID", "Name", "Type", "Status"])
-        self._populate_table()  # Add initial data
-        self.stacked_widget.addWidget(self.table)
-
-        # Add a placeholder page
-        placeholder = QLabel("Select a component from the tree view")
-        placeholder.setAlignment(Qt.AlignCenter)
-        self.stacked_widget.addWidget(placeholder)
+        # Create tab widget for center area
+        self.tab_widget = QTabWidget()
+        self.tab_widget.setTabsClosable(True)
+        self.tab_widget.tabCloseRequested.connect(self.close_tab)
 
         # Add widgets to layout
         layout.addWidget(self.tree_dock)
-        layout.addWidget(self.stacked_widget)
-
-        # Set initial state
-        self.stacked_widget.setCurrentIndex(1)  # Show placeholder
+        layout.addWidget(self.tab_widget)
 
         # Connect signals
         self.tree_view.clicked.connect(self._on_tree_item_clicked)
 
-    def _populate_table(self):
-        """Populate table with initial data"""
-        # Add sample data
-        self.table.setRowCount(3)
+    def load_views(self):
+        """Load available views from the views directory"""
+        self.views = {}
+        views_dir = os.path.join(os.path.dirname(__file__), "views")
 
-        # Sample data
-        data = [
-            ("001", "Sample Band", "Band", "Active"),
-            ("002", "Sample Board", "Board", "Inactive"),
-            ("003", "Sample RCC", "RCC", "Active"),
-        ]
+        for file in os.listdir(views_dir):
+            if file.endswith("_view.py"):
+                view_name = file[:-8]  # Remove '_view.py'
+                try:
+                    module = importlib.import_module(
+                        f".views.{view_name}_view", package=__package__
+                    )
+                    view_class = getattr(module, f"{view_name.title()}View")
+                    self.views[view_name] = view_class
+                except Exception as e:
+                    self.error_occurred.emit(
+                        f"Error loading view {view_name}: {str(e)}"
+                    )
 
-        for row, (id_, name, type_, status) in enumerate(data):
-            self.table.setItem(row, 0, QTableWidgetItem(id_))
-            self.table.setItem(row, 1, QTableWidgetItem(name))
-            self.table.setItem(row, 2, QTableWidgetItem(type_))
-            self.table.setItem(row, 3, QTableWidgetItem(status))
+    def setup_tree(self):
+        """Setup the tree structure"""
+        self.component_structure = {
+            "Bands": {
+                "Band 1": "table",
+                "Band 2": "table",
+                "Band 3": "table",
+            },
+            "Boards": {
+                "Board 1": "table",
+                "Board 2": "table",
+                "Board 3": "table",
+            },
+            "RCCs": {
+                "RCC 1": "table",
+                "RCC 2": "table",
+                "RCC 3": "table",
+            },
+        }
+
+        self.tree_model = TreeModel(self.component_structure)
+        self.tree_view.setModel(self.tree_model)
 
     def _on_tree_item_clicked(self, index: QModelIndex):
         """Handle tree item click"""
@@ -213,34 +214,41 @@ class LegacyBCFManager(QWidget):
             if (
                 item.parent and item.parent != self.tree_model.root
             ):  # Only handle leaf items
-                # Switch to table view
-                self.stacked_widget.setCurrentIndex(0)
-                self.data_changed.emit({"component": item.name, "type": item.name})
-            else:
-                # Switch to placeholder for group items
-                self.stacked_widget.setCurrentIndex(1)
+                self.open_tab(item.name, item.view_type)
         except Exception as e:
             self.error_occurred.emit(f"Error handling tree item click: {str(e)}")
 
-    def update_table(self, data: dict):
-        """Update table with new data"""
+    def open_tab(self, name: str, view_type: str):
+        """Open a new tab with the specified view"""
         try:
-            # Clear existing items
-            self.table.clear()
+            # Check if tab already exists
+            for i in range(self.tab_widget.count()):
+                if self.tab_widget.tabText(i) == name:
+                    self.tab_widget.setCurrentIndex(i)
+                    return
 
-            # Set table dimensions
-            if data:
-                rows = len(data)
-                cols = len(next(iter(data.values()))) if data else 0
-                self.table.setRowCount(rows)
-                self.table.setColumnCount(cols)
+            # Create new view
+            if view_type in self.views:
+                view = self.views[view_type]()
 
-                # Fill table
-                for row, (key, values) in enumerate(data.items()):
-                    for col, value in enumerate(values):
-                        item = QTableWidgetItem(str(value))
-                        self.table.setItem(row, col, item)
+                # Create and set up controller
+                controller_module = importlib.import_module(
+                    f"controllers.{view_type}_controller", package="src"
+                )
+                controller_class = getattr(
+                    controller_module, f"{view_type.title()}Controller"
+                )
+                controller = controller_class()
+                controller.set_view(view)
 
-            self.data_changed.emit(data)
+                # Add tab
+                self.tab_widget.addTab(view, name)
+                self.tab_widget.setCurrentWidget(view)
+            else:
+                self.error_occurred.emit(f"View type {view_type} not found")
         except Exception as e:
-            self.error_occurred.emit(f"Error updating table: {str(e)}")
+            self.error_occurred.emit(f"Error opening tab: {str(e)}")
+
+    def close_tab(self, index: int):
+        """Close the tab at the specified index"""
+        self.tab_widget.removeTab(index)

@@ -3,6 +3,7 @@ from typing import Dict, Any, Callable, Optional
 from enum import Enum, auto
 import logging
 from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
+from .build.build_master import BuildMaster
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -26,12 +27,15 @@ class CoreController(QObject):
     # Signals for communication
     state_changed = Signal(RCCState)  # Signal when state changes
     reply_signal = Signal(dict)  # Signal to send replies
+    build_event = Signal(dict)  # Single signal for all build events
 
     def __init__(self, rdb_manager: RDBManager):
         super().__init__()
         self.rdb_manager = rdb_manager
         self.current_state = RCCState.IDLE
         self.error_message = ""
+        self.build_master = BuildMaster(self)
+        self.setup_connections()
 
         # Event handlers for each state
         self.state_handlers: Dict[RCCState, Dict[str, Callable]] = {
@@ -42,6 +46,45 @@ class CoreController(QObject):
             RCCState.EXPORTING: self._get_exporting_handlers(),
             RCCState.ERROR: self._get_error_handlers(),
         }
+
+    def setup_connections(self):
+        """Setup signal connections with BuildMaster"""
+        self.build_master.build_event.connect(self._on_build_event)
+
+    def _on_build_event(self, event: Dict[str, Any]):
+        """Handle all build events"""
+        event_type = event.get("type")
+
+        if event_type == "build_started":
+            self._set_state(RCCState.BUILDING)
+            self.build_event.emit(
+                {"type": "status", "message": f"Build started: {event.get('message')}"}
+            )
+
+        elif event_type == "build_completed":
+            self._set_state(RCCState.IDLE)
+            self.build_event.emit(
+                {
+                    "type": "status",
+                    "message": f"Build completed: {event.get('message')}",
+                }
+            )
+
+        elif event_type == "build_failed":
+            self._set_error(event.get("message", "Build failed"))
+            self.build_event.emit(
+                {
+                    "type": "error",
+                    "message": event.get("message"),
+                    "details": event.get("details"),
+                }
+            )
+
+        elif event_type == "build_warning":
+            self.build_event.emit({"type": "warning", "message": event.get("message")})
+
+        elif event_type == "file_generated":
+            self.build_event.emit({"type": "file", "file_path": event.get("file_path")})
 
     def _get_idle_handlers(self) -> Dict[str, Callable]:
         """Get event handlers for IDLE state"""
@@ -140,8 +183,8 @@ class CoreController(QObject):
         """Handle build event"""
         try:
             self._set_state(RCCState.BUILDING)
-            # Implement build logic here
-            return {"status": "success", "message": "Built successfully"}
+            self.start_build(data)
+            return {"status": "success", "message": "Build started"}
         except Exception as e:
             self._set_error(str(e))
             return {"status": "error", "message": str(e)}
@@ -182,6 +225,25 @@ class CoreController(QObject):
         self._set_state(RCCState.IDLE)
         self.error_message = ""
         return {"status": "success", "message": "Recovered from error state"}
+
+    def handle_build_error(self, error_msg: str):
+        """Handle build error from BuildMaster"""
+        self._set_error(error_msg)
+
+    def start_build(self, data: Dict[str, Any], output_dir: Optional[str] = None):
+        """Start the build process"""
+        try:
+            self.build_master.generate_files(data, output_dir)
+        except Exception as e:
+            self._set_error(f"Failed to start build: {str(e)}")
+
+    def get_build_status(self) -> Dict[str, Any]:
+        """Get the current build status"""
+        return self.build_master.get_build_status()
+
+    def set_output_directory(self, output_dir: str):
+        """Set the output directory for generated files"""
+        self.build_master.set_output_directory(output_dir)
 
     def get_status(self) -> Dict[str, Any]:
         """Get current status of the controller"""
