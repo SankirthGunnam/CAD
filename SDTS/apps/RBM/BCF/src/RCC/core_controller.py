@@ -52,73 +52,8 @@ class CoreController(QObject):
         """Handle state changes from state machine"""
         logger.info(f"State changed from {old_state.name} to {new_state.name}")
 
-        # Handle state-specific business logic
-        if new_state == ToolState.INITIALIZING:
-            self._handle_initializing()
-        elif new_state == ToolState.CONFIGURING:
-            self._handle_configuring()
-        elif new_state == ToolState.BUILDING:
-            self._handle_building()
-        elif new_state == ToolState.VALIDATING:
-            self._handle_validating()
-        elif new_state == ToolState.EXPORTING:
-            self._handle_exporting()
-        elif new_state == ToolState.ERROR:
+        if new_state == ToolState.ERROR:
             self._handle_error()
-        elif new_state == ToolState.IDLE:
-            self._handle_idle()
-
-    def _handle_initializing(self):
-        """Handle business logic for INITIALIZING state"""
-        try:
-            # Initialize components
-            self.build_master.initialize()
-            self.state_machine.transition("complete")
-        except Exception as e:
-            self.state_machine.transition("error", {"error_message": str(e)})
-
-    def _handle_configuring(self):
-        """Handle business logic for CONFIGURING state"""
-        try:
-            # Configure components
-            config_data = self.state_machine.get_state_data("config_data", {})
-            self.build_master.configure(config_data)
-            self.state_machine.transition("complete")
-        except Exception as e:
-            self.state_machine.transition("error", {"error_message": str(e)})
-
-    def _handle_building(self):
-        """Handle business logic for BUILDING state"""
-        try:
-            # Start build process
-            build_data = self.state_machine.get_state_data("build_data", {})
-            self.build_master.generate_files(build_data)
-        except Exception as e:
-            self.state_machine.transition("error", {"error_message": str(e)})
-
-    def _handle_validating(self):
-        """Handle business logic for VALIDATING state"""
-        try:
-            # Validate build results
-            validation_data = self.state_machine.get_state_data("validation_data", {})
-            if self.build_master.validate_build(validation_data):
-                self.state_machine.transition("complete")
-            else:
-                self.state_machine.transition(
-                    "error", {"error_message": "Validation failed"}
-                )
-        except Exception as e:
-            self.state_machine.transition("error", {"error_message": str(e)})
-
-    def _handle_exporting(self):
-        """Handle business logic for EXPORTING state"""
-        try:
-            # Export results
-            export_data = self.state_machine.get_state_data("export_data", {})
-            self.build_master.export_results(export_data)
-            self.state_machine.transition("complete")
-        except Exception as e:
-            self.state_machine.transition("error", {"error_message": str(e)})
 
     def _handle_error(self):
         """Handle business logic for ERROR state"""
@@ -126,12 +61,6 @@ class CoreController(QObject):
             "error_message", "Unknown error"
         )
         self.reply_signal.emit({"status": "error", "message": self.error_message})
-
-    def _handle_idle(self):
-        """Handle business logic for IDLE state"""
-        # Clean up any resources or reset state
-        self.error_message = ""
-        self.reply_signal.emit({"status": "success", "message": "System is idle"})
 
     def _on_transition_failed(self, error_message: str):
         """Handle failed state transitions"""
