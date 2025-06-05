@@ -18,6 +18,19 @@ class ToolState(Enum):
     ERROR = auto()
 
 
+class ToolEvent(Enum):
+    """Events that can trigger state transitions"""
+
+    INITIALIZE = "initialize"
+    CONFIGURE = "configure"
+    BUILD = "build"
+    EXPORT = "export"
+    VALIDATE = "validate"
+    COMPLETE = "complete"
+    ERROR = "error"
+    RECOVER = "recover"
+
+
 class StateTransition:
     """Represents a state transition with its conditions"""
 
@@ -51,41 +64,43 @@ class StateMachine(QObject):
         self.state_data: Dict[str, Any] = {}
 
         # Define valid transitions for each state
-        self.transitions: Dict[ToolState, Dict[str, StateTransition]] = {
+        self.transitions: Dict[ToolState, Dict[ToolEvent, StateTransition]] = {
             ToolState.IDLE: {
-                "initialize": StateTransition(ToolState.INITIALIZING),
-                "configure": StateTransition(ToolState.CONFIGURING),
-                "build": StateTransition(ToolState.BUILDING),
-                "export": StateTransition(ToolState.EXPORTING),
+                ToolEvent.INITIALIZE: StateTransition(ToolState.INITIALIZING),
+                ToolEvent.CONFIGURE: StateTransition(ToolState.CONFIGURING),
+                ToolEvent.BUILD: StateTransition(ToolState.BUILDING),
+                ToolEvent.EXPORT: StateTransition(ToolState.EXPORTING),
             },
             ToolState.INITIALIZING: {
-                "complete": StateTransition(ToolState.IDLE),
-                "error": StateTransition(ToolState.ERROR),
+                ToolEvent.COMPLETE: StateTransition(ToolState.IDLE),
+                ToolEvent.ERROR: StateTransition(ToolState.ERROR),
             },
             ToolState.CONFIGURING: {
-                "complete": StateTransition(ToolState.IDLE),
-                "build": StateTransition(ToolState.BUILDING),
-                "error": StateTransition(ToolState.ERROR),
+                ToolEvent.COMPLETE: StateTransition(ToolState.IDLE),
+                ToolEvent.BUILD: StateTransition(ToolState.BUILDING),
+                ToolEvent.ERROR: StateTransition(ToolState.ERROR),
             },
             ToolState.BUILDING: {
-                "validate": StateTransition(ToolState.VALIDATING),
-                "complete": StateTransition(ToolState.IDLE),
-                "error": StateTransition(ToolState.ERROR),
+                ToolEvent.VALIDATE: StateTransition(ToolState.VALIDATING),
+                ToolEvent.COMPLETE: StateTransition(ToolState.IDLE),
+                ToolEvent.ERROR: StateTransition(ToolState.ERROR),
             },
             ToolState.VALIDATING: {
-                "complete": StateTransition(ToolState.IDLE),
-                "error": StateTransition(ToolState.ERROR),
+                ToolEvent.COMPLETE: StateTransition(ToolState.IDLE),
+                ToolEvent.ERROR: StateTransition(ToolState.ERROR),
             },
             ToolState.EXPORTING: {
-                "complete": StateTransition(ToolState.IDLE),
-                "error": StateTransition(ToolState.ERROR),
+                ToolEvent.COMPLETE: StateTransition(ToolState.IDLE),
+                ToolEvent.ERROR: StateTransition(ToolState.ERROR),
             },
             ToolState.ERROR: {
-                "recover": StateTransition(ToolState.IDLE),
+                ToolEvent.RECOVER: StateTransition(ToolState.IDLE),
             },
         }
 
-    def transition(self, event: str, data: Optional[Dict[str, Any]] = None) -> bool:
+    def transition(
+        self, event: ToolEvent, data: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """Attempt to transition to a new state based on the event"""
         try:
             if data is None:
@@ -97,12 +112,14 @@ class StateMachine(QObject):
 
             if not transition:
                 raise ValueError(
-                    f"Invalid event '{event}' for state {self.current_state.name}"
+                    f"Invalid event '{event.value}' for state {self.current_state.name}"
                 )
 
             # Check transition condition
             if not transition.condition(data):
-                raise ValueError(f"Transition condition not met for event '{event}'")
+                raise ValueError(
+                    f"Transition condition not met for event '{event.value}'"
+                )
 
             # Update state
             self.previous_state = self.current_state
