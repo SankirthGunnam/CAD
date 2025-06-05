@@ -1,4 +1,5 @@
-from PySide6.QtCore import QObject, Signal, Slot
+import time
+from PySide6.QtCore import QObject, Signal, QThread, Slot
 from typing import Dict, Any, Callable, Optional
 from enum import Enum, auto
 import logging
@@ -11,22 +12,78 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class RCCState(Enum):
-    """States of the RBM Core Controller"""
+class LoadWorker(QObject):
+    event_signal = Signal(dict)
+    finished = Signal()
 
-    IDLE = auto()
-    BUILDING = auto()
-    LOADING = auto()
-    SAVING = auto()
-    EXPORTING = auto()
-    ERROR = auto()
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+
+    def run(self):
+        self.event_signal.emit({"type": "status", "message": "Loading started"})
+        time.sleep(3)  # Simulate long task
+        self.event_signal.emit({"type": "status", "message": "Loading completed"})
+        self.finished.emit()
+
+
+class BuildWorker(QObject):
+    event_signal = Signal(dict)
+    finished = Signal()
+
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+        self.build_master = BuildMaster(self)
+
+    def run(self):
+        self.event_signal.emit({"type": "status", "message": "Build started"})
+        for i in range(10):
+            print("Build Progress: ", i)
+            time.sleep(1)
+        self.event_signal.emit({"type": "status", "message": "Build completed"})
+        self.finished.emit()
+
+
+class ExportWorker(QObject):
+    event_signal = Signal(dict)
+    finished = Signal()
+
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+
+    def run(self):
+        self.event_signal.emit({"type": "status", "message": "Export started"})
+        for i in range(10):
+            print("Export Progress: ", i)
+            time.sleep(1)
+        self.event_signal.emit({"type": "status", "message": "Export completed"})
+        self.finished.emit()
+
+
+class ConfigureWorker(QObject):
+    event_signal = Signal(dict)
+    finished = Signal()
+
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+
+    def run(self):
+        self.event_signal.emit({"type": "status", "message": "Configure started"})
+        for i in range(10):
+            print("Configure Progress: ", i)
+            time.sleep(1)
+        self.event_signal.emit({"type": "status", "message": "Configure completed"})
+        self.finished.emit()
 
 
 class CoreController(QObject):
     """RBM Core Controller that manages the state and processing of core events"""
 
     # Signals for communication
-    state_changed = Signal(RCCState)  # Signal when state changes
+    state_changed = Signal(ToolState)  # Signal when state changes
     reply_signal = Signal(dict)  # Signal to send replies
     build_event = Signal(dict)  # Single signal for all build events
 
@@ -40,8 +97,15 @@ class CoreController(QObject):
         self.state_machine.state_changed.connect(self._on_state_changed)
         self.state_machine.transition_failed.connect(self._on_transition_failed)
 
+        self.load_worker: Optional[LoadWorker] = None
+        self.build_worker: Optional[BuildWorker] = None
+        self.export_worker: Optional[ExportWorker] = None
+
+        self.load_thread: Optional[QThread] = None
+        self.build_thread: Optional[QThread] = None
+        self.export_thread: Optional[QThread] = None
+
         # Initialize build master
-        self.build_master = BuildMaster(self)
         self.setup_connections()
 
     def setup_connections(self):
@@ -113,7 +177,9 @@ class CoreController(QObject):
             # Attempt state transition
             if self.state_machine.transition(event_type, event_data):
                 # Handle successful transition
-                if event_type == "build":
+                if event_type == "load":
+                    self.start_load(event_data)
+                elif event_type == "build":
                     self.start_build(event_data)
                 elif event_type == "configure":
                     self._handle_configure(event_data)
@@ -148,10 +214,34 @@ class CoreController(QObject):
         """Handle build error from BuildMaster"""
         self.state_machine.transition("error", {"error_message": error_msg})
 
+    def start_load(self, data: Dict[str, Any]):
+        try:
+            self.load_thread = QThread()
+            self.load_worker = LoadWorker(data)
+            self.load_worker.moveToThread(self.load_thread)
+            self.load_worker.event_signal.connect(self.load_event.emit)
+            self.load_worker.finished.connect(self.load_thread.quit)
+            self.load_worker.finished.connect(self.load_worker.deleteLater)
+            self.load_thread.finished.connect(self.load_thread.deleteLater)
+            self.load_thread.started.connect(self.load_worker.run)
+            self.load_thread.start()
+        except Exception as e:
+            self.state_machine.transition(
+                "error", {"error_message": f"Failed to start load: {str(e)}"}
+            )
+
     def start_build(self, data: Dict[str, Any], output_dir: Optional[str] = None):
         """Start the build process"""
         try:
-            self.build_master.generate_files(data, output_dir)
+            self.build_thread = QThread()
+            self.build_worker = BuildWorker(data)
+            self.build_worker.moveToThread(self.build_thread)
+            self.build_worker.event_signal.connect(self.build_event.emit)
+            self.build_worker.finished.connect(self.build_thread.quit)
+            self.build_worker.finished.connect(self.build_worker.deleteLater)
+            self.build_thread.finished.connect(self.build_thread.deleteLater)
+            self.build_thread.started.connect(self.build_worker.run)
+            self.build_thread.start()
         except Exception as e:
             self.state_machine.transition(
                 "error", {"error_message": f"Failed to start build: {str(e)}"}
@@ -161,17 +251,37 @@ class CoreController(QObject):
         """Handle configuration"""
         try:
             # Implement configuration logic here
-            pass
+            self.state_machine.transition("configure")
+            self.export_thread = QThread()
+            self.export_worker = ConfigureWorker(data)
+            self.export_worker.moveToThread(self.export_thread)
+            self.export_worker.event_signal.connect(self.export_event.emit)
+            self.export_worker.finished.connect(self.export_thread.quit)
+            self.export_worker.finished.connect(self.export_worker.deleteLater)
+            self.export_thread.finished.connect(self.export_thread.deleteLater)
+            self.export_thread.started.connect(self.export_worker.run)
+            self.export_thread.start()
         except Exception as e:
             self.state_machine.transition("error", {"error_message": str(e)})
 
     def _handle_export(self, data: Dict[str, Any]):
         """Handle export"""
         try:
+            self.state_machine.transition("export")
             # Implement export logic here
-            pass
+            self.export_thread = QThread()
+            self.export_worker = ExportWorker(data)
+            self.export_worker.moveToThread(self.export_thread)
+            self.export_worker.event_signal.connect(self.export_event.emit)
+            self.export_worker.finished.connect(self.export_thread.quit)
+            self.export_worker.finished.connect(self.export_worker.deleteLater)
+            self.export_thread.finished.connect(self.export_thread.deleteLater)
+            self.export_thread.started.connect(self.export_worker.run)
+            self.export_thread.start()
         except Exception as e:
-            self.state_machine.transition("error", {"error_message": str(e)})
+            self.state_machine.transition(
+                "error", {"error_message": f"Failed to start export: {str(e)}"}
+            )
 
     def _handle_recover(self, data: Dict[str, Any]):
         """Handle recovery from error state"""
