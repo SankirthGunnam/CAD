@@ -20,7 +20,7 @@ from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
 from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
 from apps.RBM.BCF.gui.src.visual_bcf.view import RFView
 from apps.RBM.BCF.src.models.chip import ChipModel
-from apps.RBM.BCF.src.RCC.core_controller import RCCState
+from apps.RBM.BCF.src.RCC.core_controller import ToolState
 from .visual_bcf.visual_bcf_manager import VisualBCFManager
 from .legacy_bcf.legacy_bcf_manager import LegacyBCFManager
 
@@ -222,7 +222,7 @@ class GUIController(QMainWindow):
         print("add chip called", args, kwargs)
         """Add a new chip to the scene and database"""
         # Check if we can start building
-        if self.core_controller.current_state != RCCState.IDLE:
+        if self.core_controller.current_state != ToolState.IDLE:
             error_msg = f"Cannot add chip: Core controller is in {self.core_controller.current_state.name} state"
             print(error_msg)
             self.show_error(error_msg)

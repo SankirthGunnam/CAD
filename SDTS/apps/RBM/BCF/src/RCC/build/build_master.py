@@ -12,9 +12,11 @@ class BuildMaster(QObject):
     # Single signal for all build events
     build_event = Signal(dict)  # Emitted for all build events with type and data
 
-    def __init__(self, core_controller=None):
+    def __init__(self, rdb_manager=None, callback=None, event_handler=None):
         super().__init__()
-        self.core_controller = core_controller
+        self.rdb_manager = rdb_manager
+        self.callback = callback
+        self.event_handler = event_handler
         self.template_dir = Path(__file__).parent / "code_generator"
         self.output_dir = None
         self.setup_jinja()
@@ -50,6 +52,12 @@ class BuildMaster(QObject):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+    def _emit_event(self, event: dict):
+        if self.event_handler:
+            self.event_handler(event)
+        else:
+            self.build_event.emit(event)
+
     def generate_files(self, data: Dict[str, Any], output_dir: Optional[str] = None):
         """Generate source and header files from templates"""
         try:
@@ -59,7 +67,7 @@ class BuildMaster(QObject):
             if not self.output_dir:
                 raise ValueError("Output directory not set")
 
-            self.build_event.emit(
+            self._emit_event(
                 {"type": "build_started", "message": "Starting code generation..."}
             )
 
@@ -87,12 +95,12 @@ class BuildMaster(QObject):
                     with open(output_file, "w") as f:
                         f.write(output_content)
 
-                    self.build_event.emit(
+                    self._emit_event(
                         {"type": "file_generated", "file_path": str(output_file)}
                     )
 
                 except Exception as e:
-                    self.build_event.emit(
+                    self._emit_event(
                         {
                             "type": "build_warning",
                             "message": f"Warning processing {template_file.name}: {str(e)}",
@@ -100,24 +108,23 @@ class BuildMaster(QObject):
                     )
                     continue
 
-            self.build_event.emit(
+            self._emit_event(
                 {
                     "type": "build_completed",
                     "message": "Code generation completed successfully",
                 }
             )
-
+            if self.callback:
+                self.callback()
+        except ValueError as e:
+            raise ValueError(e)
         except Exception as e:
             error_msg = f"Build failed: {str(e)}"
-            self.build_event.emit(
+            self._emit_event(
                 {"type": "build_failed", "message": error_msg, "details": str(e)}
             )
-            if self.core_controller:
-                self.core_controller.handle_build_error(error_msg)
-
-    def set_core_controller(self, controller):
-        """Set the core controller for communication"""
-        self.core_controller = controller
+            if self.callback:
+                self.callback()
 
     def get_build_status(self) -> Dict[str, Any]:
         """Get the current build status"""

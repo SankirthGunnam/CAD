@@ -91,14 +91,14 @@ class LoadWorker(BaseWorker):
 
 
 class BuildWorker(BaseWorker):
-    def __init__(self, data: Dict[str, Any], build_master: BuildMaster):
+    def __init__(self, data: Dict[str, Any], rdb_manager, callback, event_handler):
         super().__init__(data)
-        self.build_master = build_master
+        self.build_master = BuildMaster(rdb_manager, callback, event_handler)
 
     def run(self):
         self.event_signal.emit({"type": "status", "message": "Build started"})
         try:
-            self.build_master.build(self.data)
+            self.build_master.generate_files(self.data)
         except Exception as e:
             self.event_signal.emit({"type": "error", "message": str(e)})
         self.event_signal.emit({"type": "status", "message": "Build completed"})
@@ -139,17 +139,10 @@ class CoreController(QObject):
         super().__init__()
         self.rdb_manager = rdb_manager
         self.error_message = ""
-
-        # Initialize state machine
         self.state_machine = StateMachine()
         self.state_machine.state_changed.connect(self._on_state_changed)
         self.state_machine.transition_failed.connect(self._on_transition_failed)
-
-        # Initialize build master
-        self.build_master = BuildMaster(self)
         self.setup_connections()
-
-        # Initialize worker management
         self.workers: Dict[str, Tuple[BaseWorker, QThread]] = {}
         self.worker_queue = queue.PriorityQueue()
         self._process_worker_queue()
@@ -270,7 +263,12 @@ class CoreController(QObject):
             if request.worker_type == "load":
                 worker = LoadWorker(request.data)
             elif request.worker_type == "build":
-                worker = BuildWorker(request.data, self.build_master)
+                worker = BuildWorker(
+                    request.data,
+                    self.rdb_manager,
+                    request.callback,
+                    self._on_build_event,
+                )
             elif request.worker_type == "export":
                 worker = ExportWorker(request.data)
             elif request.worker_type == "configure":
