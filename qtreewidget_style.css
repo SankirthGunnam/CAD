@@ -1,0 +1,47 @@
+/* --- Style the entire QTreeWidget --- */
+QTreeWidget {
+    background-color: #2B2B2B;  /* Dark background */
+    color: #F0F0F0;             /* Light default text color */
+    border: 2px solid #5A5A5A;
+    border-radius: 8px;
+    font-size: 14px;
+    show-decoration-selected: 1; /* Highlight the full row on selection */
+}
+
+/* --- Style each item in the tree --- */
+QTreeWidget::item {
+    /* Set a minimum height and padding for better spacing */
+    min-height: 28px;
+    padding-left: 5px;
+    border-bottom: 1px solid #353535; /* Separator line between items */
+}
+
+/* --- Style for mouse-over --- */
+QTreeWidget::item:hover {
+    background-color: #404040; /* Slightly lighter background on hover */
+}
+
+/* --- Style for selected item --- */
+QTreeWidget::item:selected {
+    background-color: #0078d7; /* A nice blue for selection */
+    color: #FFFFFF;             /* White text for the selected item */
+}
+
+/* --- Style for the expand/collapse arrows --- */
+/* This replaces the default arrows with custom images */
+/* Make sure the paths to your images are correct! */
+QTreeWidget::branch:closed:has-children {
+    image: url(:/icons/plus.png);
+}
+
+QTreeWidget::branch:open:has-children {
+    image: url(:/icons/minus.png);
+}
+
+/* --- Style the header --- */
+QHeaderView::section {
+    background-color: #3A3A3A;
+    color: #E0E0E0;
+    padding: 4px;
+    border: 1px solid #5A5A5A;
+}
