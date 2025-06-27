@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon
+from apps.RBM.BCF.gui.src.legacy_bcf.home_screen import HomeScreen
 
 
 class MainWindow(QMainWindow):
@@ -75,20 +76,27 @@ class MainWindow(QMainWindow):
         """
         )
 
+        # Add HomeScreen as the first page
+        self.home_screen = HomeScreen()
+        self.content_area.addWidget(self.home_screen)
+        # TODO: Add other app widgets here, e.g. self.content_area.addWidget(CADWidget())
+
         # Add widgets to main layout
         main_layout.addWidget(self.sidebar)
         main_layout.addWidget(self.content_area)
 
         # Set initial state
         self.current_app = None
-        self.switch_app(0)  # Start with CAD app
+        self.switch_app(0)  # Start with HomeScreen
 
     def add_app_button(self, name, icon, index):
         button = QPushButton(icon)
         button.setCheckable(True)
         button.setFixedSize(40, 40)
         button.setToolTip(name)
-        button.clicked.connect(lambda: self.switch_app(index))
+        button.clicked.connect(
+            lambda: self.switch_app(index + 1)
+        )  # +1 to skip HomeScreen
         self.app_buttons[name] = button
         self.sidebar.layout().addWidget(button)
 
@@ -96,7 +104,8 @@ class MainWindow(QMainWindow):
         # Update button states
         for button in self.app_buttons.values():
             button.setChecked(False)
-        list(self.app_buttons.values())[index].setChecked(True)
+        if index > 0:
+            list(self.app_buttons.values())[index - 1].setChecked(True)
 
         # Switch content
         self.content_area.setCurrentIndex(index)
