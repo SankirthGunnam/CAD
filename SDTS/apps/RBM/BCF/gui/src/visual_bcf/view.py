@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QGraphicsView
-from PySide6.QtCore import Qt, QRectF
+from PySide6.QtCore import Qt, QRectF, Signal
 from PySide6.QtGui import QPainter
 
 from .scene import RFScene
@@ -7,6 +7,9 @@ from .scene import RFScene
 
 class RFView(QGraphicsView):
     """View class for displaying the RF circuit"""
+    
+    # Signals
+    resizeSignal = Signal()
 
     def __init__(self, scene: RFScene):
         super().__init__(scene)
@@ -53,3 +56,8 @@ class RFView(QGraphicsView):
                 if hasattr(item, "model") and hasattr(item.model, "remove"):
                     item.model.remove()
         super().keyPressEvent(event)
+        
+    def resizeEvent(self, event) -> None:
+        """Handle resize events and emit signal"""
+        super().resizeEvent(event)
+        self.resizeSignal.emit()

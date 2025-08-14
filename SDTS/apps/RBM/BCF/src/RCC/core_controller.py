@@ -142,7 +142,7 @@ class CoreController(QObject):
         self.state_machine = StateMachine()
         self.state_machine.state_changed.connect(self._on_state_changed)
         self.state_machine.transition_failed.connect(self._on_transition_failed)
-        self.setup_connections()
+        # self.setup_connections()  # Commented out - build_master is not initialized yet
         self.workers: Dict[str, Tuple[BaseWorker, QThread]] = {}
         self.worker_queue = queue.PriorityQueue()
         self._process_worker_queue()

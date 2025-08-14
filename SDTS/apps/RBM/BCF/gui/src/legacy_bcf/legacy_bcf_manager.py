@@ -252,3 +252,22 @@ class LegacyBCFManager(QWidget):
     def close_tab(self, index: int):
         """Close the tab at the specified index"""
         self.tab_widget.removeTab(index)
+    
+    def update_table(self, data: dict):
+        """Update table with new data"""
+        try:
+            # Emit data changed signal
+            self.data_changed.emit(data)
+        except Exception as e:
+            self.error_occurred.emit(f"Error updating table: {str(e)}")
+    
+    def cleanup(self):
+        """Clean up resources"""
+        try:
+            # Close all tabs
+            self.tab_widget.clear()
+            # Clear tree model
+            if hasattr(self, 'tree_model'):
+                self.tree_model = None
+        except Exception as e:
+            self.error_occurred.emit(f"Error during cleanup: {str(e)}")

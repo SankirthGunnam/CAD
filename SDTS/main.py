@@ -6,6 +6,9 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# Suppress Qt platform warnings
+os.environ.setdefault('QT_LOGGING_RULES', 'qt.qpa.*=false;*.debug=false')
+
 # Add the current directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)

@@ -57,7 +57,7 @@ class GUIController(QMainWindow):
 
         # Create and add both managers
         self.legacy_manager = LegacyBCFManager()
-        self.visual_manager = VisualBCFManager()
+        self.visual_manager = VisualBCFManager(parent_controller=self)
 
         self.stacked_widget.addWidget(self.legacy_manager)
         self.stacked_widget.addWidget(self.visual_manager)
@@ -266,14 +266,19 @@ class GUIController(QMainWindow):
                 self.stacked_widget.setCurrentWidget(self.visual_manager)
                 self.legacy_properties_dock.hide()
                 self.visual_properties_dock.show()
+                # Show RF toolbar only in visual mode
+                self.visual_manager.show_rf_toolbar()
             else:
                 self.current_mode = "legacy"
                 self.mode_action.setText("Switch to Visual Mode")
                 self.stacked_widget.setCurrentWidget(self.legacy_manager)
                 self.visual_properties_dock.hide()
                 self.legacy_properties_dock.show()
+                # Hide RF toolbar when switching to legacy mode
+                self.visual_manager.hide_rf_toolbar()
         except Exception as e:
             self.error_occurred.emit(f"Error switching modes: {str(e)}")
+    
 
     def _on_data_changed(self, data: dict):
         """Handle data changes from either manager"""
@@ -301,6 +306,34 @@ class GUIController(QMainWindow):
             self.visual_manager.update_scene(data)
         except Exception as e:
             self.error_occurred.emit(f"Error updating data: {str(e)}")
+    
+    def update_state(self, state):
+        """Update the GUI based on the current state"""
+        try:
+            # Update window title to show current state
+            self.setWindowTitle(f"RBM GUI Controller - {state.name}")
+            
+            # Enable/disable actions based on state
+            if hasattr(state, 'name'):
+                state_name = state.name
+                if state_name == "ERROR":
+                    # Disable most actions in error state
+                    for action in self.toolbar.actions():
+                        if action.text() not in ["Switch to Visual Mode", "Switch to Legacy Mode"]:
+                            action.setEnabled(False)
+                elif state_name == "IDLE":
+                    # Enable all actions in idle state
+                    for action in self.toolbar.actions():
+                        action.setEnabled(True)
+                else:
+                    # Disable some actions during processing
+                    for action in self.toolbar.actions():
+                        if action.text() in ["Build", "Export"]:
+                            action.setEnabled(False)
+                        else:
+                            action.setEnabled(True)
+        except Exception as e:
+            print(f"Error updating state: {str(e)}")
 
     def setup_dock_widgets(self):
         """Setup dock widgets for both modes"""
@@ -324,8 +357,40 @@ class GUIController(QMainWindow):
 
     def closeEvent(self, event):
         """Clean up when window is closed"""
-        # Add any cleanup code here
+        # Call cleanup on both managers
+        if hasattr(self, 'legacy_manager'):
+            self.legacy_manager.cleanup()
+        if hasattr(self, 'visual_manager'):
+            self.visual_manager.cleanup()
         super().closeEvent(event)
+    
+    def switch_mode(self, mode: str):
+        """Switch between legacy and visual modes"""
+        try:
+            if mode == "visual":
+                self.current_mode = "visual"
+                self.mode_action.setText("Switch to Legacy Mode")
+                self.mode_action.setChecked(True)
+                self.stacked_widget.setCurrentWidget(self.visual_manager)
+                if hasattr(self, 'legacy_properties_dock'):
+                    self.legacy_properties_dock.hide()
+                if hasattr(self, 'visual_properties_dock'):
+                    self.visual_properties_dock.show()
+                # Show RF toolbar only in visual mode
+                self.visual_manager.show_rf_toolbar()
+            elif mode == "legacy":
+                self.current_mode = "legacy"
+                self.mode_action.setText("Switch to Visual Mode")
+                self.mode_action.setChecked(False)
+                self.stacked_widget.setCurrentWidget(self.legacy_manager)
+                if hasattr(self, 'visual_properties_dock'):
+                    self.visual_properties_dock.hide()
+                if hasattr(self, 'legacy_properties_dock'):
+                    self.legacy_properties_dock.show()
+                # Hide RF toolbar when switching to legacy mode
+                self.visual_manager.hide_rf_toolbar()
+        except Exception as e:
+            self.error_occurred.emit(f"Error switching modes: {str(e)}")
 
     # Action handlers
     def _on_create(self):

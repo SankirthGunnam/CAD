@@ -62,8 +62,8 @@ class TestRDBManager:
         # Trigger data change
         manager._on_data_changed("test/path")
 
-        # Verify signal was emitted
-        mock_slot.emit.assert_called_once_with("test/path")
+        # Verify signal was emitted (Qt signals call the connected slot directly)
+        mock_slot.assert_called_once_with("test/path")
 
     def test_error_handling(self, temp_dir):
         """Test error handling"""
@@ -78,5 +78,5 @@ class TestRDBManager:
         test_error = "Test error"
         manager.error_occurred.emit(test_error)
 
-        # Verify error signal was emitted
-        mock_slot.emit.assert_called_once_with(test_error)
+        # Verify error signal was emitted (Qt signals call the connected slot directly)
+        mock_slot.assert_called_once_with(test_error)
