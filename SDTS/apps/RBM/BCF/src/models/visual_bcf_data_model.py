@@ -197,6 +197,9 @@ class VisualBCFDataModel(QObject):
             # Update database
             self._update_components_table()
             
+            # Auto-export to Legacy BCF if component is a device/modem
+            self._auto_export_component_to_legacy_bcf(component_data)
+            
             # Emit signal
             self.component_added.emit(component_id)
             
@@ -297,6 +300,20 @@ class VisualBCFDataModel(QObject):
             for comp_id, comp_data in self._components_cache.items() 
             if comp_data.component_type == component_type
         }
+    
+    def get_component_by_name(self, name: str) -> Optional[ComponentData]:
+        """Get component by name"""
+        for comp_data in self._components_cache.values():
+            if comp_data.name == name:
+                return comp_data
+        return None
+    
+    def remove_component_by_name(self, name: str) -> bool:
+        """Remove a component by name"""
+        for comp_id, comp_data in self._components_cache.items():
+            if comp_data.name == name:
+                return self.remove_component(comp_id)
+        return False
     
     # Connection Management Methods
     
@@ -468,6 +485,46 @@ class VisualBCFDataModel(QObject):
             
         except Exception as e:
             logger.error(f"Error updating connections table: {e}")
+    
+    def _auto_export_component_to_legacy_bcf(self, component_data: ComponentData):
+        """Auto-export a component to Legacy BCF if it should appear in the device settings table"""
+        try:
+            # Export most component types to Legacy BCF (except pure visual elements)
+            exportable_types = ['modem', 'device', 'rfic', 'chip']  # Added 'chip' for generic chips
+            
+            if component_data.component_type in exportable_types:
+                # Get existing Legacy BCF device settings
+                device_settings = self.rdb_manager.get_table("config.device.settings")
+                
+                # Check if component already exists in Legacy BCF (avoid duplicates)
+                existing_names = {device.get('name', '') for device in device_settings}
+                if component_data.name not in existing_names:
+                    # Determine function_type
+                    function_type = component_data.properties.get('function_type', component_data.function_type)
+                    if not function_type:
+                        function_type = component_data.component_type.upper()
+                    
+                    # Create new device entry for Legacy BCF
+                    device_entry = {
+                        'name': component_data.name,
+                        'function_type': function_type,
+                        'interface_type': component_data.properties.get('interface_type', 'MIPI' if component_data.component_type in ['modem', 'device'] else 'Generic'),
+                        'interface': component_data.properties.get('interface', {'mipi': {'channel': len(device_settings) + 1}} if component_data.component_type in ['modem', 'device'] else {}),
+                        'config': component_data.properties.get('config', {'usid': f'{function_type.upper()}{len(device_settings) + 1:03d}'})
+                    }
+                    
+                    # Add to Legacy BCF table
+                    device_settings.append(device_entry)
+                    self.rdb_manager.set_table("config.device.settings", device_settings)
+                    
+                    logger.info(f"✅ Auto-exported component '{component_data.name}' (type: {component_data.component_type}, function: {function_type}) to Legacy BCF")
+                else:
+                    logger.info(f"⏭️ Component '{component_data.name}' already exists in Legacy BCF, skipping export")
+            else:
+                logger.info(f"⏭️ Component '{component_data.name}' type '{component_data.component_type}' not exported to Legacy BCF")
+                    
+        except Exception as e:
+            logger.error(f"❌ Error auto-exporting component '{component_data.name if component_data else 'unknown'}' to Legacy BCF: {e}")
     
     # Utility methods
     

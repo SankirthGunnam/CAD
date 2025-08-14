@@ -68,6 +68,7 @@ class VisualBCFController(QObject):
     selection_changed = Signal(list)  # list of selected item IDs
     operation_completed = Signal(str, str)  # operation_type, message
     error_occurred = Signal(str)  # error_message
+    component_removed_by_user = Signal(str)  # component_name - NEW signal for user deletions
     
     def __init__(self, scene: RFScene, view: RFView, data_model: VisualBCFDataModel):
         super().__init__()
@@ -277,21 +278,42 @@ class VisualBCFController(QObject):
             self.error_occurred.emit(f"Failed to add component: {str(e)}")
             return ""
     
-    def remove_component(self, component_id: str) -> bool:
+    def remove_component(self, component_id: str, emit_user_signal: bool = False) -> bool:
         """Remove a component"""
         try:
             component_data = self.data_model.get_component(component_id)
             if not component_data:
                 return False
             
+            component_name = component_data.name
             success = self.data_model.remove_component(component_id)
             if success:
-                self.operation_completed.emit("remove_component", f"Removed component: {component_data.name}")
-                logger.info(f"Successfully removed component: {component_data.name}")
+                self.operation_completed.emit("remove_component", f"Removed component: {component_name}")
+                
+                # Emit user deletion signal if this was a user-initiated deletion
+                if emit_user_signal:
+                    self.component_removed_by_user.emit(component_name)
+                    logger.info(f"User removed component: {component_name} - will sync to Legacy BCF")
+                
+                logger.info(f"Successfully removed component: {component_name}")
             return success
             
         except Exception as e:
             logger.error(f"Error removing component: {e}")
+            self.error_occurred.emit(f"Failed to remove component: {str(e)}")
+            return False
+    
+    def remove_component_by_name(self, name: str) -> bool:
+        """Remove a component by name"""
+        try:
+            success = self.data_model.remove_component_by_name(name)
+            if success:
+                self.operation_completed.emit("remove_component", f"Removed component: {name}")
+                logger.info(f"Successfully removed component: {name}")
+            return success
+            
+        except Exception as e:
+            logger.error(f"Error removing component by name: {e}")
             self.error_occurred.emit(f"Failed to remove component: {str(e)}")
             return False
     
@@ -396,17 +418,23 @@ class VisualBCFController(QObject):
             if not self.clipboard_data:
                 return
             
-            base_x, base_y = position if position else (0, 0)
+            # Use current view center as default position
+            if position is None:
+                center = self.view.mapToScene(self.view.viewport().rect().center())
+                base_x, base_y = center.x(), center.y()
+            else:
+                base_x, base_y = position
+            
             pasted_count = 0
             
             for i, clip_item in enumerate(self.clipboard_data):
                 if clip_item['type'] == 'component':
                     comp_data = clip_item['data']
-                    # Offset each pasted component
-                    offset_x = base_x + (i * 50)
-                    offset_y = base_y + (i * 50)
+                    # Offset each pasted component to avoid overlap
+                    offset_x = base_x + (i % 3) * 50  # Arrange in grid pattern
+                    offset_y = base_y + (i // 3) * 50
                     
-                    new_name = f"{comp_data['name']}_copy"
+                    new_name = f"{comp_data['name']}_copy_{i+1}"
                     self.add_component(
                         name=new_name,
                         component_type=comp_data['component_type'],
@@ -424,7 +452,7 @@ class VisualBCFController(QObject):
             self.error_occurred.emit(f"Failed to paste components: {str(e)}")
     
     def delete_selected_components(self):
-        """Delete selected components"""
+        """Delete selected components (user-initiated)"""
         try:
             selected_ids = self.get_selected_components()
             if not selected_ids:
@@ -442,7 +470,8 @@ class VisualBCFController(QObject):
             if reply == QMessageBox.Yes:
                 deleted_count = 0
                 for component_id in selected_ids:
-                    if self.remove_component(component_id):
+                    # Use emit_user_signal=True for user-initiated deletions
+                    if self.remove_component(component_id, emit_user_signal=True):
                         deleted_count += 1
                 
                 if deleted_count > 0:
@@ -477,19 +506,23 @@ class VisualBCFController(QObject):
     
     # Utility methods
     
-    def clear_scene(self):
+    def clear_scene(self, show_confirmation: bool = False):
         """Clear all components and connections"""
         try:
-            # Show confirmation dialog
-            reply = QMessageBox.question(
-                None,
-                "Clear Scene",
-                "Are you sure you want to clear all components and connections?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
-            )
+            should_clear = True
             
-            if reply == QMessageBox.Yes:
+            if show_confirmation:
+                # Show confirmation dialog only if requested
+                reply = QMessageBox.question(
+                    None,
+                    "Clear Scene",
+                    "Are you sure you want to clear all components and connections?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+                should_clear = (reply == QMessageBox.Yes)
+            
+            if should_clear:
                 self.data_model.clear_all_data()
                 self.operation_completed.emit("clear", "Cleared all components and connections")
                 logger.info("Cleared all data")
@@ -628,3 +661,37 @@ class VisualBCFController(QObject):
     def get_mode(self) -> str:
         """Get the current interaction mode"""
         return self.current_mode
+    
+    def delete_component_by_graphics_item(self, graphics_item) -> bool:
+        """Delete a component by its graphics item (user-initiated from scene)"""
+        try:
+            # Find the component ID for this graphics item
+            for component_id, graphics_wrapper in self._component_graphics_items.items():
+                if graphics_wrapper.graphics_item == graphics_item:
+                    return self.remove_component(component_id, emit_user_signal=True)
+            
+            logger.warning(f"Graphics item not found in component mapping")
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error deleting component by graphics item: {e}")
+            return False
+    
+    def delete_selected_components_by_graphics_items(self, graphics_items: list) -> int:
+        """Delete multiple components by their graphics items (user-initiated from scene)"""
+        try:
+            deleted_count = 0
+            
+            for graphics_item in graphics_items:
+                # Find the component ID for this graphics item
+                for component_id, graphics_wrapper in self._component_graphics_items.items():
+                    if graphics_wrapper.graphics_item == graphics_item:
+                        if self.remove_component(component_id, emit_user_signal=True):
+                            deleted_count += 1
+                        break
+            
+            return deleted_count
+            
+        except Exception as e:
+            logger.error(f"Error deleting components by graphics items: {e}")
+            return 0

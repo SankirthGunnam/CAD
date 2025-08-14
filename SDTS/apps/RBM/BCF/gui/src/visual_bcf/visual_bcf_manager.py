@@ -84,8 +84,13 @@ class VisualBCFManager(QWidget):
         if self.parent_controller:
             self.rf_toolbar = self._create_rf_toolbar()
 
-        # Initialize with default RFIC chip (only if MVC not enabled)
-        if not self.mvc_enabled:
+        # Initialize with default RFIC chip and auto-import from Legacy BCF
+        if self.mvc_enabled:
+            # Auto-import from Legacy BCF on startup (fixes issue #1)
+            # This will handle adding components, including default RFIC if needed
+            QTimer.singleShot(500, self.auto_import_on_startup)
+        else:
+            # For legacy mode, add default RFIC directly to scene
             self._add_default_rfic_chip()
 
     def _create_rf_toolbar(self):
@@ -207,7 +212,7 @@ class VisualBCFManager(QWidget):
             self.error_occurred.emit(f"Error clearing scene: {str(e)}")
 
     def _add_default_rfic_chip(self) -> None:
-        """Add default RFIC chip to the graphics scene on startup"""
+        """Add default RFIC chip to the graphics scene on startup (legacy mode)"""
         try:
             # Create default RFIC model
             rfic_model = RFICChipModel(
@@ -243,6 +248,48 @@ class VisualBCFManager(QWidget):
         except Exception as e:
             self.error_occurred.emit(
                 f"Error adding default RFIC chip: {str(e)}")
+    
+    def _add_default_rfic_mvc(self) -> str:
+        """Add default RFIC chip component in MVC mode (only if no components exist)"""
+        if not (self.mvc_enabled and self.controller and self.data_model):
+            return ""
+        
+        try:
+            # Check if any components already exist in the database
+            existing_components = self.data_model.get_all_components()
+            if existing_components:
+                # Components already exist, no need to add default
+                return ""
+            
+            # Add a default RFIC chip at center
+            name = "Default RFIC Chip"
+            position = (0, 0)
+            component_type = "rfic"
+            properties = {
+                'function_type': 'RFIC',
+                'frequency_range': '600MHz - 6GHz',
+                'technology': 'CMOS',
+                'package': 'BGA',
+                'rf_bands': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B8', 'B20', 'B28']
+            }
+            
+            component_id = self.controller.add_component(name, component_type, position, properties)
+            
+            if component_id:
+                self.data_changed.emit({
+                    "action": "add_default_rfic_mvc",
+                    "component_id": component_id,
+                    "component": "RFIC",
+                    "name": name,
+                    "position": position,
+                    "source": "mvc"
+                })
+            
+            return component_id
+            
+        except Exception as e:
+            self.error_occurred.emit(f"Error adding default RFIC chip (MVC): {str(e)}")
+            return ""
 
     def get_default_rfic(self) -> Optional[RFICChip]:
         """Get the default RFIC chip if it exists in the scene"""
@@ -293,80 +340,144 @@ class VisualBCFManager(QWidget):
     def _add_selected_chip(self, chip_data: Dict, position: QPointF):
         """Add the selected chip from dialog to the scene"""
         try:
-            # Create a generic chip model based on selected chip data
             chip_name = f"{chip_data['name']} ({chip_data['part_number']})"
-
-            # Determine chip size based on package type
-            package = chip_data.get('package', '')
-            if 'QFN' in package:
-                width, height = 200, 150
-            elif 'TQFN' in package:
-                width, height = 180, 120
-            elif 'LGA' in package:
-                width, height = 160, 100
-            elif 'CSP' in package:
-                width, height = 120, 80
+            
+            if self.mvc_enabled and self.controller:
+                # Use MVC controller for proper data management and auto-export
+                
+                # Determine component type based on chip type
+                chip_type = chip_data.get('type', '')
+                if 'RF Front-End Module' in chip_type:
+                    component_type = 'device'
+                    function_type = 'FEM'
+                elif 'Power Amplifier' in chip_type:
+                    component_type = 'device' 
+                    function_type = 'PA'
+                elif 'Switch' in chip_type:
+                    component_type = 'device'
+                    function_type = 'Switch'
+                elif 'Modem' in chip_type or 'LTE' in chip_type or '5G' in chip_type:
+                    component_type = 'modem'
+                    function_type = chip_type
+                else:
+                    component_type = 'chip'
+                    function_type = 'Generic'
+                
+                # Determine chip size based on package type
+                package = chip_data.get('package', '')
+                if 'QFN' in package:
+                    width, height = 200, 150
+                elif 'TQFN' in package:
+                    width, height = 180, 120
+                elif 'LGA' in package:
+                    width, height = 160, 100
+                elif 'CSP' in package:
+                    width, height = 120, 80
+                else:
+                    width, height = 180, 120  # Default size
+                
+                # Create properties from chip data
+                properties = {
+                    'function_type': function_type,
+                    'interface_type': 'MIPI' if component_type in ['modem', 'device'] else 'Generic',
+                    'interface': {'mipi': {'channel': 1}} if component_type in ['modem', 'device'] else {},
+                    'config': {'usid': f'{function_type.upper()}001'},
+                    'width': width,
+                    'height': height,
+                    'package': package,
+                    'part_number': chip_data.get('part_number', ''),
+                    'metadata': chip_data
+                }
+                
+                # Add component via MVC controller
+                component_id = self.controller.add_component(
+                    name=chip_name,
+                    component_type=component_type,
+                    position=(position.x(), position.y()),
+                    properties=properties
+                )
+                
+                if component_id:
+                    print(f"✅ Added chip '{chip_name}' via MVC controller with ID: {component_id}")
+                else:
+                    print(f"❌ Failed to add chip '{chip_name}' via MVC controller")
+            
             else:
-                width, height = 180, 120  # Default size
+                # Fallback to legacy method
+                print(f"⚠️ Using legacy method to add chip '{chip_name}' (MVC not enabled)")
+                
+                # Determine chip size based on package type
+                package = chip_data.get('package', '')
+                if 'QFN' in package:
+                    width, height = 200, 150
+                elif 'TQFN' in package:
+                    width, height = 180, 120
+                elif 'LGA' in package:
+                    width, height = 160, 100
+                elif 'CSP' in package:
+                    width, height = 120, 80
+                else:
+                    width, height = 180, 120  # Default size
 
-            # Create chip model
-            chip_model = ChipModel(name=chip_name, width=width, height=height)
+                # Create chip model
+                chip_model = ChipModel(name=chip_name, width=width, height=height)
 
-            # Add pins based on chip type
-            if 'RF Front-End Module' in chip_data.get('type', ''):
-                # FEM typically has TX, RX, and control pins
-                chip_model.add_pin(0, height//4, "TX1_IN")
-                chip_model.add_pin(0, 3*height//4, "TX2_IN")
-                chip_model.add_pin(width, height//4, "TX1_OUT")
-                chip_model.add_pin(width, 3*height//4, "TX2_OUT")
-                chip_model.add_pin(width//2, 0, "CTRL")
-                chip_model.add_pin(width//2, height, "GND")
-            elif 'Power Amplifier' in chip_data.get('type', ''):
-                # PA has input, output, bias pins
-                chip_model.add_pin(0, height//2, "RF_IN")
-                chip_model.add_pin(width, height//2, "RF_OUT")
-                chip_model.add_pin(width//2, 0, "BIAS")
-                chip_model.add_pin(width//2, height, "GND")
-            elif 'Switch' in chip_data.get('type', ''):
-                # RF switch has multiple ports
-                num_ports = 6  # Default for SP6T
-                for i in range(num_ports):
-                    angle = i * 60  # degrees
-                    x = width//2 + (width//3) * (1 if angle < 180 else -1)
-                    y = height//2 + (height//3) * (1 if angle <
-                                                   90 or angle > 270 else -1)
-                    chip_model.add_pin(x, y, f"P{i+1}")
-            else:
-                # Generic chip with basic pins
-                chip_model.add_pin(0, height//2, "IN")
-                chip_model.add_pin(width, height//2, "OUT")
-                chip_model.add_pin(width//2, 0, "VCC")
-                chip_model.add_pin(width//2, height, "GND")
+                # Add pins based on chip type
+                if 'RF Front-End Module' in chip_data.get('type', ''):
+                    # FEM typically has TX, RX, and control pins
+                    chip_model.add_pin(0, height//4, "TX1_IN")
+                    chip_model.add_pin(0, 3*height//4, "TX2_IN")
+                    chip_model.add_pin(width, height//4, "TX1_OUT")
+                    chip_model.add_pin(width, 3*height//4, "TX2_OUT")
+                    chip_model.add_pin(width//2, 0, "CTRL")
+                    chip_model.add_pin(width//2, height, "GND")
+                elif 'Power Amplifier' in chip_data.get('type', ''):
+                    # PA has input, output, bias pins
+                    chip_model.add_pin(0, height//2, "RF_IN")
+                    chip_model.add_pin(width, height//2, "RF_OUT")
+                    chip_model.add_pin(width//2, 0, "BIAS")
+                    chip_model.add_pin(width//2, height, "GND")
+                elif 'Switch' in chip_data.get('type', ''):
+                    # RF switch has multiple ports
+                    num_ports = 6  # Default for SP6T
+                    for i in range(num_ports):
+                        angle = i * 60  # degrees
+                        x = width//2 + (width//3) * (1 if angle < 180 else -1)
+                        y = height//2 + (height//3) * (1 if angle <
+                                                       90 or angle > 270 else -1)
+                        chip_model.add_pin(x, y, f"P{i+1}")
+                else:
+                    # Generic chip with basic pins
+                    chip_model.add_pin(0, height//2, "IN")
+                    chip_model.add_pin(width, height//2, "OUT")
+                    chip_model.add_pin(width//2, 0, "VCC")
+                    chip_model.add_pin(width//2, height, "GND")
 
-            # Set position
-            chip_model.update_position(position.x(), position.y())
+                # Set position
+                chip_model.update_position(position.x(), position.y())
 
-            # Store chip data as metadata
-            chip_model.metadata = chip_data
+                # Store chip data as metadata
+                chip_model.metadata = chip_data
 
-            # Create visual component
-            chip_component = Chip(chip_model)
-            chip_component.setPos(
-                position.x() - width // 2,
-                position.y() - height // 2
-            )
+                # Create visual component
+                chip_component = Chip(chip_model)
+                chip_component.setPos(
+                    position.x() - width // 2,
+                    position.y() - height // 2
+                )
 
-            # Add to scene
-            self.scene.add_component(chip_component)
+                # Add to scene
+                self.scene.add_component(chip_component)
 
-            # Emit data change signal
-            self.data_changed.emit({
-                "action": "add_chip",
-                "component": chip_data['type'],
-                "name": chip_name,
-                "position": [position.x(), position.y()],
-                "chip_data": chip_data
-            })
+                # Emit data change signal
+                self.data_changed.emit({
+                    "action": "add_chip",
+                    "component": chip_data['type'],
+                    "name": chip_name,
+                    "position": [position.x(), position.y()],
+                    "chip_data": chip_data,
+                    "source": "legacy"
+                })
 
         except Exception as e:
             self.error_occurred.emit(f"Error adding selected chip: {str(e)}")
@@ -378,121 +489,136 @@ class VisualBCFManager(QWidget):
             self.rf_toolbar.set_selection_available(has_selection)
 
     def _on_delete_selected(self):
-        """Delete selected chips"""
+        """Delete selected chips (user-initiated via toolbar/keyboard)"""
         try:
-            selected_components = self.scene.get_selected_components()
-            if not selected_components:
-                return
-
-            # Show confirmation for multiple items
-            if len(selected_components) > 1:
-                reply = QMessageBox.question(
-                    self,
-                    "Delete Components",
-                    f"Are you sure you want to delete {len(selected_components)} components?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
-                )
-                if reply != QMessageBox.Yes:
+            if self.mvc_enabled and self.controller:
+                # Use MVC controller for proper bidirectional sync
+                self.controller.delete_selected_components()
+            else:
+                # Fallback to legacy method
+                selected_components = self.scene.get_selected_components()
+                if not selected_components:
                     return
 
-            # Delete all selected components
-            for component in selected_components[:]:
-                self.scene.remove_component(component)
+                # Show confirmation for multiple items
+                if len(selected_components) > 1:
+                    reply = QMessageBox.question(
+                        self,
+                        "Delete Components",
+                        f"Are you sure you want to delete {len(selected_components)} components?",
+                        QMessageBox.Yes | QMessageBox.No,
+                        QMessageBox.No
+                    )
+                    if reply != QMessageBox.Yes:
+                        return
 
-            self.data_changed.emit({
-                "action": "delete_components",
-                "count": len(selected_components)
-            })
+                # Delete all selected components
+                for component in selected_components[:]:
+                    self.scene.remove_component(component)
+
+                self.data_changed.emit({
+                    "action": "delete_components",
+                    "count": len(selected_components)
+                })
 
         except Exception as e:
             self.error_occurred.emit(f"Error deleting components: {str(e)}")
 
     def _on_copy_selected(self):
-        """Copy selected chips to clipboard"""
+        """Copy selected chips to clipboard (user-initiated via toolbar/keyboard)"""
         try:
-            selected_components = self.scene.get_selected_components()
-            if not selected_components:
-                return
+            if self.mvc_enabled and self.controller:
+                # Use MVC controller for copy operation
+                self.controller.copy_selected_components()
+            else:
+                # Fallback to legacy method
+                selected_components = self.scene.get_selected_components()
+                if not selected_components:
+                    return
 
-            # Store component data for pasting
-            self.chip_clipboard = []
-            for component in selected_components:
-                if isinstance(component, Chip):
-                    chip_data = {
-                        'model_data': {
-                            'name': component.model.name,
-                            'width': component.model.width,
-                            'height': component.model.height,
-                            'pins': [(p.x, p.y, p.name) for p in component.model.pins],
-                            'metadata': getattr(component.model, 'metadata', {})
-                        },
-                        'position': component.model.position
-                    }
-                    self.chip_clipboard.append(chip_data)
+                # Store component data for pasting
+                self.chip_clipboard = []
+                for component in selected_components:
+                    if isinstance(component, Chip):
+                        chip_data = {
+                            'model_data': {
+                                'name': component.model.name,
+                                'width': component.model.width,
+                                'height': component.model.height,
+                                'pins': [(p.x, p.y, p.name) for p in component.model.pins],
+                                'metadata': getattr(component.model, 'metadata', {})
+                            },
+                            'position': component.model.position
+                        }
+                        self.chip_clipboard.append(chip_data)
 
-            # Enable paste button in floating toolbar if available
-            if self.rf_toolbar:
-                self.rf_toolbar.set_paste_available(
-                    len(self.chip_clipboard) > 0)
+                # Enable paste button in floating toolbar if available
+                if self.rf_toolbar:
+                    self.rf_toolbar.set_paste_available(
+                        len(self.chip_clipboard) > 0)
 
-            # Show feedback
-            self.data_changed.emit({
-                "action": "copy_components",
-                "count": len(self.chip_clipboard)
-            })
+                # Show feedback
+                self.data_changed.emit({
+                    "action": "copy_components",
+                    "count": len(self.chip_clipboard)
+                })
 
         except Exception as e:
             self.error_occurred.emit(f"Error copying components: {str(e)}")
 
     def _on_paste_chips(self):
-        """Paste chips from clipboard"""
+        """Paste chips from clipboard (user-initiated via toolbar/keyboard)"""
         try:
-            if not self.chip_clipboard:
-                return
+            if self.mvc_enabled and self.controller:
+                # Use MVC controller for paste operation
+                self.controller.paste_components()
+            else:
+                # Fallback to legacy method
+                if not self.chip_clipboard:
+                    return
 
-            # Get current view center as paste location
-            center = self.view.mapToScene(self.view.viewport().rect().center())
+                # Get current view center as paste location
+                center = self.view.mapToScene(self.view.viewport().rect().center())
 
-            pasted_components = []
-            for i, chip_data in enumerate(self.chip_clipboard):
-                # Create new chip model
-                model_data = chip_data['model_data']
-                chip_model = ChipModel(
-                    name=f"{model_data['name']}_copy_{i+1}",
-                    width=model_data['width'],
-                    height=model_data['height']
-                )
+                pasted_components = []
+                for i, chip_data in enumerate(self.chip_clipboard):
+                    # Create new chip model
+                    model_data = chip_data['model_data']
+                    chip_model = ChipModel(
+                        name=f"{model_data['name']}_copy_{i+1}",
+                        width=model_data['width'],
+                        height=model_data['height']
+                    )
 
-                # Add pins
-                for pin_data in model_data['pins']:
-                    chip_model.add_pin(pin_data[0], pin_data[1], pin_data[2])
+                    # Add pins
+                    for pin_data in model_data['pins']:
+                        chip_model.add_pin(pin_data[0], pin_data[1], pin_data[2])
 
-                # Restore metadata
-                if 'metadata' in model_data:
-                    chip_model.metadata = model_data['metadata']
+                    # Restore metadata
+                    if 'metadata' in model_data:
+                        chip_model.metadata = model_data['metadata']
 
-                # Position with offset to avoid overlap
-                offset_x = (i % 3) * 50  # Arrange in grid
-                offset_y = (i // 3) * 50
-                chip_model.update_position(
-                    center.x() + offset_x, center.y() + offset_y)
+                    # Position with offset to avoid overlap
+                    offset_x = (i % 3) * 50  # Arrange in grid
+                    offset_y = (i // 3) * 50
+                    chip_model.update_position(
+                        center.x() + offset_x, center.y() + offset_y)
 
-                # Create visual component
-                chip_component = Chip(chip_model)
-                chip_component.setPos(
-                    chip_model.position[0] - chip_model.width // 2,
-                    chip_model.position[1] - chip_model.height // 2
-                )
+                    # Create visual component
+                    chip_component = Chip(chip_model)
+                    chip_component.setPos(
+                        chip_model.position[0] - chip_model.width // 2,
+                        chip_model.position[1] - chip_model.height // 2
+                    )
 
-                # Add to scene
-                self.scene.add_component(chip_component)
-                pasted_components.append(chip_component)
+                    # Add to scene
+                    self.scene.add_component(chip_component)
+                    pasted_components.append(chip_component)
 
-            self.data_changed.emit({
-                "action": "paste_components",
-                "count": len(pasted_components)
-            })
+                self.data_changed.emit({
+                    "action": "paste_components",
+                    "count": len(pasted_components)
+                })
 
         except Exception as e:
             self.error_occurred.emit(f"Error pasting components: {str(e)}")
@@ -590,6 +716,12 @@ class VisualBCFManager(QWidget):
             self.controller.error_occurred.connect(self._on_mvc_error_occurred)
             self.controller.component_selected.connect(self._on_mvc_component_selected)
             
+            # NEW: Connect user deletion signal to handle Legacy BCF synchronization
+            self.controller.component_removed_by_user.connect(self._on_visual_component_removed_by_user)
+            
+            # Set controller reference in scene for user deletions
+            self.scene.set_controller(self.controller)
+            
             self.mvc_enabled = True
             logger.info("MVC components setup complete")
             
@@ -623,6 +755,53 @@ class VisualBCFManager(QWidget):
                     "component_type": component_data.component_type,
                     "source": "mvc"
                 })
+    
+    def _on_visual_component_removed_by_user(self, component_name: str):
+        """Handle user-initiated component deletion from Visual BCF scene"""
+        try:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"🎨 Visual BCF: User deleted component '{component_name}' - removing from Legacy BCF")
+            
+            # Find and remove the corresponding device from Legacy BCF
+            device_settings = self.rdb_manager.get_table("config.device.settings")
+            device_index_to_remove = -1
+            
+            for i, device in enumerate(device_settings):
+                if device.get('name') == component_name:
+                    device_index_to_remove = i
+                    break
+            
+            if device_index_to_remove >= 0:
+                # Remove the device from Legacy BCF
+                success = self.rdb_manager.delete_row("config.device.settings", device_index_to_remove)
+                
+                if success:
+                    logger.info(f"✅ Successfully removed device '{component_name}' from Legacy BCF")
+                    self.data_changed.emit({
+                        "action": "user_deletion_synced",
+                        "component_name": component_name,
+                        "message": f"Removed '{component_name}' from both Visual BCF and Legacy BCF",
+                        "source": "bidirectional_sync"
+                    })
+                else:
+                    logger.error(f"Failed to remove device '{component_name}' from Legacy BCF")
+                    self.error_occurred.emit(f"Failed to remove device '{component_name}' from Legacy BCF")
+            else:
+                logger.warning(f"Device '{component_name}' not found in Legacy BCF table")
+                # This might be a component that was only in Visual BCF, which is fine
+                self.data_changed.emit({
+                    "action": "user_deletion_visual_only",
+                    "component_name": component_name,
+                    "message": f"Removed '{component_name}' from Visual BCF (not found in Legacy BCF)",
+                    "source": "bidirectional_sync"
+                })
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error handling Visual BCF user deletion for '{component_name}': {e}")
+            self.error_occurred.emit(f"Failed to sync deletion of '{component_name}': {str(e)}")
     
     # MVC-enabled methods (when MVC is active, use these instead of legacy methods)
     
@@ -705,18 +884,29 @@ class VisualBCFManager(QWidget):
             self.controller.sync_with_legacy_bcf()
     
     def import_from_legacy_bcf(self, component_names: List[str] = None):
-        """Import components from Legacy BCF (MVC version)"""
+        """Import components from Legacy BCF (MVC version) with duplicate prevention"""
         if self.mvc_enabled and self.controller:
             try:
                 # Get Legacy BCF device settings
                 device_settings = self.rdb_manager.get_table("config.device.settings")
                 
+                # Get existing components to avoid duplicates
+                existing_components = self.data_model.get_all_components()
+                existing_names = {comp.name for comp in existing_components.values()}
+                
                 imported_count = 0
+                skipped_count = 0
+                
                 for i, device in enumerate(device_settings):
                     device_name = device.get('name', f'Device_{i}')
                     
                     # Skip if specific components requested and this isn't one of them
                     if component_names and device_name not in component_names:
+                        continue
+                    
+                    # Skip if component already exists (prevent duplicates)
+                    if device_name in existing_names:
+                        skipped_count += 1
                         continue
                     
                     # Determine component type based on function type
@@ -748,16 +938,59 @@ class VisualBCFManager(QWidget):
                     
                     if component_id:
                         imported_count += 1
+                        existing_names.add(device_name)  # Track newly added
                 
-                if imported_count > 0:
+                if imported_count > 0 or skipped_count > 0:
                     self.data_changed.emit({
                         "action": "import_legacy",
                         "count": imported_count,
+                        "skipped": skipped_count,
+                        "message": f"Imported {imported_count} new devices, skipped {skipped_count} duplicates",
                         "source": "mvc"
                     })
                     
             except Exception as e:
                 self.error_occurred.emit(f"Failed to import from Legacy BCF: {str(e)}")
+    
+    def auto_import_on_startup(self):
+        """Auto-import devices from Legacy BCF on startup (fixes issue #1)"""
+        try:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info("🔄 Auto-importing devices from Legacy BCF on startup...")
+            
+            # Check if there are any Legacy BCF devices to import
+            device_settings = self.rdb_manager.get_table("config.device.settings")
+            
+            if device_settings:
+                # Import all devices from Legacy BCF
+                self.import_from_legacy_bcf()
+                logger.info(f"Imported {len(device_settings)} devices from Legacy BCF")
+            else:
+                # No Legacy BCF devices exist, add default RFIC instead
+                logger.info("No Legacy BCF devices found, adding default RFIC")
+                self._add_default_rfic_mvc()
+            
+            # Emit startup import complete signal
+            self.data_changed.emit({
+                "action": "auto_import_startup",
+                "message": "Auto-imported devices from Legacy BCF on startup",
+                "source": "mvc"
+            })
+            
+            logger.info("✅ Auto-import on startup completed")
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error during auto-import on startup: {e}")
+            self.error_occurred.emit(f"Auto-import failed: {str(e)}")
+    
+    def remove_component_by_name(self, name: str) -> bool:
+        """Remove component by name (fixes issue #3 and #4)"""
+        if self.mvc_enabled and self.controller:
+            return self.controller.remove_component_by_name(name)
+        return False
     
     def get_mvc_statistics(self) -> Dict[str, Any]:
         """Get statistics from MVC model"""
