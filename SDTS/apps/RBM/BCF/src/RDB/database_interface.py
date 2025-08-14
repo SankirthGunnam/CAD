@@ -1,11 +1,9 @@
 from typing import Protocol, Dict, List, Any, Optional
-from PySide6.QtCore import QObject, Signal
 
 
 class DatabaseInterface(Protocol):
     """Protocol defining the interface for database operations"""
-
-    data_changed: Signal = Signal(str)  # Signal emits the path that changed
+    # Note: Qt signals should be defined in the actual implementation, not in the Protocol
 
     def connect(self) -> None:
         """Connect to the database"""

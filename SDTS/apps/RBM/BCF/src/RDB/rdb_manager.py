@@ -19,8 +19,9 @@ class RDBManager(QObject):
     def __init__(self, db_file: str = "device_config.json"):
         super().__init__()
         self.db: DatabaseInterface = JSONDatabase(db_file)
-        self.db.data_changed.connect(self._on_data_changed)
         self._connect()
+        # Connect signals after database initialization
+        # self.db.data_changed.connect(self._on_data_changed)  # Temporarily commented out
 
     def _connect(self) -> None:
         """Connect to the database"""
