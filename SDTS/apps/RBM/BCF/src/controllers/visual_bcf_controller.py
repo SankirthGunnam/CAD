@@ -70,10 +70,10 @@ class VisualBCFController(QObject):
     error_occurred = Signal(str)  # error_message
     component_removed_by_user = Signal(str)  # component_name - NEW signal for user deletions
     
-    def __init__(self, scene: RFScene, view: RFView, data_model: VisualBCFDataModel):
+    def __init__(self, view: RFView, data_model: VisualBCFDataModel):
         super().__init__()
-        self.scene = scene
         self.view = view
+        self.scene = self.view.scene()
         self.data_model = data_model
         
         # Maps to track graphics items
@@ -96,6 +96,93 @@ class VisualBCFController(QObject):
         self.clipboard_data: List[Dict[str, Any]] = []
         
         logger.info("VisualBCFController initialized")
+    
+    # Business Logic Methods (moved from VisualBCFManager for proper MVC separation)
+    
+    def add_lte_modem(self, position: tuple = None, name: str = None) -> str:
+        """Add LTE modem component"""
+        try:
+            if not position:
+                # Use default position if none provided
+                position = (0, 0)
+            if not name:
+                modems = self.data_model.get_components_by_type('modem')
+                name = f"LTE_Modem_{len(modems) + 1}"
+            
+            properties = {
+                'function_type': 'LTE',
+                'interface_type': 'MIPI',
+                'interface': {'mipi': {'channel': 1}},
+                'config': {'usid': f'LTE{len(self.data_model.get_all_components()) + 1:03d}'}
+            }
+            
+            return self.add_component(name, 'modem', position, properties)
+        except Exception as e:
+            logger.error(f"Error adding LTE modem: {e}")
+            self.error_occurred.emit(f"Failed to add LTE modem: {str(e)}")
+            return ""
+    
+    def add_5g_modem(self, position: tuple = None, name: str = None) -> str:
+        """Add 5G modem component"""
+        try:
+            if not position:
+                position = (150, 0)
+            if not name:
+                modems = self.data_model.get_components_by_type('modem')
+                name = f"5G_Modem_{len(modems) + 1}"
+            
+            properties = {
+                'function_type': '5G',
+                'interface_type': 'MIPI',
+                'interface': {'mipi': {'channel': 2}},
+                'config': {'usid': f'5G{len(self.data_model.get_all_components()) + 1:03d}'}
+            }
+            
+            return self.add_component(name, 'modem', position, properties)
+        except Exception as e:
+            logger.error(f"Error adding 5G modem: {e}")
+            self.error_occurred.emit(f"Failed to add 5G modem: {str(e)}")
+            return ""
+    
+    def add_rfic_chip(self, position: tuple = None, name: str = None) -> str:
+        """Add RFIC chip component"""
+        try:
+            if not position:
+                position = (0, 150)
+            if not name:
+                rfics = self.data_model.get_components_by_type('rfic')
+                name = f"RFIC_{len(rfics) + 1}"
+            
+            properties = {
+                'function_type': 'RFIC',
+                'frequency_range': '600MHz - 6GHz',
+                'technology': 'CMOS',
+                'package': 'BGA',
+                'rf_bands': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B8', 'B20', 'B28']
+            }
+            
+            return self.add_component(name, 'rfic', position, properties)
+        except Exception as e:
+            logger.error(f"Error adding RFIC chip: {e}")
+            self.error_occurred.emit(f"Failed to add RFIC chip: {str(e)}")
+            return ""
+    
+    def add_generic_chip(self, position: tuple = None, name: str = None) -> str:
+        """Add generic chip component"""
+        try:
+            if not position:
+                position = (300, 0)
+            if not name:
+                all_components = self.data_model.get_all_components()
+                name = f"Chip_{len(all_components) + 1}"
+            
+            properties = {'function_type': 'generic'}
+            
+            return self.add_component(name, 'chip', position, properties)
+        except Exception as e:
+            logger.error(f"Error adding generic chip: {e}")
+            self.error_occurred.emit(f"Failed to add generic chip: {str(e)}")
+            return ""
     
     def _connect_scene_signals(self):
         """Connect to scene signals"""
@@ -503,6 +590,155 @@ class VisualBCFController(QObject):
         except Exception as e:
             logger.error(f"Error exporting to Legacy BCF: {e}")
             self.error_occurred.emit(f"Failed to export to Legacy BCF: {str(e)}")
+    
+    def import_from_legacy_bcf(self, component_names: List[str] = None) -> Dict[str, int]:
+        """Import components from Legacy BCF with duplicate prevention"""
+        try:
+            # Get access to RDB manager through data model
+            rdb_manager = self.data_model.rdb_manager
+            if not rdb_manager:
+                raise Exception("RDB manager not available")
+            
+            # Get Legacy BCF device settings
+            device_settings = rdb_manager.get_table("config.device.settings")
+            
+            # Get existing components to avoid duplicates
+            existing_components = self.data_model.get_all_components()
+            existing_names = {comp.name for comp in existing_components.values()}
+            
+            imported_count = 0
+            skipped_count = 0
+            
+            for i, device in enumerate(device_settings):
+                device_name = device.get('name', f'Device_{i}')
+                
+                # Skip if specific components requested and this isn't one of them
+                if component_names and device_name not in component_names:
+                    continue
+                
+                # Skip if component already exists (prevent duplicates)
+                if device_name in existing_names:
+                    skipped_count += 1
+                    continue
+                
+                # Determine component type based on function type
+                function_type = device.get('function_type', '').upper()
+                if function_type in ['LTE', '5G']:
+                    component_type = 'modem'
+                elif function_type == 'RFIC':
+                    component_type = 'rfic'
+                else:
+                    component_type = 'device'
+                
+                # Create component with Legacy BCF properties
+                properties = {
+                    'function_type': function_type,
+                    'interface_type': device.get('interface_type', ''),
+                    'interface': device.get('interface', {}),
+                    'config': device.get('config', {})
+                }
+                
+                # Add with automatic positioning
+                position = (100 + (imported_count * 150), 100 + (imported_count * 100))
+                
+                component_id = self.add_component(
+                    name=device_name,
+                    component_type=component_type,
+                    position=position,
+                    properties=properties
+                )
+                
+                if component_id:
+                    imported_count += 1
+                    existing_names.add(device_name)  # Track newly added
+            
+            result = {
+                'imported': imported_count,
+                'skipped': skipped_count
+            }
+            
+            if imported_count > 0 or skipped_count > 0:
+                message = f"Imported {imported_count} new devices, skipped {skipped_count} duplicates"
+                self.operation_completed.emit("import_legacy", message)
+                logger.info(message)
+            
+            return result
+            
+        except Exception as e:
+            error_msg = f"Failed to import from Legacy BCF: {str(e)}"
+            logger.error(error_msg)
+            self.error_occurred.emit(error_msg)
+            return {'imported': 0, 'skipped': 0}
+    
+    def auto_import_on_startup(self) -> Dict[str, int]:
+        """Auto-import devices from Legacy BCF on startup"""
+        try:
+            logger.info("🔄 Auto-importing devices from Legacy BCF on startup...")
+            
+            # Get access to RDB manager through data model
+            rdb_manager = self.data_model.rdb_manager
+            if not rdb_manager:
+                raise Exception("RDB manager not available")
+            
+            # Check if there are any Legacy BCF devices to import
+            device_settings = rdb_manager.get_table("config.device.settings")
+            
+            if device_settings:
+                # Import all devices from Legacy BCF
+                result = self.import_from_legacy_bcf()
+                logger.info(f"Auto-import: imported {result['imported']}, skipped {result['skipped']} devices")
+            else:
+                # No Legacy BCF devices exist, add default RFIC instead
+                logger.info("No Legacy BCF devices found, adding default RFIC")
+                default_id = self.add_default_rfic()
+                result = {'imported': 1 if default_id else 0, 'skipped': 0}
+            
+            # Emit startup import complete signal
+            self.operation_completed.emit("auto_import_startup", "Auto-imported devices from Legacy BCF on startup")
+            logger.info("✅ Auto-import on startup completed")
+            
+            return result
+            
+        except Exception as e:
+            error_msg = f"Auto-import failed: {str(e)}"
+            logger.error(f"Error during auto-import on startup: {e}")
+            self.error_occurred.emit(error_msg)
+            return {'imported': 0, 'skipped': 0}
+    
+    def add_default_rfic(self) -> str:
+        """Add default RFIC chip component (only if no components exist)"""
+        try:
+            # Check if any components already exist in the database
+            existing_components = self.data_model.get_all_components()
+            if existing_components:
+                # Components already exist, no need to add default
+                logger.info("Components already exist, skipping default RFIC")
+                return ""
+            
+            # Add a default RFIC chip at center
+            name = "Default RFIC Chip"
+            position = (0, 0)
+            component_type = "rfic"
+            properties = {
+                'function_type': 'RFIC',
+                'frequency_range': '600MHz - 6GHz',
+                'technology': 'CMOS',
+                'package': 'BGA',
+                'rf_bands': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B8', 'B20', 'B28']
+            }
+            
+            component_id = self.add_component(name, component_type, position, properties)
+            
+            if component_id:
+                logger.info(f"Added default RFIC chip: {name}")
+            
+            return component_id
+            
+        except Exception as e:
+            error_msg = f"Error adding default RFIC chip: {str(e)}"
+            logger.error(error_msg)
+            self.error_occurred.emit(error_msg)
+            return ""
     
     # Utility methods
     

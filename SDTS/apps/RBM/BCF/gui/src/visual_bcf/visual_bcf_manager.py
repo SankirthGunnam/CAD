@@ -803,149 +803,62 @@ class VisualBCFManager(QWidget):
             logger.error(f"Error handling Visual BCF user deletion for '{component_name}': {e}")
             self.error_occurred.emit(f"Failed to sync deletion of '{component_name}': {str(e)}")
     
-    # Data-driven methods (when architecture is active, use these instead of legacy methods)
+    # View Coordination Methods (delegate business logic to Controller)
     
     def add_lte_modem(self, position: tuple = None, name: str = None) -> str:
-        """Add LTE modem component (data-driven version)"""
+        """Add LTE modem component"""
         if self.architecture_enabled and self.controller:
             if not position:
                 # Get center of current view
                 center = self.view.mapToScene(self.view.viewport().rect().center())
                 position = (center.x(), center.y())
-            if not name:
-                name = f"LTE_Modem_{len(self.data_model.get_components_by_type('modem')) + 1}"
-            
-            properties = {
-                'function_type': 'LTE',
-                'interface_type': 'MIPI',
-                'interface': {'mipi': {'channel': 1}},
-                'config': {'usid': f'LTE{len(self.data_model.get_all_components()) + 1:03d}'}
-            }
-            
-            return self.controller.add_component(name, 'modem', position, properties)
+            return self.controller.add_lte_modem(position, name)
         return ""
     
     def add_5g_modem(self, position: tuple = None, name: str = None) -> str:
-        """Add 5G modem component (data-driven version)"""
+        """Add 5G modem component"""
         if self.architecture_enabled and self.controller:
             if not position:
                 center = self.view.mapToScene(self.view.viewport().rect().center())
                 position = (center.x() + 150, center.y())
-            if not name:
-                name = f"5G_Modem_{len(self.data_model.get_components_by_type('modem')) + 1}"
-            
-            properties = {
-                'function_type': '5G',
-                'interface_type': 'MIPI',
-                'interface': {'mipi': {'channel': 2}},
-                'config': {'usid': f'5G{len(self.data_model.get_all_components()) + 1:03d}'}
-            }
-            
-            return self.controller.add_component(name, 'modem', position, properties)
+            return self.controller.add_5g_modem(position, name)
         return ""
     
     def add_rfic_chip_data_driven(self, position: tuple = None, name: str = None) -> str:
-        """Add RFIC chip component (data-driven version)"""
+        """Add RFIC chip component"""
         if self.architecture_enabled and self.controller:
             if not position:
                 center = self.view.mapToScene(self.view.viewport().rect().center())
                 position = (center.x(), center.y() + 150)
-            if not name:
-                name = f"RFIC_{len(self.data_model.get_components_by_type('rfic')) + 1}"
-            
-            properties = {
-                'function_type': 'RFIC',
-                'frequency_range': '600MHz - 6GHz',
-                'technology': 'CMOS',
-                'package': 'BGA',
-                'rf_bands': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B8', 'B20', 'B28']
-            }
-            
-            return self.controller.add_component(name, 'rfic', position, properties)
+            return self.controller.add_rfic_chip(position, name)
         return ""
     
     def add_generic_chip_data_driven(self, position: tuple = None, name: str = None) -> str:
-        """Add generic chip component (data-driven version)"""
+        """Add generic chip component"""
         if self.architecture_enabled and self.controller:
             if not position:
                 center = self.view.mapToScene(self.view.viewport().rect().center())
                 position = (center.x() + 300, center.y())
-            if not name:
-                name = f"Chip_{len(self.data_model.get_all_components()) + 1}"
-            
-            properties = {'function_type': 'generic'}
-            
-            return self.controller.add_component(name, 'chip', position, properties)
+            return self.controller.add_generic_chip(position, name)
         return ""
     
     def sync_with_legacy_bcf(self):
-        """Sync with Legacy BCF (data-driven version)"""
+        """Sync with Legacy BCF"""
         if self.architecture_enabled and self.controller:
             self.controller.sync_with_legacy_bcf()
     
     def import_from_legacy_bcf(self, component_names: List[str] = None):
-        """Import components from Legacy BCF (data-driven version) with duplicate prevention"""
+        """Import components from Legacy BCF with duplicate prevention"""
         if self.architecture_enabled and self.controller:
             try:
-                # Get Legacy BCF device settings
-                device_settings = self.rdb_manager.get_table("config.device.settings")
+                result = self.controller.import_from_legacy_bcf(component_names)
                 
-                # Get existing components to avoid duplicates
-                existing_components = self.data_model.get_all_components()
-                existing_names = {comp.name for comp in existing_components.values()}
-                
-                imported_count = 0
-                skipped_count = 0
-                
-                for i, device in enumerate(device_settings):
-                    device_name = device.get('name', f'Device_{i}')
-                    
-                    # Skip if specific components requested and this isn't one of them
-                    if component_names and device_name not in component_names:
-                        continue
-                    
-                    # Skip if component already exists (prevent duplicates)
-                    if device_name in existing_names:
-                        skipped_count += 1
-                        continue
-                    
-                    # Determine component type based on function type
-                    function_type = device.get('function_type', '').upper()
-                    if function_type in ['LTE', '5G']:
-                        component_type = 'modem'
-                    elif function_type == 'RFIC':
-                        component_type = 'rfic'
-                    else:
-                        component_type = 'device'
-                    
-                    # Create component with Legacy BCF properties
-                    properties = {
-                        'function_type': function_type,
-                        'interface_type': device.get('interface_type', ''),
-                        'interface': device.get('interface', {}),
-                        'config': device.get('config', {})
-                    }
-                    
-                    # Add with automatic positioning
-                    position = (100 + (imported_count * 150), 100 + (imported_count * 100))
-                    
-                    component_id = self.controller.add_component(
-                        name=device_name,
-                        component_type=component_type,
-                        position=position,
-                        properties=properties
-                    )
-                    
-                    if component_id:
-                        imported_count += 1
-                        existing_names.add(device_name)  # Track newly added
-                
-                if imported_count > 0 or skipped_count > 0:
+                if result['imported'] > 0 or result['skipped'] > 0:
                     self.data_changed.emit({
                         "action": "import_legacy",
-                        "count": imported_count,
-                        "skipped": skipped_count,
-                        "message": f"Imported {imported_count} new devices, skipped {skipped_count} duplicates",
+                        "count": result['imported'],
+                        "skipped": result['skipped'],
+                        "message": f"Imported {result['imported']} new devices, skipped {result['skipped']} duplicates",
                         "source": "data_driven"
                     })
                     
@@ -953,38 +866,31 @@ class VisualBCFManager(QWidget):
                 self.error_occurred.emit(f"Failed to import from Legacy BCF: {str(e)}")
     
     def auto_import_on_startup(self):
-        """Auto-import devices from Legacy BCF on startup (fixes issue #1)"""
-        try:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info("🔄 Auto-importing devices from Legacy BCF on startup...")
-            
-            # Check if there are any Legacy BCF devices to import
-            device_settings = self.rdb_manager.get_table("config.device.settings")
-            
-            if device_settings:
-                # Import all devices from Legacy BCF
-                self.import_from_legacy_bcf()
-                logger.info(f"Imported {len(device_settings)} devices from Legacy BCF")
-            else:
-                # No Legacy BCF devices exist, add default RFIC instead
-                logger.info("No Legacy BCF devices found, adding default RFIC")
-                self._add_default_rfic_data_driven()
-            
-            # Emit startup import complete signal
-            self.data_changed.emit({
-                "action": "auto_import_startup",
-                "message": "Auto-imported devices from Legacy BCF on startup",
-                "source": "data_driven"
-            })
-            
-            logger.info("✅ Auto-import on startup completed")
-            
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error during auto-import on startup: {e}")
-            self.error_occurred.emit(f"Auto-import failed: {str(e)}")
+        """Auto-import devices from Legacy BCF on startup (delegate to controller)"""
+        if self.architecture_enabled and self.controller:
+            try:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info("🔄 Auto-importing devices from Legacy BCF on startup...")
+                
+                result = self.controller.auto_import_on_startup()
+                
+                # Emit startup import complete signal
+                self.data_changed.emit({
+                    "action": "auto_import_startup",
+                    "message": "Auto-imported devices from Legacy BCF on startup",
+                    "imported": result['imported'],
+                    "skipped": result['skipped'],
+                    "source": "data_driven"
+                })
+                
+                logger.info(f"✅ Auto-import completed: {result['imported']} imported, {result['skipped']} skipped")
+                
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error during auto-import on startup: {e}")
+                self.error_occurred.emit(f"Auto-import failed: {str(e)}")
     
     def remove_component_by_name(self, name: str) -> bool:
         """Remove component by name (fixes issue #3 and #4)"""
