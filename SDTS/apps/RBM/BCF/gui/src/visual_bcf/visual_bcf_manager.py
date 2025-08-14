@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal, QPointF, QTimer
 from PySide6.QtGui import QPen, QBrush, QColor, QKeySequence, QShortcut
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from .scene import RFScene
 from .view import RFView
@@ -21,6 +21,11 @@ from apps.RBM.BCF.src.models.rfic_chip import RFICChipModel
 from ..views.chip_selection_dialog import ChipSelectionDialog
 from ..views.floating_toolbar import FloatingToolbar
 
+# Import MVC components
+from apps.RBM.BCF.src.models.visual_bcf_data_model import VisualBCFDataModel
+from apps.RBM.BCF.src.controllers.visual_bcf_controller import VisualBCFController
+from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
+
 
 class VisualBCFManager(QWidget):
     """Manager for the visual BCF interface with graphics scene and view"""
@@ -29,10 +34,16 @@ class VisualBCFManager(QWidget):
     data_changed = Signal(dict)
     error_occurred = Signal(str)
 
-    def __init__(self, parent: Optional[QWidget] = None, parent_controller=None):
+    def __init__(self, parent: Optional[QWidget] = None, parent_controller=None, rdb_manager: Optional[RDBManager] = None):
         super().__init__(parent)
         self.setWindowTitle("Visual BCF Manager")
         self.parent_controller = parent_controller
+        self.rdb_manager = rdb_manager
+
+        # MVC Components
+        self.data_model: Optional[VisualBCFDataModel] = None
+        self.controller: Optional[VisualBCFController] = None
+        self.mvc_enabled = False
 
         # Create main layout - now just for the view
         main_layout = QVBoxLayout(self)
@@ -50,10 +61,14 @@ class VisualBCFManager(QWidget):
         # Add view to main layout (takes all the space)
         main_layout.addWidget(self.view)
 
+        # Initialize MVC components if RDB manager is provided
+        if self.rdb_manager:
+            self._setup_mvc_components()
+
         # Chip selection dialog
         self.chip_selection_dialog = None
 
-        # Chip clipboard for copy/paste
+        # Chip clipboard for copy/paste (legacy)
         self.chip_clipboard = None
 
         # Setup keyboard shortcuts
@@ -69,8 +84,9 @@ class VisualBCFManager(QWidget):
         if self.parent_controller:
             self.rf_toolbar = self._create_rf_toolbar()
 
-        # Initialize with default RFIC chip
-        self._add_default_rfic_chip()
+        # Initialize with default RFIC chip (only if MVC not enabled)
+        if not self.mvc_enabled:
+            self._add_default_rfic_chip()
 
     def _create_rf_toolbar(self):
         """Create and add RF floating toolbar to parent controller"""
@@ -555,9 +571,248 @@ class VisualBCFManager(QWidget):
         if self.rf_toolbar:
             self.rf_toolbar.hide()
 
+    def _setup_mvc_components(self):
+        """Setup MVC components for data-driven Visual BCF"""
+        try:
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            # Model - Data access layer
+            self.data_model = VisualBCFDataModel(self.rdb_manager)
+            logger.info("Visual BCF Data Model created")
+            
+            # Controller - Coordinates between model and view
+            self.controller = VisualBCFController(self.scene, self.view, self.data_model)
+            logger.info("Visual BCF Controller created")
+            
+            # Connect controller signals to manager signals
+            self.controller.operation_completed.connect(self._on_mvc_operation_completed)
+            self.controller.error_occurred.connect(self._on_mvc_error_occurred)
+            self.controller.component_selected.connect(self._on_mvc_component_selected)
+            
+            self.mvc_enabled = True
+            logger.info("MVC components setup complete")
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error setting up MVC components: {e}")
+            self.error_occurred.emit(f"Failed to setup MVC: {str(e)}")
+    
+    def _on_mvc_operation_completed(self, operation: str, message: str):
+        """Handle MVC operation completed"""
+        self.data_changed.emit({
+            "action": operation,
+            "message": message,
+            "source": "mvc"
+        })
+    
+    def _on_mvc_error_occurred(self, error_message: str):
+        """Handle MVC error"""
+        self.error_occurred.emit(error_message)
+    
+    def _on_mvc_component_selected(self, component_id: str):
+        """Handle MVC component selection"""
+        if self.data_model:
+            component_data = self.data_model.get_component(component_id)
+            if component_data:
+                self.data_changed.emit({
+                    "action": "component_selected",
+                    "component_id": component_id,
+                    "component_name": component_data.name,
+                    "component_type": component_data.component_type,
+                    "source": "mvc"
+                })
+    
+    # MVC-enabled methods (when MVC is active, use these instead of legacy methods)
+    
+    def add_lte_modem(self, position: tuple = None, name: str = None) -> str:
+        """Add LTE modem component (MVC version)"""
+        if self.mvc_enabled and self.controller:
+            if not position:
+                # Get center of current view
+                center = self.view.mapToScene(self.view.viewport().rect().center())
+                position = (center.x(), center.y())
+            if not name:
+                name = f"LTE_Modem_{len(self.data_model.get_components_by_type('modem')) + 1}"
+            
+            properties = {
+                'function_type': 'LTE',
+                'interface_type': 'MIPI',
+                'interface': {'mipi': {'channel': 1}},
+                'config': {'usid': f'LTE{len(self.data_model.get_all_components()) + 1:03d}'}
+            }
+            
+            return self.controller.add_component(name, 'modem', position, properties)
+        return ""
+    
+    def add_5g_modem(self, position: tuple = None, name: str = None) -> str:
+        """Add 5G modem component (MVC version)"""
+        if self.mvc_enabled and self.controller:
+            if not position:
+                center = self.view.mapToScene(self.view.viewport().rect().center())
+                position = (center.x() + 150, center.y())
+            if not name:
+                name = f"5G_Modem_{len(self.data_model.get_components_by_type('modem')) + 1}"
+            
+            properties = {
+                'function_type': '5G',
+                'interface_type': 'MIPI',
+                'interface': {'mipi': {'channel': 2}},
+                'config': {'usid': f'5G{len(self.data_model.get_all_components()) + 1:03d}'}
+            }
+            
+            return self.controller.add_component(name, 'modem', position, properties)
+        return ""
+    
+    def add_rfic_chip_mvc(self, position: tuple = None, name: str = None) -> str:
+        """Add RFIC chip component (MVC version)"""
+        if self.mvc_enabled and self.controller:
+            if not position:
+                center = self.view.mapToScene(self.view.viewport().rect().center())
+                position = (center.x(), center.y() + 150)
+            if not name:
+                name = f"RFIC_{len(self.data_model.get_components_by_type('rfic')) + 1}"
+            
+            properties = {
+                'function_type': 'RFIC',
+                'frequency_range': '600MHz - 6GHz',
+                'technology': 'CMOS',
+                'package': 'BGA',
+                'rf_bands': ['B1', 'B2', 'B3', 'B4', 'B5', 'B7', 'B8', 'B20', 'B28']
+            }
+            
+            return self.controller.add_component(name, 'rfic', position, properties)
+        return ""
+    
+    def add_generic_chip_mvc(self, position: tuple = None, name: str = None) -> str:
+        """Add generic chip component (MVC version)"""
+        if self.mvc_enabled and self.controller:
+            if not position:
+                center = self.view.mapToScene(self.view.viewport().rect().center())
+                position = (center.x() + 300, center.y())
+            if not name:
+                name = f"Chip_{len(self.data_model.get_all_components()) + 1}"
+            
+            properties = {'function_type': 'generic'}
+            
+            return self.controller.add_component(name, 'chip', position, properties)
+        return ""
+    
+    def sync_with_legacy_bcf(self):
+        """Sync with Legacy BCF (MVC version)"""
+        if self.mvc_enabled and self.controller:
+            self.controller.sync_with_legacy_bcf()
+    
+    def import_from_legacy_bcf(self, component_names: List[str] = None):
+        """Import components from Legacy BCF (MVC version)"""
+        if self.mvc_enabled and self.controller:
+            try:
+                # Get Legacy BCF device settings
+                device_settings = self.rdb_manager.get_table("config.device.settings")
+                
+                imported_count = 0
+                for i, device in enumerate(device_settings):
+                    device_name = device.get('name', f'Device_{i}')
+                    
+                    # Skip if specific components requested and this isn't one of them
+                    if component_names and device_name not in component_names:
+                        continue
+                    
+                    # Determine component type based on function type
+                    function_type = device.get('function_type', '').upper()
+                    if function_type in ['LTE', '5G']:
+                        component_type = 'modem'
+                    elif function_type == 'RFIC':
+                        component_type = 'rfic'
+                    else:
+                        component_type = 'device'
+                    
+                    # Create component with Legacy BCF properties
+                    properties = {
+                        'function_type': function_type,
+                        'interface_type': device.get('interface_type', ''),
+                        'interface': device.get('interface', {}),
+                        'config': device.get('config', {})
+                    }
+                    
+                    # Add with automatic positioning
+                    position = (100 + (imported_count * 150), 100 + (imported_count * 100))
+                    
+                    component_id = self.controller.add_component(
+                        name=device_name,
+                        component_type=component_type,
+                        position=position,
+                        properties=properties
+                    )
+                    
+                    if component_id:
+                        imported_count += 1
+                
+                if imported_count > 0:
+                    self.data_changed.emit({
+                        "action": "import_legacy",
+                        "count": imported_count,
+                        "source": "mvc"
+                    })
+                    
+            except Exception as e:
+                self.error_occurred.emit(f"Failed to import from Legacy BCF: {str(e)}")
+    
+    def get_mvc_statistics(self) -> Dict[str, Any]:
+        """Get statistics from MVC model"""
+        if self.mvc_enabled and self.controller:
+            return self.controller.get_statistics()
+        return {}
+    
+    def is_mvc_enabled(self) -> bool:
+        """Check if MVC mode is enabled"""
+        return self.mvc_enabled
+    
+    def get_data_model(self) -> Optional[VisualBCFDataModel]:
+        """Get the data model (if MVC enabled)"""
+        return self.data_model
+    
+    def get_controller(self) -> Optional[VisualBCFController]:
+        """Get the controller (if MVC enabled)"""
+        return self.controller
+    
+    def clear_scene_mvc(self):
+        """Clear scene using MVC controller"""
+        if self.mvc_enabled and self.controller:
+            self.controller.clear_scene()
+        else:
+            # Fallback to legacy method
+            self._on_clear_scene()
+    
+    def fit_in_view(self):
+        """Fit all components in view"""
+        scene_rect = self.scene.itemsBoundingRect()
+        if not scene_rect.isEmpty():
+            self.view.fitInView(scene_rect, Qt.KeepAspectRatio)
+    
+    def reset_view(self):
+        """Reset view transformation"""
+        self.view.resetTransform()
+    
     def cleanup(self):
         """Clean up resources"""
         try:
+            # Cleanup MVC components
+            if self.mvc_enabled:
+                if self.controller:
+                    # Disconnect controller signals
+                    try:
+                        self.controller.operation_completed.disconnect()
+                        self.controller.error_occurred.disconnect()
+                        self.controller.component_selected.disconnect()
+                    except:
+                        pass
+                
+                if self.data_model:
+                    # Data model cleanup is handled internally
+                    pass
+            
             # Clear all components from scene
             components = self.scene.get_components()[:]
             for component in components:
