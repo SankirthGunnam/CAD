@@ -29,10 +29,17 @@ class RFScene(QGraphicsScene):
         self._pins: Dict[Pin, PinComponent] = {}  # Map model pins to their widgets
         self._context_menu_pos = QPointF(0, 0)
         self._selected_components = []
+        
+        # Controller reference for user deletions (set by Visual BCF Manager)
+        self._controller = None
 
     @property
     def mouse_pos(self) -> QPointF:
         return self._mouse_pos
+    
+    def set_controller(self, controller):
+        """Set the controller reference for handling user deletions"""
+        self._controller = controller
 
     def add_component(self, component):
         """Add a component to the scene"""
@@ -167,15 +174,25 @@ class RFScene(QGraphicsScene):
         print(f"Copying chip: {chip.model.name}")
         
     def _delete_chip(self, chip: Chip):
-        """Delete a specific chip"""
-        self.remove_component(chip)
+        """Delete a specific chip (user-initiated)"""
+        if self._controller:
+            # Use controller to handle deletion (emits proper signals for Legacy BCF sync)
+            self._controller.delete_component_by_graphics_item(chip)
+        else:
+            # Fallback to direct removal if no controller
+            self.remove_component(chip)
         self.selection_changed.emit(len(self.get_selected_components()) > 0)
         
     def _delete_selected(self):
-        """Delete all selected chips"""
+        """Delete all selected chips (user-initiated)"""
         selected = self.get_selected_components()[:]
-        for chip in selected:
-            self.remove_component(chip)
+        if self._controller and selected:
+            # Use controller to handle deletions (emits proper signals for Legacy BCF sync)
+            deleted_count = self._controller.delete_selected_components_by_graphics_items(selected)
+        else:
+            # Fallback to direct removal if no controller
+            for chip in selected:
+                self.remove_component(chip)
         self.selection_changed.emit(False)
         
     def _copy_selected(self):

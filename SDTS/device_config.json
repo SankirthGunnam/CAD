@@ -3,187 +3,289 @@
     "device": {
       "settings": [
         {
-          "name": "LTE Modem",
+          "name": "LTE_Modem_Main",
           "function_type": "LTE",
           "interface_type": "MIPI",
           "interface": {
             "mipi": {
-              "channel": 1,
-              "speed": "1.5Gbps",
-              "voltage": "1.8V"
-            },
-            "gpio": {
-              "pin": 2,
-              "direction": "output",
-              "pull": "up"
+              "channel": 1
             }
           },
           "config": {
             "usid": "LTE001",
-            "product_id": "P001",
-            "manufacturer_id": "M001",
-            "version": "1.0.0"
+            "frequency_range": "700MHz - 2.6GHz",
+            "max_power_dbm": 23.0,
+            "rf_bands": [
+              "B1",
+              "B3",
+              "B7",
+              "B20"
+            ],
+            "enabled": true
           }
         },
         {
-          "name": "5G Modem",
+          "name": "5G_NR_Modem",
           "function_type": "5G",
           "interface_type": "MIPI",
           "interface": {
             "mipi": {
-              "channel": 2,
-              "speed": "3.0Gbps",
-              "voltage": "1.8V"
-            },
-            "gpio": {
-              "pin": 3,
-              "direction": "output",
-              "pull": "up"
+              "channel": 2
             }
           },
           "config": {
             "usid": "5G001",
-            "product_id": "P002",
-            "manufacturer_id": "M001",
-            "version": "1.0.0"
+            "frequency_range": "600MHz - 6GHz",
+            "max_power_dbm": 25.0,
+            "rf_bands": [
+              "n1",
+              "n3",
+              "n7",
+              "n28",
+              "n77",
+              "n78"
+            ],
+            "enabled": true
+          }
+        },
+        {
+          "name": "RFIC_Primary",
+          "function_type": "RFIC",
+          "interface_type": "SPI",
+          "interface": {
+            "spi": {
+              "channel": 1
+            }
+          },
+          "config": {
+            "usid": "RFIC001",
+            "frequency_range": "600MHz - 6GHz",
+            "max_power_dbm": 20.0,
+            "rf_bands": [
+              "B1",
+              "B2",
+              "B3",
+              "B4",
+              "B5",
+              "B7",
+              "B8",
+              "B20",
+              "B28"
+            ],
+            "enabled": true
+          }
+        },
+        {
+          "name": "WiFi_Module",
+          "function_type": "WiFi",
+          "interface_type": "UART",
+          "interface": {
+            "uart": {
+              "channel": 3
+            }
+          },
+          "config": {
+            "usid": "WIFI001",
+            "frequency_range": "2.4GHz, 5GHz",
+            "max_power_dbm": 20.0,
+            "rf_bands": [
+              "2.4GHz",
+              "5GHz"
+            ],
+            "enabled": false
           }
         }
       ],
-      "properties": {
-        "max_devices": 4,
-        "supported_interfaces": [
-          "MIPI",
-          "GPIO"
-        ],
-        "power_requirements": {
-          "voltage": "3.3V",
-          "current": "100mA"
-        }
-      }
+      "properties": {}
     },
     "band": {
-      "lte": [
-        {
-          "band": "B1",
-          "power": 20,
-          "status": "active",
-          "frequency": {
-            "ul": "1920-1980",
-            "dl": "2110-2170"
-          },
-          "bandwidth": "20MHz"
-        },
-        {
-          "band": "B2",
-          "power": 25,
-          "status": "active",
-          "frequency": {
-            "ul": "1850-1910",
-            "dl": "1930-1990"
-          },
-          "bandwidth": "20MHz"
-        },
-        {
-          "band": "B3",
-          "power": 30,
-          "status": "inactive",
-          "frequency": {
-            "ul": "1710-1785",
-            "dl": "1805-1880"
-          },
-          "bandwidth": "20MHz"
-        }
-      ],
-      "5g": [
-        {
-          "band": "N1",
-          "power": 20,
-          "status": "active",
-          "frequency": {
-            "ul": "1920-1980",
-            "dl": "2110-2170"
-          },
-          "bandwidth": "20MHz"
-        },
-        {
-          "band": "N2",
-          "power": 25,
-          "status": "active",
-          "frequency": {
-            "ul": "1850-1910",
-            "dl": "1930-1990"
-          },
-          "bandwidth": "20MHz"
-        }
-      ],
-      "properties": {
-        "max_bands": 8,
-        "power_range": {
-          "min": 0,
-          "max": 30
-        },
-        "supported_technologies": [
-          "LTE",
-          "5G"
-        ]
-      }
+      "settings": [],
+      "properties": {}
     },
     "board": {
-      "device_info": {
-        "model": "RBM-1000",
-        "version": "1.0",
-        "serial_number": "SN123456",
-        "manufacturer": "Company XYZ",
-        "revision": "A1"
-      },
-      "interface": {
-        "mipi": {
-          "channels": 4,
-          "speed": "3.0Gbps",
-          "voltage": "1.8V",
-          "lanes": 4
-        },
-        "gpio": {
-          "pins": 16,
-          "voltage": "3.3V",
-          "current": "8mA"
-        }
-      },
-      "properties": {
-        "dimensions": {
-          "width": 100,
-          "height": 100,
-          "thickness": 1.6
-        },
-        "material": "FR4",
-        "layers": 6
-      }
+      "settings": [],
+      "properties": {}
     },
     "rcc": {
-      "sync": {
-        "mode": "auto",
-        "interval": 60,
-        "last_sync": "2024-01-01T12:00:00Z",
-        "server": "ntp.company.com"
-      },
-      "build": {
-        "version": "1.0.0",
-        "build_date": "2024-01-01",
-        "target": "x86_64",
-        "options": [
-          "debug",
-          "test"
-        ],
-        "dependencies": {
-          "python": "3.8",
-          "qt": "6.4",
-          "numpy": "1.24"
+      "settings": [],
+      "properties": {}
+    },
+    "visual_bcf": {
+      "components": [
+        {
+          "name": "5G_NR_Modem",
+          "component_type": "modem",
+          "function_type": "5G",
+          "properties": {
+            "function_type": "5G",
+            "interface_type": "MIPI",
+            "interface": {
+              "mipi": {
+                "channel": 2
+              }
+            },
+            "config": {
+              "usid": "5G001",
+              "frequency_range": "600MHz - 6GHz",
+              "max_power_dbm": 25.0,
+              "rf_bands": [
+                "n1",
+                "n3",
+                "n7",
+                "n28",
+                "n77",
+                "n78"
+              ],
+              "enabled": true
+            }
+          },
+          "visual_properties": {
+            "position": {
+              "x": 250,
+              "y": 200
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "1b0ba187-52ca-4a6c-8af6-cdad50724e7e"
+        },
+        {
+          "name": "RFIC_Primary",
+          "component_type": "rfic",
+          "function_type": "RFIC",
+          "properties": {
+            "function_type": "RFIC",
+            "interface_type": "SPI",
+            "interface": {
+              "spi": {
+                "channel": 1
+              }
+            },
+            "config": {
+              "usid": "RFIC001",
+              "frequency_range": "600MHz - 6GHz",
+              "max_power_dbm": 20.0,
+              "rf_bands": [
+                "B1",
+                "B2",
+                "B3",
+                "B4",
+                "B5",
+                "B7",
+                "B8",
+                "B20",
+                "B28"
+              ],
+              "enabled": true
+            }
+          },
+          "visual_properties": {
+            "position": {
+              "x": 400,
+              "y": 300
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "2b5d8501-a6dd-46aa-b2f4-edcc35c9e7ae"
+        },
+        {
+          "name": "WiFi_Module",
+          "component_type": "device",
+          "function_type": "WIFI",
+          "properties": {
+            "function_type": "WIFI",
+            "interface_type": "UART",
+            "interface": {
+              "uart": {
+                "channel": 3
+              }
+            },
+            "config": {
+              "usid": "WIFI001",
+              "frequency_range": "2.4GHz, 5GHz",
+              "max_power_dbm": 20.0,
+              "rf_bands": [
+                "2.4GHz",
+                "5GHz"
+              ],
+              "enabled": false
+            }
+          },
+          "visual_properties": {
+            "position": {
+              "x": 550,
+              "y": 400
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "a8102f6c-c03f-4880-91b9-1abb8647cfd0"
+        },
+        {
+          "name": "LTE_Modem_Main",
+          "component_type": "modem",
+          "function_type": "LTE",
+          "properties": {
+            "function_type": "LTE",
+            "interface_type": "MIPI",
+            "interface": {
+              "mipi": {
+                "channel": 1
+              }
+            },
+            "config": {
+              "usid": "LTE001",
+              "frequency_range": "700MHz - 2.6GHz",
+              "max_power_dbm": 23.0,
+              "rf_bands": [
+                "B1",
+                "B3",
+                "B7",
+                "B20"
+              ],
+              "enabled": true
+            }
+          },
+          "visual_properties": {
+            "position": {
+              "x": 100,
+              "y": 100
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "e3b0d112-015a-4a62-ba5b-66adb9777ee6"
         }
-      },
-      "properties": {
-        "max_connections": 4,
-        "timeout": 30,
-        "retry_attempts": 3
+      ],
+      "connections": [],
+      "layout": {
+        "scene_rect": {
+          "x": -1000,
+          "y": -1000,
+          "width": 2000,
+          "height": 2000
+        },
+        "grid_settings": {
+          "enabled": true,
+          "size": 20
+        }
       }
     }
   }

@@ -35,8 +35,8 @@ class RBMMain(QWidget):
         self.rdb_manager = RDBManager()
         self.core_controller = CoreController(self.rdb_manager)
 
-        # Create and add GUIController
-        self.gui_controller = GUIController()
+        # Create and add GUIController with RDB manager for Visual BCF MVC architecture
+        self.gui_controller = GUIController(rdb_manager=self.rdb_manager)
         layout.addWidget(self.gui_controller)
 
         # Connect signals
