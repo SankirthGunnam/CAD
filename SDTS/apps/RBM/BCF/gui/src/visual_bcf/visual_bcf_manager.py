@@ -40,10 +40,10 @@ class VisualBCFManager(QWidget):
         self.parent_controller = parent_controller
         self.rdb_manager = rdb_manager
 
-        # MVC Components
+        # Architecture Components
         self.data_model: Optional[VisualBCFDataModel] = None
         self.controller: Optional[VisualBCFController] = None
-        self.mvc_enabled = False
+        self.architecture_enabled = False
 
         # Create main layout - now just for the view
         main_layout = QVBoxLayout(self)
@@ -61,9 +61,9 @@ class VisualBCFManager(QWidget):
         # Add view to main layout (takes all the space)
         main_layout.addWidget(self.view)
 
-        # Initialize MVC components if RDB manager is provided
+        # Initialize architecture components if RDB manager is provided
         if self.rdb_manager:
-            self._setup_mvc_components()
+            self._setup_architecture_components()
 
         # Chip selection dialog
         self.chip_selection_dialog = None
@@ -85,7 +85,7 @@ class VisualBCFManager(QWidget):
             self.rf_toolbar = self._create_rf_toolbar()
 
         # Initialize with default RFIC chip and auto-import from Legacy BCF
-        if self.mvc_enabled:
+        if self.architecture_enabled:
             # Auto-import from Legacy BCF on startup (fixes issue #1)
             # This will handle adding components, including default RFIC if needed
             QTimer.singleShot(500, self.auto_import_on_startup)
@@ -249,9 +249,9 @@ class VisualBCFManager(QWidget):
             self.error_occurred.emit(
                 f"Error adding default RFIC chip: {str(e)}")
     
-    def _add_default_rfic_mvc(self) -> str:
-        """Add default RFIC chip component in MVC mode (only if no components exist)"""
-        if not (self.mvc_enabled and self.controller and self.data_model):
+    def _add_default_rfic_data_driven(self) -> str:
+        """Add default RFIC chip component in data-driven mode (only if no components exist)"""
+        if not (self.architecture_enabled and self.controller and self.data_model):
             return ""
         
         try:
@@ -277,18 +277,18 @@ class VisualBCFManager(QWidget):
             
             if component_id:
                 self.data_changed.emit({
-                    "action": "add_default_rfic_mvc",
+                    "action": "add_default_rfic_data_driven",
                     "component_id": component_id,
                     "component": "RFIC",
                     "name": name,
                     "position": position,
-                    "source": "mvc"
+                    "source": "data_driven"
                 })
             
             return component_id
             
         except Exception as e:
-            self.error_occurred.emit(f"Error adding default RFIC chip (MVC): {str(e)}")
+            self.error_occurred.emit(f"Error adding default RFIC chip (Data-Driven): {str(e)}")
             return ""
 
     def get_default_rfic(self) -> Optional[RFICChip]:
@@ -342,8 +342,8 @@ class VisualBCFManager(QWidget):
         try:
             chip_name = f"{chip_data['name']} ({chip_data['part_number']})"
             
-            if self.mvc_enabled and self.controller:
-                # Use MVC controller for proper data management and auto-export
+            if self.architecture_enabled and self.controller:
+                # Use controller for proper data management and auto-export
                 
                 # Determine component type based on chip type
                 chip_type = chip_data.get('type', '')
@@ -398,13 +398,13 @@ class VisualBCFManager(QWidget):
                 )
                 
                 if component_id:
-                    print(f"✅ Added chip '{chip_name}' via MVC controller with ID: {component_id}")
+                    print(f"✅ Added chip '{chip_name}' via controller with ID: {component_id}")
                 else:
-                    print(f"❌ Failed to add chip '{chip_name}' via MVC controller")
+                    print(f"❌ Failed to add chip '{chip_name}' via controller")
             
             else:
                 # Fallback to legacy method
-                print(f"⚠️ Using legacy method to add chip '{chip_name}' (MVC not enabled)")
+                print(f"⚠️ Using legacy method to add chip '{chip_name}' (Architecture not enabled)")
                 
                 # Determine chip size based on package type
                 package = chip_data.get('package', '')
@@ -491,8 +491,8 @@ class VisualBCFManager(QWidget):
     def _on_delete_selected(self):
         """Delete selected chips (user-initiated via toolbar/keyboard)"""
         try:
-            if self.mvc_enabled and self.controller:
-                # Use MVC controller for proper bidirectional sync
+            if self.architecture_enabled and self.controller:
+                # Use controller for proper bidirectional sync
                 self.controller.delete_selected_components()
             else:
                 # Fallback to legacy method
@@ -527,8 +527,8 @@ class VisualBCFManager(QWidget):
     def _on_copy_selected(self):
         """Copy selected chips to clipboard (user-initiated via toolbar/keyboard)"""
         try:
-            if self.mvc_enabled and self.controller:
-                # Use MVC controller for copy operation
+            if self.architecture_enabled and self.controller:
+                # Use controller for copy operation
                 self.controller.copy_selected_components()
             else:
                 # Fallback to legacy method
@@ -569,8 +569,8 @@ class VisualBCFManager(QWidget):
     def _on_paste_chips(self):
         """Paste chips from clipboard (user-initiated via toolbar/keyboard)"""
         try:
-            if self.mvc_enabled and self.controller:
-                # Use MVC controller for paste operation
+            if self.architecture_enabled and self.controller:
+                # Use controller for paste operation
                 self.controller.paste_components()
             else:
                 # Fallback to legacy method
@@ -697,8 +697,8 @@ class VisualBCFManager(QWidget):
         if self.rf_toolbar:
             self.rf_toolbar.hide()
 
-    def _setup_mvc_components(self):
-        """Setup MVC components for data-driven Visual BCF"""
+    def _setup_architecture_components(self):
+        """Setup architecture components for data-driven Visual BCF"""
         try:
             import logging
             logger = logging.getLogger(__name__)
@@ -708,13 +708,13 @@ class VisualBCFManager(QWidget):
             logger.info("Visual BCF Data Model created")
             
             # Controller - Coordinates between model and view
-            self.controller = VisualBCFController(self.scene, self.view, self.data_model)
+            self.controller = VisualBCFController(self.view, self.data_model)
             logger.info("Visual BCF Controller created")
             
             # Connect controller signals to manager signals
-            self.controller.operation_completed.connect(self._on_mvc_operation_completed)
-            self.controller.error_occurred.connect(self._on_mvc_error_occurred)
-            self.controller.component_selected.connect(self._on_mvc_component_selected)
+            self.controller.operation_completed.connect(self._on_controller_operation_completed)
+            self.controller.error_occurred.connect(self._on_controller_error_occurred)
+            self.controller.component_selected.connect(self._on_controller_component_selected)
             
             # NEW: Connect user deletion signal to handle Legacy BCF synchronization
             self.controller.component_removed_by_user.connect(self._on_visual_component_removed_by_user)
@@ -722,29 +722,29 @@ class VisualBCFManager(QWidget):
             # Set controller reference in scene for user deletions
             self.scene.set_controller(self.controller)
             
-            self.mvc_enabled = True
-            logger.info("MVC components setup complete")
+            self.architecture_enabled = True
+            logger.info("Architecture components setup complete")
             
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error setting up MVC components: {e}")
-            self.error_occurred.emit(f"Failed to setup MVC: {str(e)}")
+            self.error_occurred.emit(f"Failed to setup architecture: {str(e)}")
     
-    def _on_mvc_operation_completed(self, operation: str, message: str):
-        """Handle MVC operation completed"""
+    def _on_controller_operation_completed(self, operation: str, message: str):
+        """Handle controller operation completed"""
         self.data_changed.emit({
             "action": operation,
             "message": message,
-            "source": "mvc"
+            "source": "controller"
         })
     
-    def _on_mvc_error_occurred(self, error_message: str):
-        """Handle MVC error"""
+    def _on_controller_error_occurred(self, error_message: str):
+        """Handle controller error"""
         self.error_occurred.emit(error_message)
     
-    def _on_mvc_component_selected(self, component_id: str):
-        """Handle MVC component selection"""
+    def _on_controller_component_selected(self, component_id: str):
+        """Handle controller component selection"""
         if self.data_model:
             component_data = self.data_model.get_component(component_id)
             if component_data:
@@ -753,7 +753,7 @@ class VisualBCFManager(QWidget):
                     "component_id": component_id,
                     "component_name": component_data.name,
                     "component_type": component_data.component_type,
-                    "source": "mvc"
+                    "source": "controller"
                 })
     
     def _on_visual_component_removed_by_user(self, component_name: str):
@@ -803,11 +803,11 @@ class VisualBCFManager(QWidget):
             logger.error(f"Error handling Visual BCF user deletion for '{component_name}': {e}")
             self.error_occurred.emit(f"Failed to sync deletion of '{component_name}': {str(e)}")
     
-    # MVC-enabled methods (when MVC is active, use these instead of legacy methods)
+    # Data-driven methods (when architecture is active, use these instead of legacy methods)
     
     def add_lte_modem(self, position: tuple = None, name: str = None) -> str:
-        """Add LTE modem component (MVC version)"""
-        if self.mvc_enabled and self.controller:
+        """Add LTE modem component (data-driven version)"""
+        if self.architecture_enabled and self.controller:
             if not position:
                 # Get center of current view
                 center = self.view.mapToScene(self.view.viewport().rect().center())
@@ -826,8 +826,8 @@ class VisualBCFManager(QWidget):
         return ""
     
     def add_5g_modem(self, position: tuple = None, name: str = None) -> str:
-        """Add 5G modem component (MVC version)"""
-        if self.mvc_enabled and self.controller:
+        """Add 5G modem component (data-driven version)"""
+        if self.architecture_enabled and self.controller:
             if not position:
                 center = self.view.mapToScene(self.view.viewport().rect().center())
                 position = (center.x() + 150, center.y())
@@ -844,9 +844,9 @@ class VisualBCFManager(QWidget):
             return self.controller.add_component(name, 'modem', position, properties)
         return ""
     
-    def add_rfic_chip_mvc(self, position: tuple = None, name: str = None) -> str:
-        """Add RFIC chip component (MVC version)"""
-        if self.mvc_enabled and self.controller:
+    def add_rfic_chip_data_driven(self, position: tuple = None, name: str = None) -> str:
+        """Add RFIC chip component (data-driven version)"""
+        if self.architecture_enabled and self.controller:
             if not position:
                 center = self.view.mapToScene(self.view.viewport().rect().center())
                 position = (center.x(), center.y() + 150)
@@ -864,9 +864,9 @@ class VisualBCFManager(QWidget):
             return self.controller.add_component(name, 'rfic', position, properties)
         return ""
     
-    def add_generic_chip_mvc(self, position: tuple = None, name: str = None) -> str:
-        """Add generic chip component (MVC version)"""
-        if self.mvc_enabled and self.controller:
+    def add_generic_chip_data_driven(self, position: tuple = None, name: str = None) -> str:
+        """Add generic chip component (data-driven version)"""
+        if self.architecture_enabled and self.controller:
             if not position:
                 center = self.view.mapToScene(self.view.viewport().rect().center())
                 position = (center.x() + 300, center.y())
@@ -879,13 +879,13 @@ class VisualBCFManager(QWidget):
         return ""
     
     def sync_with_legacy_bcf(self):
-        """Sync with Legacy BCF (MVC version)"""
-        if self.mvc_enabled and self.controller:
+        """Sync with Legacy BCF (data-driven version)"""
+        if self.architecture_enabled and self.controller:
             self.controller.sync_with_legacy_bcf()
     
     def import_from_legacy_bcf(self, component_names: List[str] = None):
-        """Import components from Legacy BCF (MVC version) with duplicate prevention"""
-        if self.mvc_enabled and self.controller:
+        """Import components from Legacy BCF (data-driven version) with duplicate prevention"""
+        if self.architecture_enabled and self.controller:
             try:
                 # Get Legacy BCF device settings
                 device_settings = self.rdb_manager.get_table("config.device.settings")
@@ -946,7 +946,7 @@ class VisualBCFManager(QWidget):
                         "count": imported_count,
                         "skipped": skipped_count,
                         "message": f"Imported {imported_count} new devices, skipped {skipped_count} duplicates",
-                        "source": "mvc"
+                        "source": "data_driven"
                     })
                     
             except Exception as e:
@@ -969,13 +969,13 @@ class VisualBCFManager(QWidget):
             else:
                 # No Legacy BCF devices exist, add default RFIC instead
                 logger.info("No Legacy BCF devices found, adding default RFIC")
-                self._add_default_rfic_mvc()
+                self._add_default_rfic_data_driven()
             
             # Emit startup import complete signal
             self.data_changed.emit({
                 "action": "auto_import_startup",
                 "message": "Auto-imported devices from Legacy BCF on startup",
-                "source": "mvc"
+                "source": "data_driven"
             })
             
             logger.info("✅ Auto-import on startup completed")
@@ -988,31 +988,31 @@ class VisualBCFManager(QWidget):
     
     def remove_component_by_name(self, name: str) -> bool:
         """Remove component by name (fixes issue #3 and #4)"""
-        if self.mvc_enabled and self.controller:
+        if self.architecture_enabled and self.controller:
             return self.controller.remove_component_by_name(name)
         return False
     
-    def get_mvc_statistics(self) -> Dict[str, Any]:
-        """Get statistics from MVC model"""
-        if self.mvc_enabled and self.controller:
+    def get_model_statistics(self) -> Dict[str, Any]:
+        """Get statistics from data model"""
+        if self.architecture_enabled and self.controller:
             return self.controller.get_statistics()
         return {}
     
-    def is_mvc_enabled(self) -> bool:
-        """Check if MVC mode is enabled"""
-        return self.mvc_enabled
+    def is_architecture_enabled(self) -> bool:
+        """Check if data-driven architecture is enabled"""
+        return self.architecture_enabled
     
     def get_data_model(self) -> Optional[VisualBCFDataModel]:
-        """Get the data model (if MVC enabled)"""
+        """Get the data model (if architecture enabled)"""
         return self.data_model
     
     def get_controller(self) -> Optional[VisualBCFController]:
-        """Get the controller (if MVC enabled)"""
+        """Get the controller (if architecture enabled)"""
         return self.controller
     
-    def clear_scene_mvc(self):
-        """Clear scene using MVC controller"""
-        if self.mvc_enabled and self.controller:
+    def clear_scene_data_driven(self):
+        """Clear scene using data-driven controller"""
+        if self.architecture_enabled and self.controller:
             self.controller.clear_scene()
         else:
             # Fallback to legacy method
@@ -1031,8 +1031,8 @@ class VisualBCFManager(QWidget):
     def cleanup(self):
         """Clean up resources"""
         try:
-            # Cleanup MVC components
-            if self.mvc_enabled:
+            # Cleanup architecture components
+            if self.architecture_enabled:
                 if self.controller:
                     # Disconnect controller signals
                     try:
