@@ -1,63 +1,47 @@
+"""
+Custom Graphics View Module - Phase 2.5
+
+Custom QGraphicsView with zoom functionality.
+"""
+
 from PySide6.QtWidgets import QGraphicsView
-from PySide6.QtCore import Qt, QRectF, Signal
-from PySide6.QtGui import QPainter
-
-from apps.RBM.BCF.gui.source.visual_bcf.scene import RFScene
+from PySide6.QtCore import Qt
 
 
-class RFView(QGraphicsView):
-    """View class for displaying the RF circuit"""
+class CustomGraphicsView(QGraphicsView):
+    """Custom QGraphicsView with zoom functionality"""
     
-    # Signals
-    resizeSignal = Signal()
-
-    def __init__(self, scene: RFScene):
+    def __init__(self, scene):
         super().__init__(scene)
-        self.setRenderHint(QPainter.Antialiasing)
-        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
-        # self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        # self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-        self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
-
-        # Set up the view
-        self.setRenderHint(QPainter.Antialiasing)
-        self.setRenderHint(QPainter.SmoothPixmapTransform)
-
-    def wheelEvent(self, event) -> None:
-        """Handle mouse wheel events for zooming"""
-        zoom_factor = 1.15
-
-        if event.angleDelta().y() > 0:
-            self.scale(zoom_factor, zoom_factor)
-        else:
-            self.scale(1.0 / zoom_factor, 1.0 / zoom_factor)
-
-    def fitInView(
-        self, rect: QRectF, aspectRatioMode: Qt.AspectRatioMode = Qt.KeepAspectRatio
-    ) -> None:
-        """Override to ensure proper scaling"""
-        super().fitInView(rect, aspectRatioMode)
-        # Ensure we don't zoom out too far
-        if self.transform().m11() < 0.1:
-            self.resetTransform()
-
-    def resetTransform(self) -> None:
-        """Reset the view transformation"""
-        super().resetTransform()
-        # Set a reasonable initial scale
-        self.scale(1.0, 1.0)
-
-    def keyPressEvent(self, event) -> None:
-        """Handle keyboard events"""
-        if event.key() == Qt.Key_Delete:
-            # Delete selected items
-            for item in self.scene().selectedItems():
-                if hasattr(item, "model") and hasattr(item.model, "remove"):
-                    item.model.remove()
-        super().keyPressEvent(event)
+        self.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
+        self.zoom_factor = 1.0
+        self.zoom_min = 0.1
+        self.zoom_max = 10.0
         
-    def resizeEvent(self, event) -> None:
-        """Handle resize events and emit signal"""
-        super().resizeEvent(event)
-        self.resizeSignal.emit()
+    def wheelEvent(self, event):
+        """Handle mouse wheel events for zooming"""
+        # Check if Ctrl is pressed
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            # Zoom functionality
+            zoom_in = event.angleDelta().y() > 0
+            zoom_speed = 1.15
+            
+            if zoom_in and self.zoom_factor < self.zoom_max:
+                self.scale(zoom_speed, zoom_speed)
+                self.zoom_factor *= zoom_speed
+            elif not zoom_in and self.zoom_factor > self.zoom_min:
+                self.scale(1/zoom_speed, 1/zoom_speed)
+                self.zoom_factor /= zoom_speed
+                
+            # Update status if parent has it
+            if hasattr(self.parent(), 'status_updated'):
+                self.parent().status_updated.emit(f"Zoom: {self.zoom_factor:.2f}x")
+        else:
+            # Default behavior for non-Ctrl wheel events
+            super().wheelEvent(event)
+            
+    def reset_zoom(self):
+        """Reset zoom to 1.0x"""
+        scale_factor = 1.0 / self.zoom_factor
+        self.scale(scale_factor, scale_factor)
+        self.zoom_factor = 1.0
