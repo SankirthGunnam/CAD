@@ -8,7 +8,7 @@ import sys
 import os
 
 # Add the BCF path to Python path
-bcf_path = os.path.join(os.path.dirname(__file__), 'apps', 'RBM', 'BCF')
+bcf_path = os.path.join(os.path.dirname(__file__), 'apps', 'RBM5', 'BCF')
 if bcf_path not in sys.path:
     sys.path.insert(0, bcf_path)
 

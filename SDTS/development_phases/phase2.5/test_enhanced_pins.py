@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 from PySide6.QtCore import QTimer, QPointF
 
 # Add the source path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'RBM', 'BCF', 'gui', 'src', 'visual_bcf'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'RBM5', 'BCF', 'gui', 'src', 'visual_bcf'))
 
 from visual_bcf_manager import VisualBCFManager
 

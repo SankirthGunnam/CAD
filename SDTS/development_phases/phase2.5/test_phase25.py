@@ -22,7 +22,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 # Import from the local phase 2.5 directory
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'RBM', 'BCF', 'gui', 'source', 'visual_bcf'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'RBM5', 'BCF', 'gui', 'source', 'visual_bcf'))
 from visual_bcf_manager import VisualBCFManager
 
 
