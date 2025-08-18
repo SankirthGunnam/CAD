@@ -16,7 +16,7 @@ from typing import Dict, Any, Callable, Optional
 import threading
 from queue import Queue
 
-from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
+# Removed custom_widgets import - functionality moved to artifacts
 from apps.RBM.BCF.gui.source.visual_bcf.scene import RFScene
 from apps.RBM.BCF.gui.source.visual_bcf.view import RFView
 from apps.RBM.BCF.source.models.chip import ChipModel

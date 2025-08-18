@@ -14,8 +14,9 @@ import logging
 from apps.RBM.BCF.source.models.visual_bcf_data_model import VisualBCFDataModel, ComponentData, ConnectionData
 from apps.RBM.BCF.gui.source.visual_bcf.scene import RFScene
 from apps.RBM.BCF.gui.source.visual_bcf.view import RFView
-from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
-from apps.RBM.BCF.gui.custom_widgets.components.rfic_chip import RFICChip
+# Updated to use artifacts - old custom_widgets Chip class functionality is now in ComponentWithPins
+# from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
+# from apps.RBM.BCF.gui.custom_widgets.components.rfic_chip import RFICChip
 from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
 
 logger = logging.getLogger(__name__)
@@ -866,7 +867,9 @@ class VisualBCFController(QObject):
         try:
             # For now, create a simple connection graphics item
             # In a full implementation, this would create the actual connection graphics
-            from apps.RBM.BCF.gui.custom_widgets.components.connection import Connection as ConnectionComponent
+            # Updated to use artifacts instead of custom_widgets
+            # from apps.RBM.BCF.gui.custom_widgets.components.connection import Connection as ConnectionComponent
+            # Note: Connection functionality is now handled by Wire in artifacts
             
             # Find the source and target components
             from_graphics = self._component_graphics_items.get(connection_data.from_component_id)
