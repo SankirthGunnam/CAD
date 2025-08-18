@@ -5,7 +5,7 @@ from PySide6.QtTest import QTest
 from PySide6.QtCore import Qt, QTimer
 
 # Import the RBM module
-from apps.RBM.BCF.src.RBM_Main import RBMMain
+from apps.RBM.BCF.source.RBM_Main import RBMMain
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def qapp():
 @pytest.fixture
 def mock_rdb_manager():
     """Mock RDBManager for testing"""
-    with patch('apps.RBM.BCF.src.RBM_Main.RDBManager') as mock:
+    with patch('apps.RBM.BCF.source.RBM_Main.RDBManager') as mock:
         mock_instance = Mock()
         mock.return_value = mock_instance
         yield mock_instance
@@ -29,7 +29,7 @@ def mock_rdb_manager():
 @pytest.fixture
 def mock_core_controller():
     """Mock CoreController for testing"""
-    with patch('apps.RBM.BCF.src.RBM_Main.CoreController') as mock:
+    with patch('apps.RBM.BCF.source.RBM_Main.CoreController') as mock:
         mock_instance = Mock()
         mock.return_value = mock_instance
         yield mock_instance
@@ -38,7 +38,7 @@ def mock_core_controller():
 @pytest.fixture
 def mock_gui_controller():
     """Mock GUIController for testing"""
-    with patch('apps.RBM.BCF.src.RBM_Main.GUIController') as mock:
+    with patch('apps.RBM.BCF.source.RBM_Main.GUIController') as mock:
         mock_instance = Mock()
         mock.return_value = mock_instance
         yield mock_instance
@@ -287,9 +287,9 @@ class TestRBMMainIntegration:
     def test_full_component_integration(self, qapp):
         """Test full integration of all RBMMain components"""
         # Given: Real dependencies (not mocked)
-        with patch('apps.RBM.BCF.src.RBM_Main.RDBManager') as mock_rdb, \
-             patch('apps.RBM.BCF.src.RBM_Main.CoreController') as mock_core, \
-             patch('apps.RBM.BCF.src.RBM_Main.GUIController') as mock_gui:
+        with patch('apps.RBM.BCF.source.RBM_Main.RDBManager') as mock_rdb, \
+             patch('apps.RBM.BCF.source.RBM_Main.CoreController') as mock_core, \
+             patch('apps.RBM.BCF.source.RBM_Main.GUIController') as mock_gui:
             
             mock_rdb_instance = Mock()
             mock_core_instance = Mock()
@@ -340,7 +340,7 @@ class TestRBMMainErrorScenarios:
     def test_initialization_with_missing_dependencies(self, qapp):
         """Test RBMMain behavior when dependencies are missing"""
         # Given: Missing RDBManager
-        with patch('apps.RBM.BCF.src.RBM_Main.RDBManager', side_effect=ImportError("RDBManager not found")):
+        with patch('apps.RBM.BCF.source.RBM_Main.RDBManager', side_effect=ImportError("RDBManager not found")):
             # When: Creating RBMMain
             # Then: Should raise ImportError
             with pytest.raises(ImportError, match="RDBManager not found"):
@@ -349,7 +349,7 @@ class TestRBMMainErrorScenarios:
     def test_signal_connection_failures(self, qapp, mock_rdb_manager, mock_core_controller):
         """Test behavior when signal connections fail"""
         # Given: GUI controller that raises exception on connect
-        with patch('apps.RBM.BCF.src.RBM_Main.GUIController') as mock_gui:
+        with patch('apps.RBM.BCF.source.RBM_Main.GUIController') as mock_gui:
             mock_gui_instance = Mock()
             mock_gui_instance.build_requested.connect.side_effect = Exception("Connection failed")
             mock_gui.return_value = mock_gui_instance

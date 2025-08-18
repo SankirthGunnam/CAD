@@ -14,9 +14,9 @@ sys.path.insert(0, project_root)
 
 # Import project modules with error handling
 try:
-    from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
-    from apps.RBM.BCF.src.RCC.core_controller import CoreController
-    from apps.RBM.BCF.src.RCC.build.build_master import BuildMaster
+    from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
+    from apps.RBM.BCF.source.RCC.core_controller import CoreController
+    from apps.RBM.BCF.source.RCC.build.build_master import BuildMaster
 except ImportError as e:
     print(f"Warning: Could not import some modules: {e}")
     # Create placeholder classes for testing

@@ -4,9 +4,9 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QPointF
 from PySide6.QtTest import QTest
 
-from apps.RBM.BCF.gui.src.visual_bcf.visual_bcf_manager import VisualBCFManager
-from apps.RBM.BCF.src.models.chip import ChipModel
-from apps.RBM.BCF.src.models.rfic_chip import RFICChipModel
+from apps.RBM.BCF.gui.source.visual_bcf.visual_bcf_manager import VisualBCFManager
+from apps.RBM.BCF.source.models.chip import ChipModel
+from apps.RBM.BCF.source.models.rfic_chip import RFICChipModel
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def qapp():
 @pytest.fixture
 def visual_manager(qapp):
     """Create a VisualBCFManager instance for testing"""
-    with patch('apps.RBM.BCF.gui.src.visual_bcf.visual_bcf_manager.FloatingToolbar'):
+    with patch('apps.RBM.BCF.gui.source.visual_bcf.visual_bcf_manager.FloatingToolbar'):
         manager = VisualBCFManager()
     yield manager
     manager.cleanup()
@@ -32,7 +32,7 @@ class TestVisualBCFManagerInitialization:
     
     def test_initialization_creates_required_components(self, qapp):
         """Test that initialization creates all required components"""
-        with patch('apps.RBM.BCF.gui.src.visual_bcf.visual_bcf_manager.FloatingToolbar'):
+        with patch('apps.RBM.BCF.gui.source.visual_bcf.visual_bcf_manager.FloatingToolbar'):
             manager = VisualBCFManager()
             
             # Should have scene and view
@@ -50,7 +50,7 @@ class TestVisualBCFManagerInitialization:
     def test_initialization_with_parent_controller(self, qapp):
         """Test initialization with parent controller creates toolbar"""
         parent_mock = Mock()
-        with patch('apps.RBM.BCF.gui.src.visual_bcf.visual_bcf_manager.FloatingToolbar') as mock_toolbar:
+        with patch('apps.RBM.BCF.gui.source.visual_bcf.visual_bcf_manager.FloatingToolbar') as mock_toolbar:
             manager = VisualBCFManager(parent_controller=parent_mock)
             
             # Should create toolbar when parent controller is provided
@@ -404,7 +404,7 @@ class TestVisualBCFManagerToolbarIntegration:
     def test_show_hide_toolbar(self, qapp):
         """Test showing and hiding RF toolbar"""
         parent_mock = Mock()
-        with patch('apps.RBM.BCF.gui.src.visual_bcf.visual_bcf_manager.FloatingToolbar') as mock_toolbar_class:
+        with patch('apps.RBM.BCF.gui.source.visual_bcf.visual_bcf_manager.FloatingToolbar') as mock_toolbar_class:
             mock_toolbar = Mock()
             mock_toolbar_class.return_value = mock_toolbar
             

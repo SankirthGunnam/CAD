@@ -31,8 +31,8 @@ from PySide6.QtCore import Qt, QTimer, Signal, QPointF
 from PySide6.QtGui import QFont, QColor, QBrush
 
 # Import real project components
-from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
-from apps.RBM.BCF.gui.src.visual_bcf.visual_bcf_manager import VisualBCFManager
+from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
+from apps.RBM.BCF.gui.source.visual_bcf.visual_bcf_manager import VisualBCFManager
 
 # Setup logging
 logging.basicConfig(

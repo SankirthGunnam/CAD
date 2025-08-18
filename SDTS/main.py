@@ -25,7 +25,7 @@ from PySide6.QtGui import QAction
 logger.debug("Imported Qt modules")
 
 try:
-    from apps.RBM.BCF.src.RBM_Main import RBMMain
+    from apps.RBM.BCF.source.RBM_Main import RBMMain
 
     logger.debug("Imported RBMMain")
 except Exception as e:

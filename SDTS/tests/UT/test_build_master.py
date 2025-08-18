@@ -4,9 +4,9 @@ from pathlib import Path
 import tempfile
 import shutil
 import os
-from apps.RBM.BCF.src.RCC.build.build_master import BuildMaster
-from apps.RBM.BCF.src.RCC.core_controller import BuildWorker
-from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
+from apps.RBM.BCF.source.RCC.build.build_master import BuildMaster
+from apps.RBM.BCF.source.RCC.core_controller import BuildWorker
+from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
 
 
 class TestBuildMaster:

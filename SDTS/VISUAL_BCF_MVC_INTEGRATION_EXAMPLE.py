@@ -10,11 +10,11 @@ from PySide6.QtCore import Signal, QPointF
 from typing import Dict, Any, Optional
 
 # Import the new MVC components
-from apps.RBM.BCF.src.models.visual_bcf_data_model import VisualBCFDataModel
-from apps.RBM.BCF.src.controllers.visual_bcf_controller import VisualBCFController
-from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
-from apps.RBM.BCF.gui.src.visual_bcf.view import RFView
-from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
+from apps.RBM.BCF.source.models.visual_bcf_data_model import VisualBCFDataModel
+from apps.RBM.BCF.source.controllers.visual_bcf_controller import VisualBCFController
+from apps.RBM.BCF.gui.source.visual_bcf.scene import RFScene
+from apps.RBM.BCF.gui.source.visual_bcf.view import RFView
+from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
 
 
 class VisualBCFManagerMVC(QWidget):
@@ -227,7 +227,7 @@ class VisualBCFManagerMVC(QWidget):
 def example_usage():
     """Example of how to use the new Visual BCF MVC architecture"""
     
-    from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
+    from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
     from PySide6.QtWidgets import QApplication
     import sys
     

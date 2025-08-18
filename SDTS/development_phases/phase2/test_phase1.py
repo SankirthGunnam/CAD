@@ -13,7 +13,7 @@ if bcf_path not in sys.path:
     sys.path.insert(0, bcf_path)
 
 from PySide6.QtWidgets import QApplication, QMainWindow
-from gui.src.visual_bcf.visual_bcf_manager import VisualBCFManager
+from gui.source.visual_bcf.visual_bcf_manager import VisualBCFManager
 
 def main():
     """Test Phase 1 Visual BCF Manager"""

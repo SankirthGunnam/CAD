@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import Mock, patch
 from PySide6.QtWidgets import QApplication
-from apps.RBM.BCF.gui.src.gui_controller import GUIController
-from apps.RBM.BCF.src.models.chip import ChipModel
+from apps.RBM.BCF.gui.source.gui_controller import GUIController
+from apps.RBM.BCF.source.models.chip import ChipModel
 
 
 @pytest.fixture
@@ -86,7 +86,7 @@ class TestGUIController:
 
         # Mock the core_controller to avoid AttributeError
         with patch.object(controller, 'core_controller') as mock_core:
-            from apps.RBM.BCF.src.RCC.core_controller import ToolState
+            from apps.RBM.BCF.source.RCC.core_controller import ToolState
             mock_core.current_state = ToolState.IDLE
             
             # Create mock slot

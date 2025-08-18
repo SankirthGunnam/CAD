@@ -30,11 +30,11 @@ from PySide6.QtGui import QColor
 
 # Import our MVC components
 try:
-    from apps.RBM.BCF.src.models.visual_bcf_data_model import VisualBCFDataModel
-    from apps.RBM.BCF.src.controllers.visual_bcf_controller import VisualBCFController
-    from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
-    from apps.RBM.BCF.gui.src.visual_bcf.view import RFView
-    from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
+    from apps.RBM.BCF.source.models.visual_bcf_data_model import VisualBCFDataModel
+    from apps.RBM.BCF.source.controllers.visual_bcf_controller import VisualBCFController
+    from apps.RBM.BCF.gui.source.visual_bcf.scene import RFScene
+    from apps.RBM.BCF.gui.source.visual_bcf.view import RFView
+    from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
 except ImportError as e:
     logger.error(f"Failed to import MVC components: {e}")
     logger.info("Some imports might fail, creating simplified versions for testing...")

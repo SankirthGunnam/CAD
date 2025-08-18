@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon
-from apps.RBM.BCF.gui.src.legacy_bcf.home_screen import HomeScreen
+from apps.RBM.BCF.gui.source.legacy_bcf.home_screen import HomeScreen
 
 
 class MainWindow(QMainWindow):

@@ -4,8 +4,8 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QPainter, QWheelEvent, QKeyEvent
 
-from apps.RBM.BCF.gui.src.visual_bcf.view import RFView
-from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
+from apps.RBM.BCF.gui.source.visual_bcf.view import RFView
+from apps.RBM.BCF.gui.source.visual_bcf.scene import RFScene
 
 
 @pytest.fixture

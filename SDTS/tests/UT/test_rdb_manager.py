@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch
-from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
-from apps.RBM.BCF.src.RDB.json_db import JSONDatabase
+from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
+from apps.RBM.BCF.source.RDB.json_db import JSONDatabase
 
 
 class TestRDBManager:

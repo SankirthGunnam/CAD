@@ -9,8 +9,8 @@ sys.path.insert(0, project_root)
 
 # Try importing our modules
 try:
-    from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
-    from apps.RBM.BCF.src.RDB.paths import (
+    from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
+    from apps.RBM.BCF.source.RDB.paths import (
         DEVICE_SETTINGS,
         BAND_CONFIG,
         BOARD_CONFIG,

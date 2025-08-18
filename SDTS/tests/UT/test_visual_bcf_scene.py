@@ -4,8 +4,8 @@ from PySide6.QtWidgets import QApplication, QGraphicsView
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QMouseEvent
 
-from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
-from apps.RBM.BCF.src.models.chip import ChipModel
+from apps.RBM.BCF.gui.source.visual_bcf.scene import RFScene
+from apps.RBM.BCF.source.models.chip import ChipModel
 from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
 
 
@@ -383,7 +383,7 @@ class TestRFSceneChipProperties:
         rf_scene.add_component(mock_chip)
         
         # Mock the dialog
-        with patch('apps.RBM.BCF.gui.src.views.chip_properties_dialog.ChipPropertiesDialog') as mock_dialog_class:
+        with patch('apps.RBM.BCF.gui.source.views.chip_properties_dialog.ChipPropertiesDialog') as mock_dialog_class:
             mock_dialog = Mock()
             mock_dialog_class.return_value = mock_dialog
             
@@ -401,7 +401,7 @@ class TestRFSceneChipProperties:
         rf_scene.add_component(mock_chip)
         
         # Mock the dialog
-        with patch('apps.RBM.BCF.gui.src.views.chip_properties_dialog.ChipPropertiesDialog') as mock_dialog_class:
+        with patch('apps.RBM.BCF.gui.source.views.chip_properties_dialog.ChipPropertiesDialog') as mock_dialog_class:
             mock_dialog = Mock()
             mock_dialog_class.return_value = mock_dialog
             
@@ -477,7 +477,7 @@ class TestRFSceneErrorHandling:
         rf_scene.add_component(mock_chip)
         
         # Force an error by patching the dialog import to fail
-        with patch('apps.RBM.BCF.gui.src.views.chip_properties_dialog.ChipPropertiesDialog', side_effect=ImportError("Test error")), \
+        with patch('apps.RBM.BCF.gui.source.views.chip_properties_dialog.ChipPropertiesDialog', side_effect=ImportError("Test error")), \
              patch('builtins.print') as mock_print:
             
             rf_scene._show_chip_properties(mock_chip)

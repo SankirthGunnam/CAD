@@ -30,8 +30,8 @@ from PySide6.QtGui import QColor
 
 try:
     # Import real components
-    from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
-    from apps.RBM.BCF.gui.src.visual_bcf.visual_bcf_manager import VisualBCFManager
+    from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
+    from apps.RBM.BCF.gui.source.visual_bcf.visual_bcf_manager import VisualBCFManager
     real_components_available = True
     logger.info("Real components imported successfully")
 except ImportError as e:

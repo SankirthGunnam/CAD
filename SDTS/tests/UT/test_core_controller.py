@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch
-from apps.RBM.BCF.src.RCC.core_controller import CoreController, ToolState, ToolEvent
-from apps.RBM.BCF.src.RCC.build.build_master import BuildMaster
+from apps.RBM.BCF.source.RCC.core_controller import CoreController, ToolState, ToolEvent
+from apps.RBM.BCF.source.RCC.build.build_master import BuildMaster
 
 
 class TestCoreController:
@@ -60,7 +60,7 @@ class TestCoreController:
         controller = CoreController(mock_rdb_manager)
         
         # Import WorkerRequest and WorkerPriority for proper format
-        from apps.RBM.BCF.src.RCC.core_controller import WorkerRequest, WorkerPriority
+        from apps.RBM.BCF.source.RCC.core_controller import WorkerRequest, WorkerPriority
 
         # Test WorkerRequest creation
         worker_request = WorkerRequest(
