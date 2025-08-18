@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout
 from typing import Any, Dict
-from .base_view import BaseView
+from apps.RBM.BCF.gui.src.legacy_bcf.views.base_view import BaseView
 
 
 class TableView(BaseView):

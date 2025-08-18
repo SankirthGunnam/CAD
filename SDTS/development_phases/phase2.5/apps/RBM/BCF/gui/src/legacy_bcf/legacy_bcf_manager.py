@@ -18,7 +18,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
-from .views.base_view import BaseView
+from apps.RBM.BCF.gui.src.legacy_bcf.views.base_view import BaseView
 from apps.RBM.BCF.src.controllers.base_controller import BaseController
 from apps.RBM.BCF.src.models.base_model import BaseModel
 

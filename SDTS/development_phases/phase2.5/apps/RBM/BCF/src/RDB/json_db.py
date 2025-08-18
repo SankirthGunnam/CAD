@@ -2,7 +2,7 @@ import json
 import os
 from typing import Dict, List, Any, Optional
 from PySide6.QtCore import QObject, Signal
-from .database_interface import DatabaseInterface
+from apps.RBM.BCF.src.RDB.database_interface import DatabaseInterface
 
 
 class JSONDatabase(QObject):

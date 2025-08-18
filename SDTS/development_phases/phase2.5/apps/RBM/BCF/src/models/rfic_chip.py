@@ -5,8 +5,8 @@ Extends the base ChipModel with RF-specific properties and pin configurations.
 
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Tuple
-from .chip import ChipModel
-from .pin import Pin
+from apps.RBM.BCF.src.models.chip import ChipModel
+from apps.RBM.BCF.src.models.pin import Pin
 
 
 @dataclass

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
-from .pin import Pin
+from apps.RBM.BCF.src.models.pin import Pin
 
 
 @dataclass

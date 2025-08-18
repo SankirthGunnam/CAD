@@ -6,8 +6,8 @@ import logging
 import queue
 from dataclasses import dataclass
 from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
-from .build.build_master import BuildMaster
-from .state_machine import StateMachine, ToolState, ToolEvent
+from apps.RBM.BCF.src.RCC.build.build_master import BuildMaster
+from apps.RBM.BCF.src.RCC.state_machine import StateMachine, ToolState, ToolEvent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

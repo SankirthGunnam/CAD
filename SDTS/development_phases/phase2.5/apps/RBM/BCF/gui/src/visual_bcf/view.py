@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QGraphicsView
 from PySide6.QtCore import Qt, QRectF, Signal
 from PySide6.QtGui import QPainter
 
-from .scene import RFScene
+from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
 
 
 class RFView(QGraphicsView):

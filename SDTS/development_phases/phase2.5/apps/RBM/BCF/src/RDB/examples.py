@@ -3,8 +3,8 @@ Examples of using the JSON database with different data structures.
 """
 
 from typing import Dict, List
-from .json_db import JSONDatabase
-from .paths import (
+from apps.RBM.BCF.src.RDB.json_db import JSONDatabase
+from apps.RBM.BCF.src.RDB.paths import (
     DEVICE_SETTINGS,
     DEVICE_MIPI,
     DEVICE_GPIO,

@@ -8,7 +8,7 @@ from PySide6.QtGui import QBrush, QColor, QPen, QFont
 from PySide6.QtCore import QRectF, QPointF, Qt
 
 from apps.RBM.BCF.src.models.rfic_chip import RFICChipModel
-from .chip import Chip
+from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
 
 
 class RFICChip(Chip):

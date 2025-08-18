@@ -1,8 +1,8 @@
 from PySide6.QtCore import QObject, Signal
 from typing import Dict, Any, List, Optional
 import logging
-from .database_interface import DatabaseInterface
-from .json_db import JSONDatabase
+from apps.RBM.BCF.src.RDB.database_interface import DatabaseInterface
+from apps.RBM.BCF.src.RDB.json_db import JSONDatabase
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -80,7 +80,7 @@ class RDBManager(QObject):
 
     def get_model(self, path: str, columns: List[Dict[str, str]]) -> "RDBTableModel":
         """Create a Qt model for the specified table"""
-        from ..models.rdb_table_model import RDBTableModel
+        from apps.RBM.BCF.src.models.rdb_table_model import RDBTableModel
 
         return RDBTableModel(self, path, columns)
     

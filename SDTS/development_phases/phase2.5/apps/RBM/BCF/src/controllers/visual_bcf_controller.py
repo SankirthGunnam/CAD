@@ -11,12 +11,12 @@ from PySide6.QtCore import QObject, Signal, QPointF
 from PySide6.QtWidgets import QMessageBox, QApplication
 import logging
 
-from ..models.visual_bcf_data_model import VisualBCFDataModel, ComponentData, ConnectionData
-from ...gui.src.visual_bcf.scene import RFScene
-from ...gui.src.visual_bcf.view import RFView
-from ...gui.custom_widgets.components.chip import Chip
-from ...gui.custom_widgets.components.rfic_chip import RFICChip
-from ..RDB.rdb_manager import RDBManager
+from apps.RBM.BCF.src.models.visual_bcf_data_model import VisualBCFDataModel, ComponentData, ConnectionData
+from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
+from apps.RBM.BCF.gui.src.visual_bcf.view import RFView
+from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
+from apps.RBM.BCF.gui.custom_widgets.components.rfic_chip import RFICChip
+from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
 
 logger = logging.getLogger(__name__)
 
@@ -783,7 +783,7 @@ class VisualBCFController(QObject):
             
             # Create appropriate model based on component type
             if component_data.component_type == "rfic" or component_data.function_type == "RFIC":
-                from ...src.models.rfic_chip import RFICChipModel
+                from apps.RBM.BCF.src.models.rfic_chip import RFICChipModel
                 
                 # Create RFIC model with component properties
                 chip_model = RFICChipModel(
@@ -799,7 +799,7 @@ class VisualBCFController(QObject):
                 graphics_item = RFICChip(chip_model)
                 
             elif component_data.component_type in ["modem", "device"] or component_data.function_type in ["LTE", "5G", "WLAN"]:
-                from ...src.models.chip import ChipModel
+                from apps.RBM.BCF.src.models.chip import ChipModel
                 
                 # Create specialized chip model for modems/devices
                 chip_model = ChipModel(
@@ -821,7 +821,7 @@ class VisualBCFController(QObject):
                 
             else:
                 # Create generic chip model
-                from ...src.models.chip import ChipModel
+                from apps.RBM.BCF.src.models.chip import ChipModel
                 
                 chip_model = ChipModel(
                     name=component_data.name,
@@ -866,7 +866,7 @@ class VisualBCFController(QObject):
         try:
             # For now, create a simple connection graphics item
             # In a full implementation, this would create the actual connection graphics
-            from ...gui.custom_widgets.components.connection import Connection as ConnectionComponent
+            from apps.RBM.BCF.gui.custom_widgets.components.connection import Connection as ConnectionComponent
             
             # Find the source and target components
             from_graphics = self._component_graphics_items.get(connection_data.from_component_id)

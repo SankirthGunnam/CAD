@@ -64,7 +64,7 @@ class Chip(QGraphicsItem):
             return
         
         # Find all connection components in the scene and update them
-        from .connection import Connection as ConnectionComponent
+        from apps.RBM.BCF.gui.custom_widgets.components.connection import Connection as ConnectionComponent
         for item in scene.items():
             if isinstance(item, ConnectionComponent):
                 # Check if this connection involves our chip's pins

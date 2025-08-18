@@ -113,47 +113,6 @@
     "visual_bcf": {
       "components": [
         {
-          "name": "5G_NR_Modem",
-          "component_type": "modem",
-          "function_type": "5G",
-          "properties": {
-            "function_type": "5G",
-            "interface_type": "MIPI",
-            "interface": {
-              "mipi": {
-                "channel": 2
-              }
-            },
-            "config": {
-              "usid": "5G001",
-              "frequency_range": "600MHz - 6GHz",
-              "max_power_dbm": 25.0,
-              "rf_bands": [
-                "n1",
-                "n3",
-                "n7",
-                "n28",
-                "n77",
-                "n78"
-              ],
-              "enabled": true
-            }
-          },
-          "visual_properties": {
-            "position": {
-              "x": 250,
-              "y": 200
-            },
-            "size": {
-              "width": 100,
-              "height": 80
-            },
-            "rotation": 0
-          },
-          "pins": [],
-          "id": "1b0ba187-52ca-4a6c-8af6-cdad50724e7e"
-        },
-        {
           "name": "RFIC_Primary",
           "component_type": "rfic",
           "function_type": "RFIC",
@@ -198,32 +157,36 @@
           "id": "2b5d8501-a6dd-46aa-b2f4-edcc35c9e7ae"
         },
         {
-          "name": "WiFi_Module",
-          "component_type": "device",
-          "function_type": "WIFI",
+          "name": "5G_NR_Modem",
+          "component_type": "modem",
+          "function_type": "5G",
           "properties": {
-            "function_type": "WIFI",
-            "interface_type": "UART",
+            "function_type": "5G",
+            "interface_type": "MIPI",
             "interface": {
-              "uart": {
-                "channel": 3
+              "mipi": {
+                "channel": 2
               }
             },
             "config": {
-              "usid": "WIFI001",
-              "frequency_range": "2.4GHz, 5GHz",
-              "max_power_dbm": 20.0,
+              "usid": "5G001",
+              "frequency_range": "600MHz - 6GHz",
+              "max_power_dbm": 25.0,
               "rf_bands": [
-                "2.4GHz",
-                "5GHz"
+                "n1",
+                "n3",
+                "n7",
+                "n28",
+                "n77",
+                "n78"
               ],
-              "enabled": false
+              "enabled": true
             }
           },
           "visual_properties": {
             "position": {
-              "x": 550,
-              "y": 400
+              "x": 250,
+              "y": 200
             },
             "size": {
               "width": 100,
@@ -232,7 +195,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "a8102f6c-c03f-4880-91b9-1abb8647cfd0"
+          "id": "6a903622-a59c-4611-ba63-22e6c46b9f7b"
         },
         {
           "name": "LTE_Modem_Main",
@@ -271,7 +234,151 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "e3b0d112-015a-4a62-ba5b-66adb9777ee6"
+          "id": "462bbd20-97eb-4c34-b6c9-0c33bd4ad669"
+        },
+        {
+          "name": "WiFi_Module",
+          "component_type": "device",
+          "function_type": "WIFI",
+          "properties": {
+            "function_type": "WIFI",
+            "interface_type": "UART",
+            "interface": {
+              "uart": {
+                "channel": 3
+              }
+            },
+            "config": {
+              "usid": "WIFI001",
+              "frequency_range": "2.4GHz, 5GHz",
+              "max_power_dbm": 20.0,
+              "rf_bands": [
+                "2.4GHz",
+                "5GHz"
+              ],
+              "enabled": false
+            }
+          },
+          "visual_properties": {
+            "position": {
+              "x": 250,
+              "y": 200
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "25ba2afa-a3be-4348-8e21-cf9bd20ca653"
+        },
+        {
+          "name": "Chip_5",
+          "component_type": "chip",
+          "function_type": "generic",
+          "properties": {
+            "function_type": "generic"
+          },
+          "visual_properties": {
+            "position": {
+              "x": -77.0,
+              "y": -213.0
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "8efa929e-feac-498f-96d8-87d8730aa336"
+        },
+        {
+          "name": "MYRJ4 (MYRJ41G2A6F-R25)",
+          "component_type": "chip",
+          "function_type": "Generic",
+          "properties": {
+            "function_type": "Generic",
+            "interface_type": "Generic",
+            "interface": {},
+            "config": {
+              "usid": "GENERIC001"
+            },
+            "width": 160,
+            "height": 100,
+            "package": "LGA 2.0x1.6mm",
+            "part_number": "MYRJ41G2A6F-R25",
+            "metadata": {
+              "applications": "LTE Band 1 Rx",
+              "channels": "1",
+              "description": "Ultra-compact SAW filter for cellular receive",
+              "frequency": "2110 - 2200 MHz",
+              "gain": "1.5 dB IL",
+              "image": "lga_2p0x1p6.png",
+              "name": "MYRJ4",
+              "package": "LGA 2.0x1.6mm",
+              "part_number": "MYRJ41G2A6F-R25",
+              "power": "N/A",
+              "type": "RF Filter"
+            }
+          },
+          "visual_properties": {
+            "position": {
+              "x": -77.0,
+              "y": -213.0
+            },
+            "size": {
+              "width": 160,
+              "height": 100
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "11950a60-eaf1-44ca-aafd-a0b610d17992"
+        },
+        {
+          "name": "AFEM-8092 (AFEM-8092)",
+          "component_type": "chip",
+          "function_type": "Generic",
+          "properties": {
+            "function_type": "Generic",
+            "interface_type": "Generic",
+            "interface": {},
+            "config": {
+              "usid": "GENERIC001"
+            },
+            "width": 120,
+            "height": 80,
+            "package": "CSP 2.5x2.0mm",
+            "part_number": "AFEM-8092",
+            "metadata": {
+              "applications": "Multi-band LTE/5G",
+              "channels": "Tunable",
+              "description": "High-performance antenna tuner with wide frequency coverage",
+              "frequency": "700 MHz - 2.7 GHz",
+              "gain": "Variable",
+              "image": "csp_2p5x2p0.png",
+              "name": "AFEM-8092",
+              "package": "CSP 2.5x2.0mm",
+              "part_number": "AFEM-8092",
+              "power": "N/A",
+              "type": "Antenna Tuner"
+            }
+          },
+          "visual_properties": {
+            "position": {
+              "x": -77.0,
+              "y": -213.0
+            },
+            "size": {
+              "width": 120,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "cb2f4ad4-272a-41e9-a774-48d4388a81da"
         }
       ],
       "connections": [],

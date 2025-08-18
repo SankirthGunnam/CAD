@@ -1,5 +1,5 @@
 """RDB Models package"""
 
-from .rdb_table_model import RDBTableModel
+from apps.RBM.BCF.src.models.rdb_table_model import RDBTableModel
 
 __all__ = ["RDBTableModel", "ChipModel", "PinModel"]

@@ -21,8 +21,8 @@ from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
 from apps.RBM.BCF.gui.src.visual_bcf.view import RFView
 from apps.RBM.BCF.src.models.chip import ChipModel
 from apps.RBM.BCF.src.RCC.core_controller import ToolState
-from .visual_bcf.visual_bcf_manager import VisualBCFManager
-from .legacy_bcf.legacy_bcf_manager import LegacyBCFManager
+from apps.RBM.BCF.gui.src.visual_bcf.visual_bcf_manager import VisualBCFManager
+from apps.RBM.BCF.gui.src.legacy_bcf.legacy_bcf_manager import LegacyBCFManager
 
 
 class GUIController(QMainWindow):

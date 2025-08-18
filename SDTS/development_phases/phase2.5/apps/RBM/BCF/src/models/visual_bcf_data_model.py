@@ -8,7 +8,7 @@ and properties data from the underlying JSON database tables used by Legacy BCF.
 
 from typing import Dict, List, Any, Optional, Tuple
 from PySide6.QtCore import QObject, Signal
-from ..RDB.rdb_manager import RDBManager
+from apps.RBM.BCF.src.RDB.rdb_manager import RDBManager
 import uuid
 import logging
 

@@ -1,4 +1,4 @@
-from .db.memory_db import MemoryDB
+from apps.RBM.BCF.src.db.memory_db import MemoryDB
 
 
 def init_database():

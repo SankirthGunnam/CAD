@@ -12,14 +12,14 @@ from PySide6.QtCore import Qt, Signal, QPointF, QTimer
 from PySide6.QtGui import QPen, QBrush, QColor, QKeySequence, QShortcut
 from typing import Dict, Any, Optional, List
 
-from .scene import RFScene
-from .view import RFView
+from apps.RBM.BCF.gui.src.visual_bcf.scene import RFScene
+from apps.RBM.BCF.gui.src.visual_bcf.view import RFView
 from apps.RBM.BCF.gui.custom_widgets.components.chip import Chip
 from apps.RBM.BCF.gui.custom_widgets.components.rfic_chip import RFICChip
 from apps.RBM.BCF.src.models.chip import ChipModel
 from apps.RBM.BCF.src.models.rfic_chip import RFICChipModel
-from ..views.chip_selection_dialog import ChipSelectionDialog
-from ..views.floating_toolbar import FloatingToolbar
+from apps.RBM.BCF.gui.src.views.chip_selection_dialog import ChipSelectionDialog
+from apps.RBM.BCF.gui.src.views.floating_toolbar import FloatingToolbar
 
 # Import Architecture components
 from apps.RBM.BCF.src.models.visual_bcf_data_model import VisualBCFDataModel

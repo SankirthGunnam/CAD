@@ -1,14 +1,14 @@
 from typing import Any, Dict, List
-from .base_controller import BaseController
-from ..models.table_model import TableModel
-from ...gui.src.legacy_bcf.views.table_view import TableView
+from apps.RBM.BCF.src.controllers.base_controller import BaseController
+from apps.RBM.BCF.src.models.base_model import BaseModel
+from apps.RBM.BCF.gui.src.legacy_bcf.views.table_view import TableView
 
 
 class TableController(BaseController):
     """Controller for table data"""
 
     def __init__(self):
-        super().__init__(TableModel())
+        super().__init__(BaseModel())
         self.view = None
 
     def set_view(self, view: TableView):
