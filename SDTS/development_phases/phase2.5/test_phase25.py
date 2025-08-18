@@ -13,13 +13,16 @@ This test demonstrates all the fixes and enhancements made in Phase 2.5:
 import sys
 import os
 
-# Add the BCF directory to path so we can import the visual manager
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'RBM', 'BCF', 'gui', 'src', 'visual_bcf'))
+# Add the project root directory to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, project_root)
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QLabel
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
+# Import from the local phase 2.5 directory
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'RBM', 'BCF', 'gui', 'source', 'visual_bcf'))
 from visual_bcf_manager import VisualBCFManager
 
 
