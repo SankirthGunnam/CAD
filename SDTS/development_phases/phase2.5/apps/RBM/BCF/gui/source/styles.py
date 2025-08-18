@@ -15,7 +15,7 @@ def get_resource_path(relative_path):
 
 def load_stylesheet():
     """Load the stylesheet from CSS file or fall back to embedded styles"""
-    css_path = get_resource_path("gui/assets/styles.css")
+    css_path = get_resource_path("gui/resource/styles.css")
 
     # Try to load from file first
     if os.path.exists(css_path):

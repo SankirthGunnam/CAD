@@ -9,9 +9,9 @@ class PackageImageGenerator:
     
     def __init__(self, image_dir: str = None):
         if image_dir is None:
-            # Default to resources/package_images directory relative to this file
+            # Default to resource/package_images directory relative to this file
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            self.image_dir = os.path.join(current_dir, '../../../resources/package_images')
+            self.image_dir = os.path.join(current_dir, '../../../resource/package_images')
         else:
             self.image_dir = image_dir
             
