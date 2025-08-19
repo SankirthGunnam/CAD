@@ -11,7 +11,7 @@ from PySide6.QtCore import QObject, Signal, QPointF
 from PySide6.QtWidgets import QMessageBox, QApplication
 import logging
 
-from apps.RBM5.BCF.source.models.visual_bcf_data_model import VisualBCFDataModel, ComponentData, ConnectionData
+from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualBCFDataModel, ComponentData, ConnectionData
 from apps.RBM5.BCF.gui.source.visual_bcf.scene import RFScene
 from apps.RBM5.BCF.gui.source.visual_bcf.view import RFView
 # Updated to use artifacts - old custom_widgets Chip class functionality is now in ComponentWithPins

@@ -2,6 +2,10 @@ import json
 import os
 from typing import Dict, List, Any, Optional
 from PySide6.QtCore import QObject, Signal
+
+# Use centralized path setup from BCF package
+import apps.RBM5.BCF  # This automatically sets up the path
+
 from apps.RBM5.BCF.source.RDB.database_interface import DatabaseInterface
 
 

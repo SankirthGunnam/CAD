@@ -11,24 +11,21 @@ This phase fixes core functionality issues and implements modular structure:
 """
 
 import sys
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QMessageBox)
-from PySide6.QtCore import Signal, Qt, QPointF
 from typing import Dict, Any, List
 
-# Import from our new modular structure
-try:
-    # Try relative imports first (when imported as a package)
-    from .scene import ComponentScene
-    from .view import CustomGraphicsView
-    from .artifacts import ComponentWithPins, ComponentPin, Wire
-except ImportError:
-    # Fallback to direct imports (when running directly)
-    from scene import ComponentScene
-    from view import CustomGraphicsView
-    from artifacts import ComponentWithPins, ComponentPin, Wire
+from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
+                              QLabel, QMessageBox, QSplitter, QTabWidget)
+from PySide6.QtCore import Signal, Qt, QPointF
+
+from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
+from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
+from apps.RBM5.BCF.gui.source.visual_bcf.artifacts import ComponentWithPins, ComponentPin, Wire
+from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import FloatingToolbar as FloatingToolbarPalette
+from apps.RBM5.BCF.source.controllers.visual_bcf.device_settings_controller import DeviceSettingsController
+from apps.RBM5.BCF.source.controllers.visual_bcf.io_connect_controller import IOConnectController
 
 
-class VisualBCFManager(QWidget):
+class VisualBCFManager(QMainWindow):
     """
     Visual BCF Manager - Phase 2.5 Implementation
     
@@ -49,6 +46,7 @@ class VisualBCFManager(QWidget):
     def __init__(self, parent=None, parent_controller=None, rdb_manager=None):
         super().__init__(parent)
         self.setObjectName("VisualBCFManager")
+        self.setWindowTitle("Visual BCF Manager - Phase 2.5")
         
         # Store references
         self.parent_controller = parent_controller
@@ -61,25 +59,56 @@ class VisualBCFManager(QWidget):
         # Initialize properties
         self.scene = None
         self.view = None
+        self.vbcf_info_tab_widget = None
+        self.device_list_controller = None
+        self.io_connect_controller = None
+        self.floating_toolbar = None
         
         # Setup UI components
         self._setup_ui()
         self._setup_toolbar()
         self._connect_signals()
         
-        # Enable keyboard focus
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        
         # Initial status
         self.status_updated.emit("Visual BCF Manager initialized - Phase 2.5")
         
     def _setup_ui(self):
         """Initialize the UI layout"""
-        # Main layout
-        layout = QVBoxLayout(self)
+        # Create central widget
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        
+        # Main layout for central widget
+        layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(5)
         
+        # Add info label
+        info_label = QLabel("Visual BCF Manager - Phase 2.5: Core Functionality Fixes")
+        info_label.setStyleSheet("font-weight: bold; color: #2c3e50; padding: 5px;")
+        layout.addWidget(info_label)
+        
+        # Create horizontal splitter
+        splitter = QSplitter(Qt.Horizontal)
+        layout.addWidget(splitter)
+        
+        # Left side: Graphics view
+        self._setup_graphics_view()
+        splitter.addWidget(self.view)
+        
+        # Right side: Tab widget
+        self._setup_tab_widget()
+        splitter.addWidget(self.vbcf_info_tab_widget)
+        
+        # Set splitter proportions (70% graphics view, 30% tabs)
+        splitter.setStretchFactor(0, 7)  # Graphics view
+        splitter.setStretchFactor(1, 3)  # Tab widget
+        
+        # Status bar
+        self._setup_status_bar()
+        
+    def _setup_graphics_view(self):
+        """Setup the graphics scene and view"""
         # Create custom graphics scene and view
         self.scene = ComponentScene()
         self.scene.setParent(self)  # Set parent for access to placement_mode
@@ -87,73 +116,167 @@ class VisualBCFManager(QWidget):
         
         self.view = CustomGraphicsView(self.scene)
         self.view.setObjectName("BCFGraphicsView")
-        self.view.setMinimumSize(800, 600)
+        self.view.setMinimumSize(600, 400)
         
-        # Add info label
-        info_label = QLabel("Visual BCF Manager - Phase 2.5: Core Functionality Fixes")
-        info_label.setStyleSheet("font-weight: bold; color: #2c3e50; padding: 5px;")
+    def _setup_tab_widget(self):
+        """Setup the tab widget with Device Settings and IO Connect tabs"""
+        self.vbcf_info_tab_widget = QTabWidget()
+        self.vbcf_info_tab_widget.setObjectName("vbcf_info_tab_widget")
         
-        # Add components to layout
-        layout.addWidget(info_label)
-        layout.addWidget(self.view)
+        # Set tab position to west (left side)
+        self.vbcf_info_tab_widget.setTabPosition(QTabWidget.West)
         
-        # Status bar equivalent
+        # Create Device Settings tab using new MVC controller
+        if DeviceSettingsController:
+            try:
+                # Create controller with proper RDB manager
+                self.device_settings_controller = DeviceSettingsController(
+                    rdb_manager=self.rdb_manager, 
+                    parent=self
+                )
+                print("created device settings controller", self.device_settings_controller)
+                # For backward compatibility, also store as device_list_controller
+                self.device_list_controller = self.device_settings_controller
+                
+                # Get the view widget from controller
+                device_widget = self.device_settings_controller.view
+                if device_widget:
+                    self.vbcf_info_tab_widget.addTab(device_widget, "Device Settings")
+                    print("✓ Device Settings tab added successfully")
+                else:
+                    print("✗ Failed to get Device Settings widget")
+            except Exception as e:
+                print(f"✗ Failed to create Device Settings controller: {e}")
+                self.device_settings_controller = None
+                self.device_list_controller = None
+        else:
+            print("✗ DeviceSettingsController not available")
+            self.device_settings_controller = None
+            self.device_list_controller = None
+        
+        # Create IO Connect tab using new MVC controller
+        if IOConnectController:
+            try:
+                # Create controller with proper RDB manager
+                self.io_connect_controller = IOConnectController(
+                    rdb_manager=self.rdb_manager,
+                    parent=self
+                )
+                
+                # Get the view widget from controller
+                io_widget = self.io_connect_controller.get_widget()
+                if io_widget:
+                    self.vbcf_info_tab_widget.addTab(io_widget, "IO Connect")
+                    print("✓ IO Connect tab added successfully")
+                else:
+                    print("✗ Failed to get IO Connect widget")
+            except Exception as e:
+                print(f"✗ Failed to create IO Connect controller: {e}")
+                self.io_connect_controller = None
+        else:
+            print("✗ IOConnectController not available")
+            self.io_connect_controller = None
+        
+        # Set minimum size for tab widget
+        self.vbcf_info_tab_widget.setMinimumWidth(350)
+        
+        # Initialize controllers if they were created successfully
+        try:
+            if self.device_settings_controller:
+                # Initialize with default revision
+                self.device_settings_controller.init_tab(revision=1)
+                print("✓ Device Settings controller initialized")
+        except Exception as e:
+            print(f"✗ Failed to initialize Device Settings controller: {e}")
+            
+        try:
+            if self.io_connect_controller:
+                # Initialize with default revision
+                self.io_connect_controller.init_tab(revision=1)
+                print("✓ IO Connect controller initialized")
+        except Exception as e:
+            print(f"✗ Failed to initialize IO Connect controller: {e}")
+        
+    def _setup_status_bar(self):
+        """Setup the status bar"""
         self.status_label = QLabel("Ready - Click 'Add Component' then click on scene")
         self.status_label.setStyleSheet("padding: 5px; background: #ecf0f1; border-top: 1px solid #bdc3c7;")
-        layout.addWidget(self.status_label)
+        self.statusBar().addWidget(self.status_label)
         
     def _setup_toolbar(self):
-        """Create toolbar with component placement functionality"""
-        # Create toolbar layout
-        toolbar_layout = QHBoxLayout()
+        """Create floating toolbar with component placement functionality"""
+        print("🔧 VisualBCFManager: Setting up floating toolbar...")
+        # Create floating toolbar using working QPalette implementation
+        central_widget = self.centralWidget()
+        self.floating_toolbar = FloatingToolbarPalette(parent=central_widget)
+        print(f"🔧 VisualBCFManager: Created floating toolbar: {self.floating_toolbar}")
         
-        # Component type buttons
-        self.btn_add_chip = QPushButton("Add Chip")
-        self.btn_add_chip.setToolTip("Place chip components on scene")
-        self.btn_add_chip.clicked.connect(lambda: self._set_component_type("chip"))
+        # Show the floating toolbar first
+        print("🔧 VisualBCFManager: Calling show() on floating toolbar...")
+        self.floating_toolbar.show()
+        print(f"🔧 VisualBCFManager: Toolbar visibility after show: {self.floating_toolbar.isVisible()}")
         
-        self.btn_add_resistor = QPushButton("Add Resistor")
-        self.btn_add_resistor.setToolTip("Place resistor components on scene")
-        self.btn_add_resistor.clicked.connect(lambda: self._set_component_type("resistor"))
+        # Position the toolbar at top-center of the graphics view
+        self._position_toolbar_on_graphics_view()
+        print(f"🔧 VisualBCFManager: Positioned toolbar at: {self.floating_toolbar.pos()}")
         
-        self.btn_add_capacitor = QPushButton("Add Capacitor")
-        self.btn_add_capacitor.setToolTip("Place capacitor components on scene")
-        self.btn_add_capacitor.clicked.connect(lambda: self._set_component_type("capacitor"))
+        # Force layout update and visibility
+        self.floating_toolbar.adjustSize()  # Adjust to content size
+        self.floating_toolbar.show()  # Ensure visible
+        self.floating_toolbar.raise_()  # Bring to front
+        self.floating_toolbar.activateWindow()  # Activate
         
-        # Control buttons
-        self.btn_select_mode = QPushButton("Select Mode")
-        self.btn_select_mode.setToolTip("Switch to selection mode")
-        self.btn_select_mode.clicked.connect(self._set_select_mode)
+        print(f"🔧 VisualBCFManager: Final toolbar visibility: {self.floating_toolbar.isVisible()}")
+        print(f"🔧 VisualBCFManager: Toolbar size: {self.floating_toolbar.size()}")
+        print(f"🔧 VisualBCFManager: Toolbar geometry: {self.floating_toolbar.geometry()}")
         
-        self.btn_delete = QPushButton("Delete Selected")
-        self.btn_delete.setToolTip("Delete selected components (or use Del key)")
-        self.btn_delete.clicked.connect(self._on_delete_selected)
+        # Connect toolbar signals to existing methods
+        self.floating_toolbar.add_chip_requested.connect(lambda: self._set_component_type("chip"))
+        self.floating_toolbar.add_resistor_requested.connect(lambda: self._set_component_type("resistor"))
+        self.floating_toolbar.add_capacitor_requested.connect(lambda: self._set_component_type("capacitor"))
+        self.floating_toolbar.select_mode_requested.connect(self._set_select_mode)
+        self.floating_toolbar.connection_mode_requested.connect(self._set_select_mode)  # For now, use select mode
+        self.floating_toolbar.delete_selected_requested.connect(self._on_delete_selected)
+        self.floating_toolbar.clear_scene_requested.connect(self._on_clear_scene)
+        self.floating_toolbar.zoom_fit_requested.connect(self._on_zoom_fit)
+        self.floating_toolbar.phase_info_requested.connect(self._show_phase_info)
         
-        self.btn_clear = QPushButton("Clear Scene")
-        self.btn_clear.setToolTip("Clear all components from scene")
-        self.btn_clear.clicked.connect(self._on_clear_scene)
+        # Connect zoom signals to view
+        if self.view:
+            self.floating_toolbar.zoom_in_requested.connect(self.view.zoom_in)
+            self.floating_toolbar.zoom_out_requested.connect(self.view.zoom_out) 
+            self.floating_toolbar.zoom_reset_requested.connect(self.view.reset_zoom)
         
-        self.btn_zoom_fit = QPushButton("Zoom Fit")
-        self.btn_zoom_fit.setToolTip("Fit scene in view")
-        self.btn_zoom_fit.clicked.connect(self._on_zoom_fit)
+    def _position_toolbar_on_graphics_view(self):
+        """Position the floating toolbar at the top-center of the graphics view"""
+        if not self.view or not self.floating_toolbar:
+            return
+            
+        # Get the central widget to position within it
+        central_widget = self.centralWidget()
+        if not central_widget:
+            return
+            
+        # Get central widget size
+        central_size = central_widget.size()
         
-        self.btn_info = QPushButton("Phase Info")
-        self.btn_info.setToolTip("Show phase information")
-        self.btn_info.clicked.connect(self._show_phase_info)
+        # Get the actual toolbar size after adjustSize
+        self.floating_toolbar.adjustSize()
+        actual_toolbar_size = self.floating_toolbar.size()
         
-        # Add buttons to toolbar
-        toolbar_layout.addWidget(self.btn_add_chip)
-        toolbar_layout.addWidget(self.btn_add_resistor)
-        toolbar_layout.addWidget(self.btn_add_capacitor)
-        toolbar_layout.addWidget(self.btn_select_mode)
-        toolbar_layout.addWidget(self.btn_delete)
-        toolbar_layout.addWidget(self.btn_clear)
-        toolbar_layout.addWidget(self.btn_zoom_fit)
-        toolbar_layout.addWidget(self.btn_info)
-        toolbar_layout.addStretch()  # Push buttons to left
+        # Position it more towards the graphics view area (left side of splitter)
+        graphics_area_width = int(central_size.width() * 0.7)  # 70% for graphics view
+        x = max(10, (graphics_area_width - actual_toolbar_size.width()) // 2)
+        y = 50  # 50px from top to account for the info label
         
-        # Insert toolbar at top of main layout
-        self.layout().insertLayout(1, toolbar_layout)
+        print(f"🔧 VisualBCFManager: Central widget size: {central_size}")
+        print(f"🔧 VisualBCFManager: Actual toolbar size: {actual_toolbar_size}")
+        print(f"🔧 VisualBCFManager: Graphics area width: {graphics_area_width}")
+        print(f"🔧 VisualBCFManager: Calculated toolbar position: ({x}, {y})")
+        
+        # Position the toolbar
+        self.floating_toolbar.move(x, y)
+        
         
     def _connect_signals(self):
         """Connect internal signals"""
@@ -165,6 +288,25 @@ class VisualBCFManager(QWidget):
             self.scene.component_added.connect(self._on_component_added)
             self.scene.component_removed.connect(self._on_component_removed)
             self.scene.wire_added.connect(self._on_wire_added)
+            
+        # Connect tab controller signals (using new MVC structure)
+        if self.device_list_controller:
+            # Connect to MVC controller signals
+            if hasattr(self.device_list_controller, 'gui_event'):
+                self.device_list_controller.gui_event.connect(self._on_controller_gui_event)
+            # Try to connect legacy signals if available
+            elif hasattr(self.device_list_controller, 'device_selected'):
+                self.device_list_controller.device_selected.connect(self._on_device_selected)
+                self.device_list_controller.device_modified.connect(self._on_device_modified)
+            
+        if self.io_connect_controller:
+            # Connect to MVC controller signals
+            if hasattr(self.io_connect_controller, 'gui_event'):
+                self.io_connect_controller.gui_event.connect(self._on_controller_gui_event)
+            # Try to connect legacy signals if available
+            elif hasattr(self.io_connect_controller, 'connection_selected'):
+                self.io_connect_controller.connection_selected.connect(self._on_connection_selected)
+                self.io_connect_controller.connection_modified.connect(self._on_connection_modified)
         
     def _update_status_display(self, message: str):
         """Update status label"""
@@ -194,21 +336,23 @@ class VisualBCFManager(QWidget):
         
     def _update_button_states(self):
         """Update button visual states based on current mode"""
-        # Reset all buttons
-        buttons = [self.btn_add_chip, self.btn_add_resistor, self.btn_add_capacitor, self.btn_select_mode]
-        for btn in buttons:
-            btn.setStyleSheet("")
+        if not self.floating_toolbar:
+            return
             
-        # Highlight active button
+        # Clear all button selections first
+        self.floating_toolbar._clear_mode_selection()
+        self.floating_toolbar._clear_component_selection()
+        
+        # Set the appropriate button as checked based on current mode
         if self.placement_mode:
             if self.selected_component_type == "chip":
-                self.btn_add_chip.setStyleSheet("background-color: #4CAF50; color: white;")
+                self.floating_toolbar.add_chip_btn.setChecked(True)
             elif self.selected_component_type == "resistor":
-                self.btn_add_resistor.setStyleSheet("background-color: #4CAF50; color: white;")
+                self.floating_toolbar.add_resistor_btn.setChecked(True)
             elif self.selected_component_type == "capacitor":
-                self.btn_add_capacitor.setStyleSheet("background-color: #4CAF50; color: white;")
+                self.floating_toolbar.add_capacitor_btn.setChecked(True)
         else:
-            self.btn_select_mode.setStyleSheet("background-color: #4CAF50; color: white;")
+            self.floating_toolbar.select_btn.setChecked(True)
             
     def _on_component_added(self, name: str, component_type: str, position: QPointF):
         """Handle component added to scene"""
@@ -244,6 +388,62 @@ class VisualBCFManager(QWidget):
         
         wire_count = len(self.scene.wires)
         self.status_updated.emit(f"Wire connected: {start_component}.{start_pin} → {end_component}.{end_pin} - Total wires: {wire_count}")
+        
+    def _on_device_selected(self, device_name: str):
+        """Handle device selected in Device Settings tab"""
+        self.status_updated.emit(f"Device selected: {device_name}")
+        
+    def _on_device_modified(self, device_data: dict):
+        """Handle device modified in Device Settings tab"""
+        if device_data.get('action') == 'deleted':
+            device_name = device_data.get('device', {}).get('name', 'Unknown')
+            self.status_updated.emit(f"Device deleted: {device_name}")
+        else:
+            device_name = device_data.get('name', 'Unknown')
+            self.status_updated.emit(f"Device modified: {device_name}")
+            
+        # Refresh IO Connect tab to reflect changes
+        if self.io_connect_controller:
+            self.io_connect_controller.refresh()
+        
+    def _on_connection_selected(self, connection_id: str):
+        """Handle connection selected in IO Connect tab"""
+        self.status_updated.emit(f"Connection selected: {connection_id}")
+        
+    def _on_connection_modified(self, connection_data: dict):
+        """Handle connection modified in IO Connect tab"""
+        if connection_data.get('action') == 'deleted':
+            conn_id = connection_data.get('connection', {}).get('id', 'Unknown')
+            self.status_updated.emit(f"Connection deleted: {conn_id}")
+        else:
+            conn_id = connection_data.get('id', 'Unknown')
+            self.status_updated.emit(f"Connection modified: {conn_id}")
+            
+    def _on_controller_gui_event(self, event_name: str, event_data: dict):
+        """Handle GUI events from MVC controllers."""
+        # Handle device-related events
+        if event_name == "device_selected":
+            device_name = event_data.get('device_name', 'Unknown')
+            self._on_device_selected(device_name)
+        elif event_name == "device_modified":
+            self._on_device_modified(event_data)
+        # Handle connection-related events
+        elif event_name == "connection_selected":
+            connection_id = event_data.get('connection_id', 'Unknown')
+            self._on_connection_selected(connection_id)
+        elif event_name == "connection_modified":
+            self._on_connection_modified(event_data)
+        # Handle other events
+        elif event_name in ["tab_initialized", "refresh_completed", "controller_refreshed"]:
+            # Log these events for debugging
+            controller = event_data.get('controller', 'Unknown')
+            self.status_updated.emit(f"Controller event: {event_name} from {controller}")
+        elif event_name == "auto_connect_completed":
+            connections_created = event_data.get('connections_created', 0)
+            self.status_updated.emit(f"Auto-connect completed: {connections_created} connections created")
+        elif event_name == "devices_updated":
+            device_count = event_data.get('device_count', 0)
+            self.status_updated.emit(f"Devices updated: {device_count} devices available")
         
     def _on_delete_selected(self):
         """Delete selected components"""
@@ -390,6 +590,8 @@ class VisualBCFManager(QWidget):
 # Test function for standalone running
 def main():
     """Test the Phase 2.5 Visual BCF Manager"""
+    # Use centralized path setup from BCF package
+    import apps.RBM5.BCF  # This automatically sets up the path
     from PySide6.QtWidgets import QApplication, QMainWindow
     
     app = QApplication(sys.argv)

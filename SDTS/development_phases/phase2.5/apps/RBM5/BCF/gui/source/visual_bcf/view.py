@@ -45,3 +45,29 @@ class CustomGraphicsView(QGraphicsView):
         scale_factor = 1.0 / self.zoom_factor
         self.scale(scale_factor, scale_factor)
         self.zoom_factor = 1.0
+        
+        # Update status if parent has it
+        if hasattr(self.parent(), 'status_updated'):
+            self.parent().status_updated.emit(f"Zoom reset: {self.zoom_factor:.2f}x")
+            
+    def zoom_in(self):
+        """Zoom in by a fixed amount"""
+        if self.zoom_factor < self.zoom_max:
+            zoom_speed = 1.25
+            self.scale(zoom_speed, zoom_speed)
+            self.zoom_factor *= zoom_speed
+            
+            # Update status if parent has it
+            if hasattr(self.parent(), 'status_updated'):
+                self.parent().status_updated.emit(f"Zoom in: {self.zoom_factor:.2f}x")
+                
+    def zoom_out(self):
+        """Zoom out by a fixed amount"""
+        if self.zoom_factor > self.zoom_min:
+            zoom_speed = 1.25
+            self.scale(1/zoom_speed, 1/zoom_speed)
+            self.zoom_factor /= zoom_speed
+            
+            # Update status if parent has it
+            if hasattr(self.parent(), 'status_updated'):
+                self.parent().status_updated.emit(f"Zoom out: {self.zoom_factor:.2f}x")

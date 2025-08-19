@@ -1,3 +1,6 @@
+import threading
+from queue import Queue
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -13,13 +16,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt, QObject, Signal, Slot, QThread, QMetaObject
 from typing import Dict, Any, Callable, Optional
-import threading
-from queue import Queue
 
-# Removed custom_widgets import - functionality moved to artifacts
 from apps.RBM5.BCF.gui.source.visual_bcf.scene import RFScene
 from apps.RBM5.BCF.gui.source.visual_bcf.view import RFView
-from apps.RBM5.BCF.source.models.chip import ChipModel
+from apps.RBM5.BCF.source.models.visual_bcf.chip import ChipModel
 from apps.RBM5.BCF.source.RCC.core_controller import ToolState
 from apps.RBM5.BCF.gui.source.visual_bcf.visual_bcf_manager import VisualBCFManager
 from apps.RBM5.BCF.gui.source.legacy_bcf.legacy_bcf_manager import LegacyBCFManager

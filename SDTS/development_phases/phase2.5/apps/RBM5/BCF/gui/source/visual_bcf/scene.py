@@ -3,22 +3,17 @@ Component Scene Module - Phase 2.5
 
 Custom scene that handles component placement and wire drawing.
 """
+from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import QGraphicsScene
 from PySide6.QtCore import Signal, QPointF, Qt
-from typing import TYPE_CHECKING
 
-try:
-    from .artifacts.pin import ComponentPin
-    from .artifacts.chip import ComponentWithPins
-    from .artifacts.connection import Wire
-except ImportError:
-    from artifacts.pin import ComponentPin
-    from artifacts.chip import ComponentWithPins
-    from artifacts.connection import Wire
+from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
+from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.chip import ComponentWithPins
+from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire
 
 if TYPE_CHECKING:
-    from .visual_bcf_manager import VisualBCFManager
+    from apps.RBM5.BCF.gui.source.visual_bcf.visual_bcf_manager import VisualBCFManager
 
 
 class ComponentScene(QGraphicsScene):

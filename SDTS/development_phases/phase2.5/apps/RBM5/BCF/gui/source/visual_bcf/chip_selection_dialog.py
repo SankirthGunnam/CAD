@@ -19,7 +19,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QFont
 from typing import Dict, Optional, List
-from apps.RBM5.BCF.gui.source.views.package_image_generator import PackageImageGenerator
+from apps.RBM5.BCF.gui.source.visual_bcf.package_image_generator import PackageImageGenerator
+
 
 class ChipSelectionDialog(QDialog):
     """Dialog for selecting RF front-end devices with vendor categorization"""

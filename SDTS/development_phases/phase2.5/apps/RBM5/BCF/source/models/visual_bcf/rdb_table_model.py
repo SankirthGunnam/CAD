@@ -1,4 +1,8 @@
 from typing import Any, Dict, List, Optional
+
+# Use centralized path setup from BCF package
+import apps.RBM5.BCF  # This automatically sets up the path
+
 from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex
 from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
 
@@ -17,7 +21,10 @@ class RDBTableModel(QAbstractTableModel):
         self.db = db
         self.table_path = table_path
         self.columns = columns
-        self.db.data_changed.connect(self._on_data_changed)
+        
+        # Only connect signal if db is not None
+        if self.db is not None and hasattr(self.db, 'data_changed'):
+            self.db.data_changed.connect(self._on_data_changed)
 
     def _on_data_changed(self, changed_path: str) -> None:
         """Handle database changes"""
@@ -26,6 +33,8 @@ class RDBTableModel(QAbstractTableModel):
 
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
         """Return number of rows in the table"""
+        if self.db is None:
+            return 0
         return len(self.db.get_table(self.table_path))
 
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
@@ -34,7 +43,7 @@ class RDBTableModel(QAbstractTableModel):
 
     def data(self, index: QModelIndex, role: int = Qt.DisplayRole) -> Any:
         """Return data for the given index and role"""
-        if not index.isValid():
+        if not index.isValid() or self.db is None:
             return None
 
         if role == Qt.DisplayRole or role == Qt.EditRole:
@@ -56,7 +65,7 @@ class RDBTableModel(QAbstractTableModel):
 
     def setData(self, index: QModelIndex, value: Any, role: int = Qt.EditRole) -> bool:
         """Set data at the given index"""
-        if not index.isValid() or role != Qt.EditRole:
+        if not index.isValid() or role != Qt.EditRole or self.db is None:
             return False
 
         try:
@@ -104,6 +113,8 @@ class RDBTableModel(QAbstractTableModel):
 
     def insertRow(self, row: int, parent: QModelIndex = QModelIndex()) -> bool:
         """Insert a new row"""
+        if self.db is None:
+            return False
         try:
             self.beginInsertRows(parent, row, row)
             new_row = {
@@ -120,6 +131,8 @@ class RDBTableModel(QAbstractTableModel):
 
     def removeRow(self, row: int, parent: QModelIndex = QModelIndex()) -> bool:
         """Remove a row"""
+        if self.db is None:
+            return False
         try:
             self.beginRemoveRows(parent, row, row)
             self.db.delete_row(self.table_path, row)

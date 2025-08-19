@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
 )
 from PySide6.QtCore import Qt
-from apps.RBM5.BCF.source.models.chip_table_model import ChipTableModel
+from apps.RBM5.BCF.source.models.visual_bcf.chip_table_model import ChipTableModel
 
 
 class ChipDialog(QDialog):

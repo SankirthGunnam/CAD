@@ -21,11 +21,12 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QPixmap
 from typing import Dict, Any, Optional
 
+
 class ChipPropertiesDialog(QDialog):
     """Dialog for editing chip properties and parameters"""
     
     properties_updated = Signal(dict)  # Emits updated properties
-    
+
     def __init__(self, chip_data: Dict[str, Any], parent=None):
         super().__init__(parent)
         self.setWindowTitle("Chip Properties")

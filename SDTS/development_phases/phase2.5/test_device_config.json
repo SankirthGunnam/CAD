@@ -1,0 +1,20 @@
+{
+  "config": {
+    "device": {
+      "settings": [],
+      "properties": {}
+    },
+    "band": {
+      "settings": [],
+      "properties": {}
+    },
+    "board": {
+      "settings": [],
+      "properties": {}
+    },
+    "rcc": {
+      "settings": [],
+      "properties": {}
+    }
+  }
+}

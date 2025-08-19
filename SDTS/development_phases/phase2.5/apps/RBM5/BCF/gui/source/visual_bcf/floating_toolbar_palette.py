@@ -1,17 +1,23 @@
+#!/usr/bin/env python3
+"""
+Floating Toolbar using QPalette for background styling instead of CSS
+This approach should be more reliable for background colors
+"""
+
+import sys
 from PySide6.QtWidgets import (
-    QWidget,
-    QPushButton,
-    QHBoxLayout,
-    QSizePolicy,
-    QFrame,
-    QLabel
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+    QPushButton, QLabel, QFrame, QGraphicsView, QGraphicsScene
 )
-from PySide6.QtCore import Qt, Signal, QSize, QPoint
-from PySide6.QtGui import QMouseEvent
+from PySide6.QtCore import Qt, Signal, QPoint
+from PySide6.QtGui import QMouseEvent, QPalette, QColor, QPainter
 from typing import Optional
 
-class FloatingToolbar(QWidget):
-    """Floating toolbar for all scene operations using QWidget for better stability"""
+class FloatingToolbarPalette(QWidget):
+    """
+    Floating toolbar using QPalette for background instead of CSS.
+    This approach should be more reliable for showing background colors.
+    """
     
     # Signals for toolbar actions
     zoom_in_requested = Signal()
@@ -31,40 +37,31 @@ class FloatingToolbar(QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        print(f"🔧 FloatingToolbar: Initializing with parent: {parent}")
+        print(f"🔧 FloatingToolbarPalette: Initializing with parent: {parent}")
         
-        # Set object name for CSS targeting
-        self.setObjectName("FloatingToolbar")
+        # Set object name for debugging
+        self.setObjectName("FloatingToolbarPalette")
         
-        # Keep it simple - no special window flags, just a regular widget
-        # This will be positioned as an overlay within the parent widget
-        print(f"🔧 FloatingToolbar: Using regular widget mode for parent binding")
+        # Set fixed size for the toolbar
+        self.setFixedSize(500, 45)
         
-        # Set size constraints - make toolbar flexible
-        self.setMinimumSize(400, 40)  # Reduced minimum width for better fit
-        self.setMaximumSize(800, 60)  # Maximum width to prevent overflow
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        
-        # Track current mode
+        # Initialize current mode and dragging variables
         self.current_mode = "select"
-        
-        # Variables for dragging
         self._dragging = False
         self._drag_position = QPoint()
         
-        self._setup_ui()
-        self._apply_styling()
+        # Setup UI first
+        self.setup_ui()
         
-    def _setup_ui(self):
-        """Setup the user interface with buttons"""
-        root_layout = QHBoxLayout()
-        root_layout.setContentsMargins(0, 0, 0, 0)  # Reduced left margin for handle
-        self.setLayout(root_layout)
-        self.central_widget = QWidget()
-        root_layout.addWidget(self.central_widget)
-        layout = QHBoxLayout()
-        self.central_widget.setLayout(layout)
-        layout.setContentsMargins(2, 2, 5, 2)  # Reduced left margin for handle
+        # Apply QPalette background styling
+        self.apply_palette_styling()
+        
+        print(f"🔧 FloatingToolbarPalette: Initialization complete")
+        
+    def setup_ui(self):
+        """Setup the complete toolbar UI with all buttons and functionality"""
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(3)
         
         # Add move handle at the beginning - use QLabel instead of QPushButton
@@ -76,26 +73,26 @@ class FloatingToolbar(QWidget):
         # Set cursor to indicate draggable
         self.move_handle.setCursor(Qt.SizeAllCursor)
         layout.addWidget(self.move_handle)
-        
+
         # Separator after handle
         sep_handle = QFrame()
         sep_handle.setFrameShape(QFrame.VLine)
         sep_handle.setFrameShadow(QFrame.Sunken)
         layout.addWidget(sep_handle)
         
-        # Mode selection group
-        self.select_btn = QPushButton("S", self)
+        # Mode selection group with better icons
+        self.select_btn = QPushButton("↗️", self)  # Cursor/selection icon
         self.select_btn.setToolTip("Select Mode (S)")
         self.select_btn.setCheckable(True)
         self.select_btn.setChecked(True)
-        self.select_btn.setFixedSize(30, 30)
+        self.select_btn.setFixedSize(30, 35)
         self.select_btn.clicked.connect(self._on_select_mode)
         layout.addWidget(self.select_btn)
         
-        self.connection_btn = QPushButton("C", self)
+        self.connection_btn = QPushButton("🔗", self)  # Link/connection icon
         self.connection_btn.setToolTip("Connection Mode (C)")
         self.connection_btn.setCheckable(True)
-        self.connection_btn.setFixedSize(30, 30)
+        self.connection_btn.setFixedSize(30, 35)
         self.connection_btn.clicked.connect(self._on_connection_mode)
         layout.addWidget(self.connection_btn)
         
@@ -105,25 +102,25 @@ class FloatingToolbar(QWidget):
         sep1.setFrameShadow(QFrame.Sunken)
         layout.addWidget(sep1)
         
-        # Component add buttons
+        # Component add buttons with better icons
         self.add_chip_btn = QPushButton("🔲", self)
         self.add_chip_btn.setToolTip("Add Chip")
         self.add_chip_btn.setCheckable(True)
-        self.add_chip_btn.setFixedSize(30, 30)
+        self.add_chip_btn.setFixedSize(30, 35)
         self.add_chip_btn.clicked.connect(self._on_add_chip_clicked)
         layout.addWidget(self.add_chip_btn)
         
-        self.add_resistor_btn = QPushButton("⧈", self)
+        self.add_resistor_btn = QPushButton("⌇", self)  # Resistor symbol
         self.add_resistor_btn.setToolTip("Add Resistor")
         self.add_resistor_btn.setCheckable(True)
-        self.add_resistor_btn.setFixedSize(30, 30)
+        self.add_resistor_btn.setFixedSize(30, 35)
         self.add_resistor_btn.clicked.connect(self._on_add_resistor_clicked)
         layout.addWidget(self.add_resistor_btn)
         
-        self.add_capacitor_btn = QPushButton("⧇", self)
+        self.add_capacitor_btn = QPushButton("-||-", self)  # Capacitor symbol
         self.add_capacitor_btn.setToolTip("Add Capacitor")
         self.add_capacitor_btn.setCheckable(True)
-        self.add_capacitor_btn.setFixedSize(30, 30)
+        self.add_capacitor_btn.setFixedSize(30, 35)
         self.add_capacitor_btn.clicked.connect(self._on_add_capacitor_clicked)
         layout.addWidget(self.add_capacitor_btn)
         
@@ -133,28 +130,28 @@ class FloatingToolbar(QWidget):
         sep2.setFrameShadow(QFrame.Sunken)
         layout.addWidget(sep2)
         
-        # Zoom controls
-        self.zoom_in_btn = QPushButton("+", self)
+        # Zoom controls with better icons
+        self.zoom_in_btn = QPushButton("+", self)  # Magnifying glass plus
         self.zoom_in_btn.setToolTip("Zoom In (+)")
-        self.zoom_in_btn.setFixedSize(30, 30)
+        self.zoom_in_btn.setFixedSize(30, 35)
         self.zoom_in_btn.clicked.connect(self.zoom_in_requested.emit)
         layout.addWidget(self.zoom_in_btn)
         
-        self.zoom_out_btn = QPushButton("−", self)
+        self.zoom_out_btn = QPushButton("-", self)  # Magnifying glass minus
         self.zoom_out_btn.setToolTip("Zoom Out (-)")
-        self.zoom_out_btn.setFixedSize(30, 30)
+        self.zoom_out_btn.setFixedSize(30, 35)
         self.zoom_out_btn.clicked.connect(self.zoom_out_requested.emit)
         layout.addWidget(self.zoom_out_btn)
         
-        self.zoom_reset_btn = QPushButton("⊡", self)
+        self.zoom_reset_btn = QPushButton("🔄", self)  # Target/reset icon
         self.zoom_reset_btn.setToolTip("Reset Zoom (0)")
-        self.zoom_reset_btn.setFixedSize(30, 30)
+        self.zoom_reset_btn.setFixedSize(30, 35)
         self.zoom_reset_btn.clicked.connect(self.zoom_reset_requested.emit)
         layout.addWidget(self.zoom_reset_btn)
         
-        self.zoom_fit_btn = QPushButton("⊞", self)
+        self.zoom_fit_btn = QPushButton("⊞", self)  # Framed picture icon
         self.zoom_fit_btn.setToolTip("Zoom Fit (F)")
-        self.zoom_fit_btn.setFixedSize(30, 30)
+        self.zoom_fit_btn.setFixedSize(30, 35)
         self.zoom_fit_btn.clicked.connect(self.zoom_fit_requested.emit)
         layout.addWidget(self.zoom_fit_btn)
         
@@ -164,17 +161,17 @@ class FloatingToolbar(QWidget):
         sep3.setFrameShadow(QFrame.Sunken)
         layout.addWidget(sep3)
         
-        # Component operations
-        self.delete_selected_btn = QPushButton("🗑", self)
+        # Component operations with better icons
+        self.delete_selected_btn = QPushButton("🗑", self)  # Trash/delete icon
         self.delete_selected_btn.setToolTip("Delete Selected (Del)")
-        self.delete_selected_btn.setFixedSize(30, 30)
+        self.delete_selected_btn.setFixedSize(30, 35)
         self.delete_selected_btn.setEnabled(False)
         self.delete_selected_btn.clicked.connect(self.delete_selected_requested.emit)
         layout.addWidget(self.delete_selected_btn)
         
-        self.clear_scene_btn = QPushButton("🗋", self)
+        self.clear_scene_btn = QPushButton("🗋", self)  # Clear/sweep icon
         self.clear_scene_btn.setToolTip("Clear Scene")
-        self.clear_scene_btn.setFixedSize(30, 30)
+        self.clear_scene_btn.setFixedSize(30, 35)
         self.clear_scene_btn.clicked.connect(self.clear_scene_requested.emit)
         layout.addWidget(self.clear_scene_btn)
         
@@ -184,17 +181,17 @@ class FloatingToolbar(QWidget):
         sep4.setFrameShadow(QFrame.Sunken)
         layout.addWidget(sep4)
         
-        # Edit operations
-        self.copy_btn = QPushButton("⧉", self)
+        # Edit operations with better icons
+        self.copy_btn = QPushButton("⧉", self)  # Copy/duplicate icon
         self.copy_btn.setToolTip("Copy (Ctrl+C)")
-        self.copy_btn.setFixedSize(30, 30)
+        self.copy_btn.setFixedSize(30, 35)
         self.copy_btn.setEnabled(False)
         self.copy_btn.clicked.connect(self.copy_chip_requested.emit)
         layout.addWidget(self.copy_btn)
         
-        self.paste_btn = QPushButton("⧪", self)
+        self.paste_btn = QPushButton("⧪", self)  # Clipboard/paste icon
         self.paste_btn.setToolTip("Paste (Ctrl+V)")
-        self.paste_btn.setFixedSize(30, 30)
+        self.paste_btn.setFixedSize(30, 35)
         self.paste_btn.setEnabled(False)
         self.paste_btn.clicked.connect(self.paste_chip_requested.emit)
         layout.addWidget(self.paste_btn)
@@ -208,72 +205,80 @@ class FloatingToolbar(QWidget):
         # Info button
         self.phase_info_btn = QPushButton("ℹ", self)
         self.phase_info_btn.setToolTip("Phase Info")
-        self.phase_info_btn.setFixedSize(30, 30)
+        self.phase_info_btn.setFixedSize(30, 35)
         self.phase_info_btn.clicked.connect(self.phase_info_requested.emit)
         layout.addWidget(self.phase_info_btn)
         
-    def _apply_styling(self):
-        """Apply custom styling to the toolbar"""
-        # Set a solid background color and ensure the widget has autoFillBackground enabled
+    def apply_palette_styling(self):
+        """
+        Apply light theme styling to match the app's overall theme
+        """
+        print("🎨 FloatingToolbarPalette: Applying light theme QPalette styling...")
+        
+        # Enable auto fill background
         self.setAutoFillBackground(True)
         
-        self.setStyleSheet("""
-            QWidget {
-                background-color: rgb(248, 249, 250);
-                border: 2px solid lightgray;
-                border-radius: 8px;
-                padding: 3px;
-            }
-            
-            QPushButton {
-                background-color: transparent;
-                border: 1px solid rgba(200, 200, 200, 100);
-                border-radius: 4px;
-                color: black;
-                font-weight: bold;
-                font-size: 13px;
-                padding: 2px;
-                margin: 1px;
-            }
-            
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 50);
-                border-color: rgba(255, 255, 255, 150);
-            }
-            
-            QPushButton:pressed {
-                background-color: rgba(255, 255, 255, 100);
-                border-color: rgba(255, 255, 255, 200);
-            }
-            
-            QPushButton:checked {
-                background-color: rgba(255, 200, 0, 180);
-                border-color: rgba(255, 220, 0, 200);
-                color: black;
-                font-weight: bold;
-            }
-            
-            QPushButton:disabled {
-                background-color: transparent;
-                color: rgba(150, 150, 150, 120);
-                border-color: rgba(150, 150, 150, 60);
-            }
-            
-            /* Special styling for move handle (now QLabel) */
-            QLabel#MoveHandle {
-                border: 1px solid rgba(255, 255, 255, 150);
-                border-radius: 3px;
-                color: rgba(50, 50, 50, 220);
-                font-size: 12px;
-                font-weight: bold;
-            }
-            
-            QFrame[frameShape="5"] {
-                color: rgba(200, 200, 200, 150);
-                max-width: 1px;
-            }
-        """)
+        # Create and configure palette with light theme colors
+        palette = self.palette()
         
+        # Light theme toolbar background - soft gray-blue
+        palette.setColor(QPalette.Window, QColor(248, 249, 250))       # Very light gray background
+        palette.setColor(QPalette.Base, QColor(248, 249, 250))         # Very light gray background
+        palette.setColor(QPalette.Button, QColor(239, 243, 246))       # Light button background
+        palette.setColor(QPalette.WindowText, QColor(52, 58, 64))      # Dark gray text
+        palette.setColor(QPalette.ButtonText, QColor(52, 58, 64))      # Dark gray button text
+        
+        # Apply the palette
+        self.setPalette(palette)
+        
+        # Style individual buttons with light theme colors
+        for button in self.findChildren(QPushButton):
+            button_palette = button.palette()
+            button_palette.setColor(QPalette.Button, QColor(255, 255, 255))        # White button background
+            button_palette.setColor(QPalette.ButtonText, QColor(73, 80, 87))       # Medium gray text
+            # Hover and pressed states
+            button_palette.setColor(QPalette.Light, QColor(233, 236, 239))         # Light hover state
+            button_palette.setColor(QPalette.Dark, QColor(0, 123, 255))            # Blue active/checked state
+            button.setPalette(button_palette)
+            button.setAutoFillBackground(True)
+        
+        # Style the move handle with accent color
+        handle_palette = self.move_handle.palette()
+        handle_palette.setColor(QPalette.Window, QColor(0, 123, 255))      # Primary blue handle
+        handle_palette.setColor(QPalette.WindowText, QColor(255, 255, 255))  # White text
+        self.move_handle.setPalette(handle_palette)
+        self.move_handle.setAutoFillBackground(True)
+        
+        print("🎨 FloatingToolbarPalette: Light theme QPalette styling applied successfully")
+        
+    def paintEvent(self, event):
+        """Custom paint event with light theme background and rounded corners"""
+        super().paintEvent(event)
+        
+        # Paint light theme background with subtle gradient and rounded corners
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Create light gradient for professional look
+        from PySide6.QtGui import QLinearGradient, QBrush
+        gradient = QLinearGradient(0, 0, 0, self.height())
+        gradient.setColorAt(0.0, QColor(255, 255, 255))    # White at top
+        gradient.setColorAt(1.0, QColor(245, 248, 250))    # Very light gray at bottom
+        
+        # Fill the toolbar with gradient and rounded corners
+        brush = QBrush(gradient)
+        painter.setBrush(brush)
+        painter.setPen(Qt.NoPen)
+        painter.drawRoundedRect(self.rect(), 12, 12)  # More rounded corners (12px radius)
+        
+        # Add subtle light border
+        painter.setBrush(Qt.NoBrush)
+        painter.setPen(QColor(206, 212, 218))  # Light gray border
+        painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 12, 12)
+        
+        painter.end()
+        
+    # Event handlers for toolbar actions (same as before)
     def _on_select_mode(self):
         """Handle select mode action"""
         self.current_mode = "select"
@@ -323,6 +328,7 @@ class FloatingToolbar(QWidget):
         self.add_resistor_btn.setChecked(False)
         self.add_capacitor_btn.setChecked(False)
         
+    # Public methods for external state management
     def set_selection_available(self, available: bool):
         """Enable/disable selection-dependent actions"""
         self.delete_selected_btn.setEnabled(available)
@@ -338,55 +344,31 @@ class FloatingToolbar(QWidget):
         
     def position_at_center_top(self, parent_widget):
         """Position the toolbar at the center top of the parent widget"""
-        toolbar_width = self.sizeHint().width()
-        toolbar_height = self.sizeHint().height()
-        print(f"🔧 FloatingToolbar: Toolbar size: {toolbar_width}x{toolbar_height}")
-        
-        # Get the parent widget's geometry in global coordinates
-        parent_rect = parent_widget.geometry()
-        parent_global_pos = parent_widget.mapToGlobal(parent_widget.rect().topLeft())
-        print(f"🔧 FloatingToolbar: Parent rect: {parent_rect}")
-        print(f"🔧 FloatingToolbar: Parent global pos: {parent_global_pos}")
-        
-        # Calculate center position relative to the parent widget
-        x = parent_global_pos.x() + (parent_rect.width() - toolbar_width) // 2
-        y = parent_global_pos.y() + 20  # 20px from top of parent
-        print(f"🔧 FloatingToolbar: Moving to position: ({x}, {y})")
-        
-        self.move(x, y)
-        print(f"🔧 FloatingToolbar: Actual position after move: {self.pos()}")
-        
-    def position_relative_to_window(self, parent_window):
-        """Position the toolbar relative to the parent window - more reliable"""
-        # Get the toolbar size
+        if not parent_widget:
+            print("🔧 FloatingToolbarPalette: No parent widget provided for positioning")
+            return
+            
+        # Get toolbar dimensions
         toolbar_width = self.width() if self.width() > 0 else self.sizeHint().width()
         toolbar_height = self.height() if self.height() > 0 else self.sizeHint().height()
-        print(f"🔧 FloatingToolbar: Using toolbar size: {toolbar_width}x{toolbar_height}")
         
-        # Get the parent window's geometry in global coordinates
-        if parent_window.isVisible():
-            parent_rect = parent_window.geometry()
-            parent_global_pos = parent_window.mapToGlobal(parent_window.rect().topLeft())
-        else:
-            # Use default positioning if window is not visible yet
-            parent_rect = parent_window.rect() if parent_window.rect().width() > 0 else parent_window.geometry()
-            parent_global_pos = QPoint(100, 100)  # Default position
-            
-        print(f"🔧 FloatingToolbar: Window rect: {parent_rect}")
-        print(f"🔧 FloatingToolbar: Window global pos: {parent_global_pos}")
+        # Get parent widget dimensions
+        parent_rect = parent_widget.rect()
         
-        # Calculate center position relative to the parent window
-        x = parent_global_pos.x() + (parent_rect.width() - toolbar_width) // 2
-        y = parent_global_pos.y() + 60  # 60px from top of window to account for title bar
+        # Calculate center position
+        x = (parent_rect.width() - toolbar_width) // 2
+        y = 20  # 20px from top
         
-        print(f"🔧 FloatingToolbar: Positioning to: ({x}, {y})")
+        # Position relative to parent
         self.move(x, y)
-        print(f"🔧 FloatingToolbar: Final position: {self.pos()}")
         
-        # Ensure toolbar is raised and visible
+        print(f"🔧 FloatingToolbarPalette: Positioned at ({x}, {y}) within parent {parent_rect}")
+        
+        # Ensure toolbar is visible and on top
         self.raise_()
-        self.activateWindow()
+        self.show()
         
+    # Mouse events for dragging functionality (same as before)
     def mousePressEvent(self, event: QMouseEvent):
         """Handle mouse press for dragging - only on move handle"""
         if event.button() == Qt.LeftButton:
@@ -396,6 +378,7 @@ class FloatingToolbar(QWidget):
                 self._dragging = True
                 self._drag_position = event.globalPosition().toPoint() - self.pos()
                 event.accept()
+                print("🔧 FloatingToolbarPalette: Started dragging")
                 return
                 
         # If not on move handle, pass to parent
@@ -408,8 +391,8 @@ class FloatingToolbar(QWidget):
                 new_pos = event.globalPosition().toPoint() - self._drag_position
                 self.move(new_pos)
                 event.accept()
-            except Exception:
-                # Ignore any drag-related errors to prevent crashes
+            except Exception as e:
+                print(f"🔧 FloatingToolbarPalette: Drag error: {e}")
                 pass
         else:
             super().mouseMoveEvent(event)
@@ -419,9 +402,13 @@ class FloatingToolbar(QWidget):
         if event.button() == Qt.LeftButton and self._dragging:
             self._dragging = False
             event.accept()
+            print("🔧 FloatingToolbarPalette: Stopped dragging")
         else:
             super().mouseReleaseEvent(event)
-            
-    def paintEvent(self, event):
-        """Custom paint event for rounded corners"""
-        super().paintEvent(event)
+
+
+# This module provides the FloatingToolbarPalette class for integration into the main application
+# The test code has been removed for cleaner integration
+
+# For testing this toolbar independently, use the standalone test file:
+# python floating_toolbar_palette.py

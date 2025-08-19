@@ -9,10 +9,7 @@ from PySide6.QtWidgets import QGraphicsLineItem, QMenu
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QPen, QColor
 
-try:
-    from .pin import ComponentPin
-except ImportError:
-    from pin import ComponentPin
+from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
 
 
 class Wire(QGraphicsLineItem):
