@@ -85,8 +85,8 @@ class ComponentScene(QGraphicsScene):
             self.removeItem(self.current_wire)
             self.current_wire = None
 
-        # Create new temporary wire
-        self.current_wire = Wire(pin)
+        # Create new temporary wire with scene reference for collision detection
+        self.current_wire = Wire(pin, scene=self)
         self.addItem(self.current_wire)
 
         # Update status
@@ -103,7 +103,7 @@ class ComponentScene(QGraphicsScene):
 
         # Update temporary wire if drawing
         if self.current_wire and self.current_wire.is_temporary:
-            self.current_wire.update_line(self.mouse_position)
+            self.current_wire.update_path(self.mouse_position)
 
         super().mouseMoveEvent(event)
 

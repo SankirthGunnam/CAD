@@ -250,6 +250,10 @@ class EnhancedWire(QGraphicsPathItem):
         self.wire_path = None
         self.avoided_components = []
         
+        # Track update mode for performance optimization
+        self._is_dragging = False
+        self._last_full_update_pos = None
+        
         # Set initial path
         self.update_path()
     
@@ -737,8 +741,25 @@ class EnhancedWire(QGraphicsPathItem):
         
         print(f"🔄 Intersection recalculation complete")
     
+    def set_dragging_mode(self, is_dragging: bool):
+        """Set whether the wire is currently being dragged"""
+        self._is_dragging = is_dragging
+        if not is_dragging:
+            # When dragging ends, mark for full update
+            self._last_full_update_pos = None
+    
+    def update_wire_position_dragging(self):
+        """Update wire position during dragging (lightweight)"""
+        self.set_dragging_mode(True)
+        self.update_wire_position_lightweight()
+    
+    def update_wire_position_final(self):
+        """Update wire position after dragging is complete (full update)"""
+        self.set_dragging_mode(False)
+        self.update_path()
+    
     def update_wire_position_lightweight(self):
-        """Lightweight update that only recalculates wire positions without full routing"""
+        """Lightweight update that maintains bumps while allowing smooth movement"""
         if not self.start_pin or not self.end_pin or not self.wire_path:
             return
         
@@ -754,14 +775,37 @@ class EnhancedWire(QGraphicsPathItem):
         self._last_start_pos = start_pos
         self._last_end_pos = end_pos
         
-        # Only update the wire path if it's a simple straight connection
-        # For complex routed wires, use the full update_path method
-        if len(self.wire_path.segments) <= 3:  # Simple wire
-            # Recalculate basic path without collision detection
-            self.wire_path = WirePath(start_pos, end_pos)
+        # If we're not in dragging mode, use full update
+        if not self._is_dragging:
+            self.update_path()
+            return
+        
+        # During dragging, use lightweight update with bump preservation
+        if self.wire_path and self.wire_path.intersection_bumps:
+            # Calculate position offset from last update
+            if hasattr(self, '_last_start_pos') and hasattr(self, '_last_end_pos'):
+                offset_x = start_pos.x() - self._last_start_pos.x()
+                offset_y = start_pos.y() - self._last_start_pos.y()
+            else:
+                offset_x = offset_y = 0
+            
+            # Adjust bump positions by the offset
+            adjusted_bumps = []
+            for bump_point, direction in self.wire_path.intersection_bumps:
+                adjusted_point = QPointF(bump_point.x() + offset_x, bump_point.y() + offset_y)
+                adjusted_bumps.append((adjusted_point, direction))
+            
+            # Create new wire path with adjusted bumps
+            new_wire_path = WirePath(start_pos, end_pos)
+            new_wire_path.intersection_bumps = adjusted_bumps
+            
+            # Update the wire
+            self.wire_path = new_wire_path
             self.setPath(self.wire_path.get_path())
+            
+            print(f"🔄 Lightweight update: Preserved {len(adjusted_bumps)} bumps during dragging")
         else:
-            # Complex wire - use full update
+            # No bumps to preserve, use full update
             self.update_path()
     
     def contextMenuEvent(self, event):

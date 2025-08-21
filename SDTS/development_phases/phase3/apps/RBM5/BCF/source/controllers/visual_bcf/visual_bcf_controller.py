@@ -933,7 +933,7 @@ class VisualBCFController(QObject):
                     if connection_id in self._connection_graphics_items:
                         return
 
-                    connection_graphics = Wire(start_pin)
+                    connection_graphics = Wire(start_pin, scene=self.scene)
                     if connection_graphics.complete_wire(end_pin):
                         self.scene.addItem(connection_graphics)
                         if hasattr(
