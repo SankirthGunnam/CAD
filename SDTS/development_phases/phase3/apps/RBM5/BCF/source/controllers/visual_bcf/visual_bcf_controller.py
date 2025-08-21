@@ -9,7 +9,7 @@ part of the MVC pattern.
 import logging
 from typing import Dict, List, Any, Tuple
 
-from PySide6.QtCore import QObject, Signal, QTimer, Qt
+from PySide6.QtCore import QObject, Signal, QTimer, Qt, QPoint
 from PySide6.QtWidgets import QWidget
 
 from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import (
@@ -18,8 +18,7 @@ from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import (
 from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
 from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts import ComponentWithPins, Wire
-from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import (
-    FloatingToolbar as FloatingToolbarPalette)
+from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import FloatingToolbar
 
 logger = logging.getLogger(__name__)
 
@@ -78,13 +77,15 @@ class VisualBCFController(QObject):
 
         # Create floating toolbar
         self.floating_toolbar = None
-        self._setup_toolbar()
 
         # Connect signals
         self._connect_signals()
 
         # Load existing data
         self.load_scene()
+
+        # Setup toolbar after everything else is initialized
+        self._setup_toolbar()
 
         # Setup periodic cleanup timer
         self.cleanup_timer = QTimer()
@@ -95,12 +96,10 @@ class VisualBCFController(QObject):
 
     def _setup_toolbar(self):
         """Create floating toolbar with component placement functionality"""
-        self.floating_toolbar = FloatingToolbarPalette(
+        self.floating_toolbar = FloatingToolbar(
             parent=self.parent_widget)
-        self.floating_toolbar.show()
-        self._position_toolbar_on_graphics_view()
 
-        # Connect toolbar signals
+        # Connect toolbar signals immediately
         self.floating_toolbar.add_chip_requested.connect(
             lambda: self._set_component_type("chip"))
         self.floating_toolbar.add_resistor_requested.connect(
@@ -125,6 +124,18 @@ class VisualBCFController(QObject):
             self.floating_toolbar.zoom_reset_requested.connect(
                 self.view.reset_zoom)
 
+        # Use QTimer to delay positioning until the parent widget is fully
+        # ready
+        QTimer.singleShot(100, self._finalize_toolbar_setup)
+
+    def _finalize_toolbar_setup(self):
+        """Finalize toolbar setup after parent widget is fully initialized"""
+        if self.floating_toolbar:
+            # Make sure the toolbar is visible and on top
+            self.floating_toolbar.raise_()
+            self.floating_toolbar.show()
+            self._position_toolbar_on_graphics_view()
+
     def _position_toolbar_on_graphics_view(self):
         """Position the floating toolbar at the top-center of the graphics view"""
         if not self.view or not self.floating_toolbar:
@@ -133,15 +144,29 @@ class VisualBCFController(QObject):
         if not self.parent_widget:
             return
 
-        parent_size = self.parent_widget.size()
+        # Get the graphics view's geometry within the parent widget
+        view_rect = self.view.geometry()
         self.floating_toolbar.adjustSize()
         actual_toolbar_size = self.floating_toolbar.size()
 
-        graphics_area_width = int(parent_size.width() * 0.7)
-        x = max(10, (graphics_area_width - actual_toolbar_size.width()) // 2)
-        y = 50
+        # Calculate the graphics view's position relative to the parent widget
+        view_global_pos = self.view.mapTo(self.parent_widget, QPoint(0, 0))
+
+        # Position toolbar at the top-center of the graphics view
+        x = view_global_pos.x() + max(10,
+                                      (view_rect.width() - actual_toolbar_size.width()) // 2)
+        y = view_global_pos.y() + 10  # 10px from top of graphics view
+
+        # Ensure the toolbar is within the parent's bounds
+        x = max(0, min(x, self.parent_widget.width() - actual_toolbar_size.width()))
+        y = max(0, min(y, self.parent_widget.height() -
+                actual_toolbar_size.height()))
 
         self.floating_toolbar.move(x, y)
+
+        # Debug logging
+        logger.info(
+            f"Positioned floating toolbar at ({x}, {y}) relative to graphics view at {view_global_pos}")
 
     def _set_component_type(self, component_type: str):
         """Set the component type for placement"""
@@ -882,6 +907,6 @@ class VisualBCFController(QObject):
         """Get the graphics scene"""
         return self.scene
 
-    def get_toolbar(self) -> FloatingToolbarPalette:
+    def get_toolbar(self) -> FloatingToolbar:
         """Get the floating toolbar"""
         return self.floating_toolbar

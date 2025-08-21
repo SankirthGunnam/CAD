@@ -33,14 +33,12 @@ class FloatingToolbar(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        print(f"🔧 FloatingToolbar: Initializing with parent: {parent}")
 
         # Set object name for CSS targeting
         self.setObjectName("FloatingToolbar")
 
         # Keep it simple - no special window flags, just a regular widget
         # This will be positioned as an overlay within the parent widget
-        print(f"🔧 FloatingToolbar: Using regular widget mode for parent binding")
 
         # Set size constraints - make toolbar flexible
         self.setMinimumSize(400, 40)  # Reduced minimum width for better fit
@@ -58,6 +56,9 @@ class FloatingToolbar(QWidget):
 
         self._setup_ui()
         self._apply_styling()
+
+        # Enable mouse tracking for the entire toolbar
+        self.setMouseTracking(True)
 
     def _setup_ui(self):
         """Setup the user interface with buttons"""
@@ -80,6 +81,8 @@ class FloatingToolbar(QWidget):
         self.move_handle.setAlignment(Qt.AlignCenter)
         # Set cursor to indicate draggable
         self.move_handle.setCursor(Qt.SizeAllCursor)
+        # Enable mouse tracking for the handle
+        self.move_handle.setMouseTracking(True)
         layout.addWidget(self.move_handle)
 
         # Separator after handle
@@ -343,67 +346,12 @@ class FloatingToolbar(QWidget):
         """Get the current mode"""
         return self.current_mode
 
-    def position_at_center_top(self, parent_widget):
-        """Position the toolbar at the center top of the parent widget"""
-        toolbar_width = self.sizeHint().width()
-        toolbar_height = self.sizeHint().height()
-        print(
-            f"🔧 FloatingToolbar: Toolbar size: {toolbar_width}x{toolbar_height}")
-
-        # Get the parent widget's geometry in global coordinates
-        parent_rect = parent_widget.geometry()
-        parent_global_pos = parent_widget.mapToGlobal(
-            parent_widget.rect().topLeft())
-        print(f"🔧 FloatingToolbar: Parent rect: {parent_rect}")
-        print(f"🔧 FloatingToolbar: Parent global pos: {parent_global_pos}")
-
-        # Calculate center position relative to the parent widget
-        x = parent_global_pos.x() + (parent_rect.width() - toolbar_width) // 2
-        y = parent_global_pos.y() + 20  # 20px from top of parent
-        print(f"🔧 FloatingToolbar: Moving to position: ({x}, {y})")
-
-        self.move(x, y)
-        print(f"🔧 FloatingToolbar: Actual position after move: {self.pos()}")
-
-    def position_relative_to_window(self, parent_window):
-        """Position the toolbar relative to the parent window - more reliable"""
-        # Get the toolbar size
-        toolbar_width = self.width() if self.width() > 0 else self.sizeHint().width()
-        toolbar_height = self.height() if self.height() > 0 else self.sizeHint().height()
-        print(
-            f"🔧 FloatingToolbar: Using toolbar size: {toolbar_width}x{toolbar_height}")
-
-        # Get the parent window's geometry in global coordinates
-        if parent_window.isVisible():
-            parent_rect = parent_window.geometry()
-            parent_global_pos = parent_window.mapToGlobal(
-                parent_window.rect().topLeft())
-        else:
-            # Use default positioning if window is not visible yet
-            parent_rect = parent_window.rect() if parent_window.rect(
-            ).width() > 0 else parent_window.geometry()
-            parent_global_pos = QPoint(100, 100)  # Default position
-
-        print(f"🔧 FloatingToolbar: Window rect: {parent_rect}")
-        print(f"🔧 FloatingToolbar: Window global pos: {parent_global_pos}")
-
-        # Calculate center position relative to the parent window
-        x = parent_global_pos.x() + (parent_rect.width() - toolbar_width) // 2
-        y = parent_global_pos.y() + 60  # 60px from top of window to account for title bar
-
-        print(f"🔧 FloatingToolbar: Positioning to: ({x}, {y})")
-        self.move(x, y)
-        print(f"🔧 FloatingToolbar: Final position: {self.pos()}")
-
-        # Ensure toolbar is raised and visible
-        self.raise_()
-        self.activateWindow()
-
     def mousePressEvent(self, event: QMouseEvent):
         """Handle mouse press for dragging - only on move handle"""
         if event.button() == Qt.LeftButton:
             # Check if the click is on the move handle
             widget_under_mouse = self.childAt(event.pos())
+
             if widget_under_mouse == self.move_handle:
                 self._dragging = True
                 self._drag_position = event.globalPosition().toPoint() - self.pos()

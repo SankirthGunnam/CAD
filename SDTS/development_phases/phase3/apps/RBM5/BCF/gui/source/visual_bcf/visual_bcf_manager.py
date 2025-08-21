@@ -29,7 +29,7 @@ from PySide6.QtCore import Signal, Qt, QPointF
 from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
 from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts import ComponentWithPins, ComponentPin, Wire
-from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import FloatingToolbar as FloatingToolbarPalette
+from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import FloatingToolbar
 from apps.RBM5.BCF.source.controllers.visual_bcf.device_settings_controller import DeviceSettingsController
 from apps.RBM5.BCF.source.controllers.visual_bcf.io_connect_controller import IOConnectController
 from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualBCFDataModel
