@@ -1,7 +1,8 @@
-from PySide6.QtCore import QAbstractTableModel, Qt, Signal
 from typing import Dict, Any, List
-from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
 
+from PySide6.QtCore import QAbstractTableModel, Qt, Signal
+
+from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
 
 class ChipTableModel(QAbstractTableModel):
     """Model for displaying chip data in a TableView"""

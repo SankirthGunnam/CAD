@@ -1,10 +1,12 @@
 import time
-from PySide6.QtCore import QObject, Signal, QThread, Slot, QWaitCondition, QMutex
 from typing import Dict, Any, Callable, Optional, List, Tuple
 from enum import Enum, auto
 import logging
 import queue
 from dataclasses import dataclass
+
+from PySide6.QtCore import QObject, Signal, QThread, Slot, QWaitCondition, QMutex
+
 from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
 from apps.RBM5.BCF.source.RCC.build.build_master import BuildMaster
 from apps.RBM5.BCF.source.RCC.state_machine import StateMachine, ToolState, ToolEvent
@@ -84,14 +86,17 @@ class BaseWorker(QObject):
 
 class LoadWorker(BaseWorker):
     def run(self):
-        self.event_signal.emit({"type": "status", "message": "Loading started"})
+        self.event_signal.emit(
+            {"type": "status", "message": "Loading started"})
         time.sleep(3)  # Simulate long task
-        self.event_signal.emit({"type": "status", "message": "Loading completed"})
+        self.event_signal.emit(
+            {"type": "status", "message": "Loading completed"})
         self.finished.emit()
 
 
 class BuildWorker(BaseWorker):
-    def __init__(self, data: Dict[str, Any], rdb_manager, callback, event_handler):
+    def __init__(self, data: Dict[str, Any],
+                 rdb_manager, callback, event_handler):
         super().__init__(data)
         self.build_master = BuildMaster(rdb_manager, callback, event_handler)
 
@@ -101,7 +106,8 @@ class BuildWorker(BaseWorker):
             self.build_master.generate_files(self.data)
         except Exception as e:
             self.event_signal.emit({"type": "error", "message": str(e)})
-        self.event_signal.emit({"type": "status", "message": "Build completed"})
+        self.event_signal.emit(
+            {"type": "status", "message": "Build completed"})
         self.finished.emit()
 
 
@@ -111,17 +117,20 @@ class ExportWorker(BaseWorker):
         for i in range(10):
             print("Export Progress: ", i)
             time.sleep(1)
-        self.event_signal.emit({"type": "status", "message": "Export completed"})
+        self.event_signal.emit(
+            {"type": "status", "message": "Export completed"})
         self.finished.emit()
 
 
 class ConfigureWorker(BaseWorker):
     def run(self):
-        self.event_signal.emit({"type": "status", "message": "Configure started"})
+        self.event_signal.emit(
+            {"type": "status", "message": "Configure started"})
         for i in range(10):
             print("Configure Progress: ", i)
             time.sleep(1)
-        self.event_signal.emit({"type": "status", "message": "Configure completed"})
+        self.event_signal.emit(
+            {"type": "status", "message": "Configure completed"})
         self.finished.emit()
 
 
@@ -141,8 +150,10 @@ class CoreController(QObject):
         self.error_message = ""
         self.state_machine = StateMachine()
         self.state_machine.state_changed.connect(self._on_state_changed)
-        self.state_machine.transition_failed.connect(self._on_transition_failed)
-        # self.setup_connections()  # Commented out - build_master is not initialized yet
+        self.state_machine.transition_failed.connect(
+            self._on_transition_failed)
+        # self.setup_connections()  # Commented out - build_master is not
+        # initialized yet
         self.workers: Dict[str, Tuple[BaseWorker, QThread]] = {}
         self.worker_queue = queue.PriorityQueue()
         self._process_worker_queue()
@@ -164,12 +175,15 @@ class CoreController(QObject):
         self.error_message = self.state_machine.get_state_data(
             "error_message", "Unknown error"
         )
-        self.reply_signal.emit({"status": "error", "message": self.error_message})
+        self.reply_signal.emit(
+            {"status": "error", "message": self.error_message})
 
     def _on_transition_failed(self, error_message: str):
         """Handle failed state transitions"""
         logger.error(f"State transition failed: {error_message}")
-        self.state_machine.transition(ToolEvent.ERROR, {"error_message": error_message})
+        self.state_machine.transition(
+            ToolEvent.ERROR, {
+                "error_message": error_message})
 
     def _on_build_event(self, event: Dict[str, Any]):
         """Handle all build events"""
@@ -203,10 +217,12 @@ class CoreController(QObject):
             )
 
         elif event_type == "build_warning":
-            self.build_event.emit({"type": "warning", "message": event.get("message")})
+            self.build_event.emit(
+                {"type": "warning", "message": event.get("message")})
 
         elif event_type == "file_generated":
-            self.build_event.emit({"type": "file", "file_path": event.get("file_path")})
+            self.build_event.emit(
+                {"type": "file", "file_path": event.get("file_path")})
 
     def process_event(self, event: Dict[str, Any]) -> None:
         """Process an incoming event based on current state"""
@@ -215,7 +231,8 @@ class CoreController(QObject):
 
         try:
             # Attempt state transition
-            if self.state_machine.transition(ToolEvent(event_type), event_data):
+            if self.state_machine.transition(
+                    ToolEvent(event_type), event_data):
                 # Queue worker request
                 worker_type = event_type
                 priority = WorkerPriority.NORMAL
@@ -231,8 +248,7 @@ class CoreController(QObject):
                         {
                             "status": "success",
                             "message": f"Event {event_type} processed successfully",
-                        }
-                    ),
+                        }),
                 )
                 self.worker_queue.put((-priority.value, request))
             else:
@@ -245,7 +261,8 @@ class CoreController(QObject):
 
         except Exception as e:
             logger.error(f"Error processing event {event_type}: {str(e)}")
-            self.state_machine.transition(ToolEvent.ERROR, {"error_message": str(e)})
+            self.state_machine.transition(
+                ToolEvent.ERROR, {"error_message": str(e)})
 
     def _process_worker_queue(self):
         """Process the worker queue"""
@@ -278,7 +295,8 @@ class CoreController(QObject):
                 thread = QThread()
                 worker.moveToThread(thread)
                 worker.event_signal.connect(self.worker_event.emit)
-                worker.input_requested.connect(self._handle_worker_input_request)
+                worker.input_requested.connect(
+                    self._handle_worker_input_request)
                 worker.finished.connect(thread.quit)
                 worker.finished.connect(worker.deleteLater)
                 thread.finished.connect(thread.deleteLater)
@@ -292,8 +310,9 @@ class CoreController(QObject):
         except Exception as e:
             logger.error(f"Error creating worker: {str(e)}")
             self.state_machine.transition(
-                ToolEvent.ERROR, {"error_message": f"Failed to create worker: {str(e)}"}
-            )
+                ToolEvent.ERROR, {
+                    "error_message": f"Failed to create worker: {
+                        str(e)}"})
 
     def _handle_worker_input_request(self, request_id: str, message: str):
         """Handle input request from worker"""

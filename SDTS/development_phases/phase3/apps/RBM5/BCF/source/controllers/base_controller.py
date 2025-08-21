@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
-from PySide6.QtCore import QObject, Signal
 
+from PySide6.QtCore import QObject, Signal
 
 class BaseController(QObject):
     """Base class for all controllers in the legacy BCF manager"""

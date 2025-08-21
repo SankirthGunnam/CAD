@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
-from apps.RBM5.BCF.source.models.visual_bcf.pin import Pin
 
+from apps.RBM5.BCF.source.models.visual_bcf.pin import Pin
 
 @dataclass
 class Connection:

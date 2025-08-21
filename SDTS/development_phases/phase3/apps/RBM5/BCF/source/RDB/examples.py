@@ -3,8 +3,10 @@ Examples of using the JSON database with different data structures.
 """
 
 from typing import Dict, List
+
 from apps.RBM5.BCF.source.RDB.json_db import JSONDatabase
 from apps.RBM5.BCF.source.RDB.paths import (
+
     DEVICE_SETTINGS,
     DEVICE_MIPI,
     DEVICE_GPIO,
@@ -91,7 +93,10 @@ def setup_board_config(db: JSONDatabase) -> None:
 def setup_rcc_config(db: JSONDatabase) -> None:
     """Setup RCC configuration"""
     # Sync configuration
-    sync_config = {"mode": "auto", "interval": 60, "last_sync": "2024-01-01T12:00:00Z"}
+    sync_config = {
+        "mode": "auto",
+        "interval": 60,
+        "last_sync": "2024-01-01T12:00:00Z"}
     db.set_value(RCC_SYNC, sync_config)
 
     # Build configuration

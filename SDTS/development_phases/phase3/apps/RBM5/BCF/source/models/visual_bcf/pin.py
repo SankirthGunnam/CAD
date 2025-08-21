@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
-
 @dataclass
 class Pin:
     """Core pin model without UI dependencies"""

@@ -1,4 +1,9 @@
 from PySide6.QtWidgets import (
+
+from apps.RBM5.BCF.source.models.base_model import BaseModel
+from apps.RBM5.BCF.source.controllers.base_controller import BaseController
+from apps.RBM5.BCF.gui.source.legacy_bcf.views.base_view import BaseView
+
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -15,12 +20,14 @@ import os
 import sys
 
 # Add the necessary paths to sys.path
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+sys.path.append(
+    os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "..",
+        "..",
+        ".."))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-from apps.RBM5.BCF.gui.source.legacy_bcf.views.base_view import BaseView
-from apps.RBM5.BCF.source.controllers.base_controller import BaseController
-from apps.RBM5.BCF.source.models.base_model import BaseModel
 
 
 class TreeItem:
@@ -146,7 +153,8 @@ class LegacyBCFManager(QWidget):
         self.tree_dock.setFeatures(
             QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable
         )
-        self.tree_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.tree_dock.setAllowedAreas(
+            Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
 
         # Create tree view
         self.tree_view = QTreeView()
@@ -216,7 +224,9 @@ class LegacyBCFManager(QWidget):
             ):  # Only handle leaf items
                 self.open_tab(item.name, item.view_type)
         except Exception as e:
-            self.error_occurred.emit(f"Error handling tree item click: {str(e)}")
+            self.error_occurred.emit(
+                f"Error handling tree item click: {
+                    str(e)}")
 
     def open_tab(self, name: str, view_type: str):
         """Open a new tab with the specified view"""
@@ -252,7 +262,7 @@ class LegacyBCFManager(QWidget):
     def close_tab(self, index: int):
         """Close the tab at the specified index"""
         self.tab_widget.removeTab(index)
-    
+
     def update_table(self, data: dict):
         """Update table with new data"""
         try:
@@ -260,7 +270,7 @@ class LegacyBCFManager(QWidget):
             self.data_changed.emit(data)
         except Exception as e:
             self.error_occurred.emit(f"Error updating table: {str(e)}")
-    
+
     def cleanup(self):
         """Clean up resources"""
         try:

@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
-from PySide6.QtCore import QObject
 
+from PySide6.QtCore import QObject
 
 class BaseModel(QObject):
     """Base class for all models in the legacy BCF manager"""

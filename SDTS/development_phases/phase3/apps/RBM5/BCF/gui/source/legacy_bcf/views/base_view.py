@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QWidget
 from typing import Any, Dict
 
+from PySide6.QtWidgets import QWidget
 
 class BaseView(QWidget):
     """Base class for all views in the legacy BCF manager"""

@@ -5,53 +5,52 @@ These paths are used to access data in the JSON structure using Path objects.
 
 from typing import Union, List
 
-
 class Path:
     """A pathlib.Path-like class for JSON database paths using slash notation."""
-    
+
     def __init__(self, path: Union[str, "Path"] = ""):
         if isinstance(path, Path):
             self._path = path._path
         else:
             self._path = str(path).strip("/")
-    
+
     def __truediv__(self, other: Union[str, "Path"]) -> "Path":
         """Implement the / operator for path concatenation."""
         if isinstance(other, Path):
             other_path = other._path
         else:
             other_path = str(other).strip("/")
-        
+
         if not self._path:
             return Path(other_path)
         elif not other_path:
             return Path(self._path)
         else:
             return Path(f"{self._path}/{other_path}")
-    
+
     def __str__(self) -> str:
         """Return the path as a string."""
         return self._path
-    
+
     def __repr__(self) -> str:
         """Return the path representation."""
         return f"Path('{self._path}')"
-    
+
     def __eq__(self, other) -> bool:
         """Check equality with another Path or string."""
         if isinstance(other, Path):
             return self._path == other._path
         return self._path == str(other)
-    
+
     def __hash__(self) -> int:
         """Make Path hashable."""
         return hash(self._path)
-    
+
     @property
     def parts(self) -> List[str]:
         """Return path parts as a list."""
         return self._path.split("/") if self._path else []
-    
+
     @property
     def parent(self) -> "Path":
         """Return the parent path."""
@@ -59,13 +58,13 @@ class Path:
         if len(parts) <= 1:
             return Path()
         return Path("/".join(parts[:-1]))
-    
+
     @property
     def name(self) -> str:
         """Return the final component of the path."""
         parts = self.parts
         return parts[-1] if parts else ""
-    
+
     def joinpath(self, *others: Union[str, "Path"]) -> "Path":
         """Join multiple path components."""
         result = Path(self._path)
@@ -183,6 +182,8 @@ PAM_CONFIG = CONFIG / "pam"
 ET_DPD_CONFIG = CONFIG / "et_dpd"
 
 # Helper function to build paths (kept for backward compatibility)
+
+
 def build_path(*parts: str) -> str:
     """Build a path from parts using slash notation"""
     return "/".join(parts)

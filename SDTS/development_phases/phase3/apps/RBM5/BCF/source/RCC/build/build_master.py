@@ -3,14 +3,15 @@ from pathlib import Path
 import jinja2
 import datetime
 import os
-from PySide6.QtCore import QObject, Signal
 
+from PySide6.QtCore import QObject, Signal
 
 class BuildMaster(QObject):
     """Master class for handling code generation and build process"""
 
     # Single signal for all build events
-    build_event = Signal(dict)  # Emitted for all build events with type and data
+    # Emitted for all build events with type and data
+    build_event = Signal(dict)
 
     def __init__(self, rdb_manager=None, callback=None, event_handler=None):
         super().__init__()
@@ -58,7 +59,8 @@ class BuildMaster(QObject):
         else:
             self.build_event.emit(event)
 
-    def generate_files(self, data: Dict[str, Any], output_dir: Optional[str] = None):
+    def generate_files(self, data: Dict[str, Any],
+                       output_dir: Optional[str] = None):
         """Generate source and header files from templates"""
         try:
             if output_dir:
@@ -67,9 +69,8 @@ class BuildMaster(QObject):
             if not self.output_dir:
                 raise ValueError("Output directory not set")
 
-            self._emit_event(
-                {"type": "build_started", "message": "Starting code generation..."}
-            )
+            self._emit_event({"type": "build_started",
+                              "message": "Starting code generation..."})
 
             # Common template data
             template_data = {
@@ -103,9 +104,10 @@ class BuildMaster(QObject):
                     self._emit_event(
                         {
                             "type": "build_warning",
-                            "message": f"Warning processing {template_file.name}: {str(e)}",
-                        }
-                    )
+                            "message": f"Warning processing {
+                                template_file.name}: {
+                                str(e)}",
+                        })
                     continue
 
             self._emit_event(

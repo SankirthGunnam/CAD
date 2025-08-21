@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Dict, List, Any, Optional
+
 from PySide6.QtCore import QObject, Signal
 
 # Use centralized path setup from BCF package
@@ -20,7 +21,8 @@ class JSONDatabase(QObject):
         self.data: Dict[str, Any] = {}
         self.connected = False
         # Control whether to save to disk on every mutation. Default is disabled
-        # to avoid frequent unintended writes; callers should invoke save() explicitly.
+        # to avoid frequent unintended writes; callers should invoke save()
+        # explicitly.
         self.auto_save: bool = False
 
     def connect(self) -> None:
@@ -189,7 +191,8 @@ class JSONDatabase(QObject):
                     "band": {"settings": [], "properties": {}},
                     "board": {"settings": [], "properties": {}},
                     "rcc": {"settings": [], "properties": {}},
-                    # Ensure visual_bcf root exists for first-time runs (no current_scene)
+                    # Ensure visual_bcf root exists for first-time runs (no
+                    # current_scene)
                     "visual_bcf": {
                         "components": [],
                         "connections": [],

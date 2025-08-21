@@ -12,7 +12,8 @@ class Model:
             self.rdb[paths.DCF_DEVICES] = self.__get_devices()
 
         self.all_devices_model.model_data = self.rdb[paths.DCF_DEVICES]
-        self.selected_devices_model.model_dat = self.rdb[paths.BCF_DEV_MIPI(current_revision)]
+        self.selected_devices_model.model_dat = self.rdb[paths.BCF_DEV_MIPI(
+            current_revision)]
 
     def __get_devices(self):
         items = common.get_device_names_in_customer_path()

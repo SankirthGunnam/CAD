@@ -1,8 +1,8 @@
 from typing import Any, Dict, List
+
 from apps.RBM5.BCF.source.controllers.base_controller import BaseController
 from apps.RBM5.BCF.source.models.base_model import BaseModel
 from apps.RBM5.BCF.gui.source.legacy_bcf.views.table_view import TableView
-
 
 class TableController(BaseController):
     """Controller for table data"""

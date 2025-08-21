@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import (
+
     QDialog,
     QVBoxLayout,
     QHBoxLayout,
@@ -86,13 +87,16 @@ class ChipDialog(QDialog):
     def load_chip_data(self):
         """Load existing chip data if editing"""
         if self.chip_id:
-            chip = next((c for c in self.model.chips if c["id"] == self.chip_id), None)
+            chip = next(
+                (c for c in self.model.chips if c["id"] == self.chip_id), None)
             if chip:
                 self.name_edit.setText(chip["name"])
                 self.width_spin.setValue(float(chip["width"]))
                 self.height_spin.setValue(float(chip["height"]))
-                self.material_combo.setCurrentText(chip["parameters"]["material"])
-                self.thickness_spin.setValue(float(chip["parameters"]["thickness"]))
+                self.material_combo.setCurrentText(
+                    chip["parameters"]["material"])
+                self.thickness_spin.setValue(
+                    float(chip["parameters"]["thickness"]))
 
     def save_chip(self):
         """Save the chip data"""

@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import (
+
     QWidget,
     QVBoxLayout,
     QLabel,
@@ -25,7 +26,8 @@ class HomeScreen(QWidget):
         # Title bar
         title = QLabel("Welcome to SDTS")
         title.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        title.setStyleSheet("font-size: 32px; font-weight: bold; margin-bottom: 8px;")
+        title.setStyleSheet(
+            "font-size: 32px; font-weight: bold; margin-bottom: 8px;")
         layout.addWidget(title)
 
         # Search bar
@@ -55,7 +57,8 @@ class HomeScreen(QWidget):
             btn.setIconSize(QSize(48, 48))
             btn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            btn.setStyleSheet("font-size: 16px; padding: 12px; border-radius: 12px;")
+            btn.setStyleSheet(
+                "font-size: 16px; padding: 12px; border-radius: 12px;")
             # For emoji icons, set as text if no QIcon is available
             if not btn.icon().isNull():
                 pass

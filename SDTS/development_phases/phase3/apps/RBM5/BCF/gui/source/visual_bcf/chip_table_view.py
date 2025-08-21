@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QTableView, QHeaderView, QMenu, QPushButton, QVBoxLayout
 from PySide6.QtCore import Qt, QModelIndex
+
 from apps.RBM5.BCF.source.models.visual_bcf.chip_table_model import ChipTableModel
 from apps.RBM5.BCF.gui.source.visual_bcf.chip_dialog import ChipDialog
-
 
 class ChipTableView(QTableView):
     """View for displaying and managing chips in a table"""

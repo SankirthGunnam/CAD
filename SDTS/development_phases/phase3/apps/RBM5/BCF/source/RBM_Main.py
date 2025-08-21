@@ -3,7 +3,9 @@ import os
 import threading
 from queue import Queue, PriorityQueue
 from typing import Dict, List, Optional, Any
+
 from PySide6.QtWidgets import (
+
     QApplication,
     QMainWindow,
     QWidget,
@@ -35,7 +37,8 @@ class RBMMain(QWidget):
         self.rdb_manager = RDBManager()
         self.core_controller = CoreController(self.rdb_manager)
 
-        # Create and add GUIController with RDB manager for Visual BCF MVC architecture
+        # Create and add GUIController with RDB manager for Visual BCF MVC
+        # architecture
         self.gui_controller = GUIController(rdb_manager=self.rdb_manager)
         layout.addWidget(self.gui_controller)
 
@@ -46,7 +49,8 @@ class RBMMain(QWidget):
         """Setup all signal connections"""
         # GUI to Core connections
         self.gui_controller.build_requested.connect(self._on_build_requested)
-        self.gui_controller.configure_requested.connect(self._on_configure_requested)
+        self.gui_controller.configure_requested.connect(
+            self._on_configure_requested)
         self.gui_controller.export_requested.connect(self._on_export_requested)
 
         # Core to GUI connections
@@ -60,15 +64,18 @@ class RBMMain(QWidget):
 
     def _on_build_requested(self, build_data: Dict[str, Any]):
         """Handle build request from GUI"""
-        self.core_controller.process_event({"type": "build", "data": build_data})
+        self.core_controller.process_event(
+            {"type": "build", "data": build_data})
 
     def _on_configure_requested(self, config_data: Dict[str, Any]):
         """Handle configuration request from GUI"""
-        self.core_controller.process_event({"type": "configure", "data": config_data})
+        self.core_controller.process_event(
+            {"type": "configure", "data": config_data})
 
     def _on_export_requested(self, export_data: Dict[str, Any]):
         """Handle export request from GUI"""
-        self.core_controller.process_event({"type": "export", "data": export_data})
+        self.core_controller.process_event(
+            {"type": "export", "data": export_data})
 
     def _on_core_reply(self, reply: Dict[str, Any]):
         """Handle replies from core controller"""

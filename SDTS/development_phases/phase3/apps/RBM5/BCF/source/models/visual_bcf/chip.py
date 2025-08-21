@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Tuple
-from apps.RBM5.BCF.source.models.visual_bcf.pin import Pin
 
+from apps.RBM5.BCF.source.models.visual_bcf.pin import Pin
 
 @dataclass
 class ChipModel:
@@ -14,7 +14,11 @@ class ChipModel:
     properties: Dict[str, str]
     position: Tuple[float, float]
 
-    def __init__(self, name: str = "Chip", width: float = 50, height: float = 50):
+    def __init__(
+            self,
+            name: str = "Chip",
+            width: float = 50,
+            height: float = 50):
         self.name = name
         self.width = width
         self.height = height

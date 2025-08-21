@@ -6,16 +6,20 @@ between the graphics view/scene and the data model. It implements the Controller
 part of the MVC pattern.
 """
 
+import logging
 from typing import Dict, List, Any, Tuple
+
 from PySide6.QtCore import QObject, Signal, QTimer, Qt
 from PySide6.QtWidgets import QWidget
-import logging
 
-from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualBCFDataModel, ComponentData, ConnectionData
+from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import (
+
+    VisualBCFDataModel, ComponentData, ConnectionData)
 from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
 from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts import ComponentWithPins, Wire
-from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import FloatingToolbar as FloatingToolbarPalette
+from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import (
+    FloatingToolbar as FloatingToolbarPalette)
 
 logger = logging.getLogger(__name__)
 

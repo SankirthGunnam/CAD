@@ -1,9 +1,9 @@
 from typing import Protocol, Dict, List, Any, Optional
 
-
 class DatabaseInterface(Protocol):
     """Protocol defining the interface for database operations"""
-    # Note: Qt signals should be defined in the actual implementation, not in the Protocol
+    # Note: Qt signals should be defined in the actual implementation, not in
+    # the Protocol
 
     def connect(self) -> None:
         """Connect to the database"""

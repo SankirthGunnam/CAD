@@ -1,7 +1,8 @@
-from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout
 from typing import Any, Dict
-from apps.RBM5.BCF.gui.source.legacy_bcf.views.base_view import BaseView
 
+from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout
+
+from apps.RBM5.BCF.gui.source.legacy_bcf.views.base_view import BaseView
 
 class TableView(BaseView):
     """View for displaying data in a table format"""

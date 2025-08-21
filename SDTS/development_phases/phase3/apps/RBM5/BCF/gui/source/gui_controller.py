@@ -2,6 +2,7 @@ import threading
 from queue import Queue
 
 from PySide6.QtWidgets import (
+
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -43,14 +44,15 @@ class GUIController(QMainWindow):
     data_changed = Signal(dict)
     error_occurred = Signal(str)
     build_requested = Signal(dict)  # Signal when build is requested
-    configure_requested = Signal(dict)  # Signal when configuration is requested
+    # Signal when configuration is requested
+    configure_requested = Signal(dict)
     export_requested = Signal(dict)  # Signal when export is requested
 
     def __init__(self, parent: Optional[QWidget] = None, rdb_manager=None):
         super().__init__(parent)
         self.setWindowTitle("RBM GUI Controller")
         self.setMinimumSize(1000, 800)
-        
+
         # Store RDB manager reference
         self.rdb_manager = rdb_manager
 
@@ -61,7 +63,8 @@ class GUIController(QMainWindow):
         # Create and add both managers
         self.legacy_manager = LegacyBCFManager()
         # Pass RDB manager to Visual BCF Manager to enable MVC architecture
-        self.visual_manager = VisualBCFManager(parent_controller=self, rdb_manager=self.rdb_manager)
+        self.visual_manager = VisualBCFManager(
+            parent_controller=self, rdb_manager=self.rdb_manager)
 
         self.stacked_widget.addWidget(self.legacy_manager)
         self.stacked_widget.addWidget(self.visual_manager)
@@ -79,14 +82,16 @@ class GUIController(QMainWindow):
         # Connect signals
         self.legacy_manager.data_changed.connect(self._on_data_changed)
         self.visual_manager.data_changed.connect(self._on_data_changed)
-        # NEW: Connect Visual BCF data changes to refresh Legacy BCF table 
-        self.visual_manager.data_changed.connect(self.on_visual_data_changed_refresh_table)
+        # NEW: Connect Visual BCF data changes to refresh Legacy BCF table
+        self.visual_manager.data_changed.connect(
+            self.on_visual_data_changed_refresh_table)
         self.legacy_manager.error_occurred.connect(self._on_error)
         self.visual_manager.error_occurred.connect(self._on_error)
 
         # Event handling
         self.gui_event_callbacks: Dict[str, Callable] = {}  # For GUI events
-        self.non_gui_event_callbacks: Dict[str, Callable] = {}  # For non-GUI events
+        self.non_gui_event_callbacks: Dict[str,
+                                           Callable] = {}  # For non-GUI events
         self.blocking_events: Dict[str, bool] = {
             self.EVENT_CREATE: True,
             self.EVENT_LOAD: True,
@@ -113,7 +118,8 @@ class GUIController(QMainWindow):
 
     def start_event_processor(self):
         """Start the event processing thread"""
-        self.event_thread = threading.Thread(target=self._process_events, daemon=True)
+        self.event_thread = threading.Thread(
+            target=self._process_events, daemon=True)
         self.event_thread.start()
 
     def _process_events(self):
@@ -131,8 +137,7 @@ class GUIController(QMainWindow):
                     self.non_gui_event_callbacks[event_name](data)
                 else:
                     print(
-                        f"Warning: No handler registered for non-GUI event: {event_name}"
-                    )
+                        f"Warning: No handler registered for non-GUI event: {event_name}")
 
     def _process_blocking_event(self, event_name: str, data: Dict[str, Any]):
         """Process a GUI event in the main thread"""
@@ -142,7 +147,8 @@ class GUIController(QMainWindow):
                 reply = func(data)
                 self.handle_reply(event_name, reply)
             else:
-                print(f"Warning: No handler registered for GUI event: {event_name}")
+                print(
+                    f"Warning: No handler registered for GUI event: {event_name}")
         except Exception as e:
             self.show_error(f"Error processing {event_name}: {str(e)}")
 
@@ -229,7 +235,8 @@ class GUIController(QMainWindow):
         """Add a new chip to the scene and database"""
         # Check if we can start building
         if self.core_controller.current_state != ToolState.IDLE:
-            error_msg = f"Cannot add chip: Core controller is in {self.core_controller.current_state.name} state"
+            error_msg = f"Cannot add chip: Core controller is in {
+                self.core_controller.current_state.name} state"
             print(error_msg)
             self.show_error(error_msg)
             return
@@ -284,7 +291,6 @@ class GUIController(QMainWindow):
                 self.visual_manager.hide_rf_toolbar()
         except Exception as e:
             self.error_occurred.emit(f"Error switching modes: {str(e)}")
-    
 
     def _on_data_changed(self, data: dict):
         """Handle data changes from either manager"""
@@ -292,12 +298,12 @@ class GUIController(QMainWindow):
             # To avoid recursion, only emit the signal without cross-updating managers
             # The managers should handle their own data consistency
             self.data_changed.emit(data)
-            
+
             # Log the data change for debugging
             source = data.get('source', 'unknown')
             action = data.get('action', 'unknown')
             print(f"Data changed - Source: {source}, Action: {action}")
-            
+
         except Exception as e:
             print(f"Error handling data change: {str(e)}")
 
@@ -305,23 +311,32 @@ class GUIController(QMainWindow):
         """Handle errors from either manager"""
         QMessageBox.critical(self, "Error", message)
         self.error_occurred.emit(message)
-    
+
     def on_visual_data_changed_refresh_table(self, data: dict):
         """Refresh Legacy BCF device table when Visual BCF data changes (especially deletions)"""
         try:
             action = data.get('action', '')
             source = data.get('source', '')
             message = data.get('message', '')
-            
-            print(f"📊 Visual BCF data changed - Action: '{action}', Source: '{source}', Message: '{message}'")
-            
+
+            print(
+                f"📊 Visual BCF data changed - Action: '{action}', Source: '{source}', Message: '{message}'")
+
             # Only handle specific Visual BCF actions that affect Legacy BCF
-            if source in ['mvc', 'bidirectional_sync'] and action in [
-                'user_deletion_synced', 'user_deletion_visual_only', 'delete_components',
-                'remove_component', 'add_component', 'import_legacy', 'paste_components', 'paste'
-            ]:
-                print(f"🎯 Triggering Legacy BCF table refresh for action: {action}")
-                
+            if source in [
+                    'mvc',
+                    'bidirectional_sync'] and action in [
+                    'user_deletion_synced',
+                    'user_deletion_visual_only',
+                    'delete_components',
+                    'remove_component',
+                    'add_component',
+                    'import_legacy',
+                    'paste_components',
+                    'paste']:
+                print(
+                    f"🎯 Triggering Legacy BCF table refresh for action: {action}")
+
                 # Refresh Legacy BCF table to reflect the changes
                 if hasattr(self.legacy_manager, 'refresh_device_table'):
                     self.legacy_manager.refresh_device_table()
@@ -332,16 +347,20 @@ class GUIController(QMainWindow):
                     print(f"✅ Called legacy_manager.update_table()")
                 else:
                     print(f"❌ No refresh method found in legacy_manager")
-                
+
                 # Log the refresh action
                 component_name = data.get('component_name', 'Unknown')
-                print(f"🔄 Refreshed Legacy BCF table due to Visual BCF {action} of '{component_name}'")
+                print(
+                    f"🔄 Refreshed Legacy BCF table due to Visual BCF {action} of '{component_name}'")
             else:
-                print(f"⏭️ Skipping refresh - Source: '{source}', Action: '{action}' not in handled actions")
-                
+                print(
+                    f"⏭️ Skipping refresh - Source: '{source}', Action: '{action}' not in handled actions")
+
         except Exception as e:
             print(f"❌ Error refreshing Legacy BCF table: {str(e)}")
-            self.error_occurred.emit(f"Failed to refresh Legacy BCF table: {str(e)}")
+            self.error_occurred.emit(
+                f"Failed to refresh Legacy BCF table: {
+                    str(e)}")
 
     def update_data(self, data: dict):
         """Update both managers with new data"""
@@ -350,20 +369,21 @@ class GUIController(QMainWindow):
             self.visual_manager.update_scene(data)
         except Exception as e:
             self.error_occurred.emit(f"Error updating data: {str(e)}")
-    
+
     def update_state(self, state):
         """Update the GUI based on the current state"""
         try:
             # Update window title to show current state
             self.setWindowTitle(f"RBM GUI Controller - {state.name}")
-            
+
             # Enable/disable actions based on state
             if hasattr(state, 'name'):
                 state_name = state.name
                 if state_name == "ERROR":
                     # Disable most actions in error state
                     for action in self.toolbar.actions():
-                        if action.text() not in ["Switch to Visual Mode", "Switch to Legacy Mode"]:
+                        if action.text() not in [
+                                "Switch to Visual Mode", "Switch to Legacy Mode"]:
                             action.setEnabled(False)
                 elif state_name == "IDLE":
                     # Enable all actions in idle state
@@ -407,7 +427,7 @@ class GUIController(QMainWindow):
         if hasattr(self, 'visual_manager'):
             self.visual_manager.cleanup()
         super().closeEvent(event)
-    
+
     def switch_mode(self, mode: str):
         """Switch between legacy and visual modes"""
         try:
@@ -456,22 +476,22 @@ class GUIController(QMainWindow):
     def _on_export(self):
         """Handle export action"""
         self.export_requested.emit({"mode": self.current_mode})
-    
+
     def show_status(self, message: str):
         """Show status message"""
         print(f"Status: {message}")
         # Could also use a status bar if we had one
-    
+
     def show_warning(self, message: str):
         """Show warning message"""
         print(f"Warning: {message}")
         QMessageBox.warning(self, "Warning", message)
-    
+
     def add_generated_file(self, file_path: str):
         """Add a generated file to the list"""
         print(f"Generated file: {file_path}")
         # Could update a file list widget if we had one
-    
+
     def refresh_data(self):
         """Refresh data in both managers"""
         try:

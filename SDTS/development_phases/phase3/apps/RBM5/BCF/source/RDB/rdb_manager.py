@@ -1,6 +1,7 @@
-from PySide6.QtCore import QObject, Signal
 from typing import Dict, Any, List, Optional
 import logging
+
+from PySide6.QtCore import QObject, Signal
 
 # Use centralized path setup from BCF package
 import apps.RBM5.BCF  # This automatically sets up the path
@@ -25,7 +26,8 @@ class RDBManager(QObject):
         self.db: DatabaseInterface = JSONDatabase(db_file)
         self._connect()
         # Connect signals after database initialization
-        # self.db.data_changed.connect(self._on_data_changed)  # Temporarily commented out
+        # self.db.data_changed.connect(self._on_data_changed)  # Temporarily
+        # commented out
 
     def _connect(self) -> None:
         """Connect to the database"""
@@ -82,12 +84,13 @@ class RDBManager(QObject):
         """Delete row from table"""
         return self.db.delete_row(path, row_index)
 
-    def get_model(self, path: str, columns: List[Dict[str, str]]) -> "RDBTableModel":
+    def get_model(self, path: str,
+                  columns: List[Dict[str, str]]) -> "RDBTableModel":
         """Create a Qt model for the specified table"""
         from apps.RBM5.BCF.source.models.visual_bcf.rdb_table_model import RDBTableModel
 
         return RDBTableModel(self, path, columns)
-    
+
     def close(self):
         """Close the database connection and clean up resources"""
         try:

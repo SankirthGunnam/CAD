@@ -21,7 +21,7 @@ class RDBTableModel(QAbstractTableModel):
         self.db = db
         self.table_path = table_path
         self.columns = columns
-        
+
         # Only connect signal if db is not None
         if self.db is not None and hasattr(self.db, 'data_changed'):
             self.db.data_changed.connect(self._on_data_changed)
@@ -63,7 +63,11 @@ class RDBTableModel(QAbstractTableModel):
                 return row.get(column_key)
         return None
 
-    def setData(self, index: QModelIndex, value: Any, role: int = Qt.EditRole) -> bool:
+    def setData(
+            self,
+            index: QModelIndex,
+            value: Any,
+            role: int = Qt.EditRole) -> bool:
         """Set data at the given index"""
         if not index.isValid() or role != Qt.EditRole or self.db is None:
             return False
@@ -91,8 +95,10 @@ class RDBTableModel(QAbstractTableModel):
         return False
 
     def headerData(
-        self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole
-    ) -> Any:
+            self,
+            section: int,
+            orientation: Qt.Orientation,
+            role: int = Qt.DisplayRole) -> Any:
         """Return header data"""
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self.columns[section]["name"]

@@ -3,12 +3,11 @@ import apps.RBM5.BCF  # This automatically sets up the path
 
 from apps.RBM5.BCF.source.models.visual_bcf.rdb_table_model import RDBTableModel
 
-
 class IOConnectModel:
     def __init__(self, parent, rdb: "RDBManager"):
         self.parent = parent
         self.rdb = rdb
-        
+
         # Single table for IO connections
         self.connections_model = RDBTableModel(
             db=rdb,
