@@ -23,6 +23,7 @@ class ComponentScene(QGraphicsScene):
     component_removed = Signal(str)  # name
     # start_component, start_pin, end_component, end_pin
     wire_added = Signal(str, str, str, str)
+    wire_removed = Signal(str, str, str, str)  # start_component, start_pin, end_component, end_pin
 
     def __init__(self, controller=None):
         super().__init__()
@@ -222,19 +223,61 @@ class ComponentScene(QGraphicsScene):
                 scene_data["components"].append(component_data)
 
         # Serialize connections/wires
-        for wire in self.wires:
-            if hasattr(wire, 'start_pin') and hasattr(wire, 'end_pin'):
-                if wire.start_pin and wire.end_pin:
-                    connection_data = {
-                        "start_component": wire.start_pin.parent_component.name,
-                        "start_pin": wire.start_pin.pin_id,
-                        "end_component": wire.end_pin.parent_component.name,
-                        "end_pin": wire.end_pin.pin_id,
-                        "properties": getattr(
-                            wire,
-                            'properties',
-                            {})}
-                    scene_data["connections"].append(connection_data)
+        print(f"Scene serialization: Found {len(self.wires)} wires in scene.wires")
+        
+        # First try to get connections from controller if available
+        if hasattr(self, 'controller') and self.controller:
+            try:
+                print(f"Scene serialization: Using controller with {len(self.controller._connection_graphics_items)} tracked connections")
+                # Use controller's connection tracking for more accurate serialization
+                for connection_id, wrapper in self.controller._connection_graphics_items.items():
+                    if wrapper and wrapper.graphics_item:
+                        wire = wrapper.graphics_item
+                        print(f"Processing controller connection {connection_id}: wire={wire}, start_pin={getattr(wire, 'start_pin', None)}, end_pin={getattr(wire, 'end_pin', None)}")
+                        if hasattr(wire, 'start_pin') and hasattr(wire, 'end_pin') and wire.start_pin and wire.end_pin:
+                            connection_data = {
+                                "start_component": wire.start_pin.parent_component.name,
+                                "start_pin": wire.start_pin.pin_id,
+                                "end_component": wire.end_pin.parent_component.name,
+                                "end_pin": wire.end_pin.pin_id,
+                                "properties": getattr(wire, 'properties', {})
+                            }
+                            scene_data["connections"].append(connection_data)
+                            print(f"Added connection: {wire.start_pin.parent_component.name}:{wire.start_pin.pin_id} -> {wire.end_pin.parent_component.name}:{wire.end_pin.pin_id}")
+                        else:
+                            print(f"Skipping connection {connection_id} - missing pins")
+            except Exception as e:
+                print(f"Warning: Could not serialize connections from controller: {e}")
+                import traceback
+                traceback.print_exc()
+                # Fallback to scene's wire list
+                for wire in self.wires:
+                    if hasattr(wire, 'start_pin') and hasattr(wire, 'end_pin'):
+                        if wire.start_pin and wire.end_pin:
+                            connection_data = {
+                                "start_component": wire.start_pin.parent_component.name,
+                                "start_pin": wire.start_pin.pin_id,
+                                "end_component": wire.end_pin.parent_component.name,
+                                "end_pin": wire.end_pin.pin_id,
+                                "properties": getattr(wire, 'properties', {})
+                            }
+                            scene_data["connections"].append(connection_data)
+        else:
+            print("Scene serialization: No controller available, using scene.wires")
+            # Fallback to scene's wire list if no controller
+            for wire in self.wires:
+                if hasattr(wire, 'start_pin') and hasattr(wire, 'end_pin'):
+                    if wire.start_pin and wire.end_pin:
+                        connection_data = {
+                            "start_component": wire.start_pin.parent_component.name,
+                            "start_pin": wire.start_pin.pin_id,
+                            "end_component": wire.end_pin.parent_component.name,
+                            "end_pin": wire.end_pin.pin_id,
+                            "properties": getattr(wire, 'properties', {})
+                        }
+                        scene_data["connections"].append(connection_data)
+        
+        print(f"Scene serialization: Total connections serialized: {len(scene_data['connections'])}")
 
         return scene_data
 
@@ -298,7 +341,14 @@ class ComponentScene(QGraphicsScene):
 
     def clear_scene(self):
         """Clear all components and connections from scene"""
-        # Remove all items
+        # Notify controller first to clear its tracking dictionaries
+        if hasattr(self, 'controller') and self.controller:
+            try:
+                self.controller._clear_graphics_items()
+            except Exception as e:
+                print(f"Warning: Could not notify controller to clear graphics items: {e}")
+        
+        # Remove all items from the scene
         self.clear()
 
         # Clear lists
@@ -308,6 +358,51 @@ class ComponentScene(QGraphicsScene):
         # Reset counter
         self.component_counter = 1
         self.current_wire = None
+        
+
+
+    def remove_wire(self, wire):
+        """Remove a wire from the scene and clean up properly"""
+        try:
+            # Get wire information before removal
+            if hasattr(wire, 'start_pin') and wire.start_pin and hasattr(wire, 'end_pin') and wire.end_pin:
+                start_component_name = wire.start_pin.parent_component.name
+                start_pin_id = wire.start_pin.pin_id
+                end_component_name = wire.end_pin.parent_component.name
+                end_pin_id = wire.end_pin.pin_id
+                
+                # Remove wire from components' connected_wires lists
+                if hasattr(wire.start_pin.parent_component, 'remove_wire'):
+                    wire.start_pin.parent_component.remove_wire(wire)
+                if hasattr(wire.end_pin.parent_component, 'remove_wire'):
+                    wire.end_pin.parent_component.remove_wire(wire)
+                
+                # Remove from scene's wire list
+                if wire in self.wires:
+                    self.wires.remove(wire)
+                
+                # Remove from scene graphics
+                self.removeItem(wire)
+                
+                # Emit wire removed signal
+                self.wire_removed.emit(
+                    start_component_name, start_pin_id,
+                    end_component_name, end_pin_id
+                )
+                
+                print(f"Wire removed: {start_component_name}.{start_pin_id} -> {end_component_name}.{end_pin_id}")
+            else:
+                # Just remove from scene if wire info is incomplete
+                if wire in self.wires:
+                    self.wires.remove(wire)
+                self.removeItem(wire)
+                
+        except Exception as e:
+            print(f"Error removing wire: {e}")
+            # Fallback - just remove from scene
+            if wire in self.wires:
+                self.wires.remove(wire)
+            self.removeItem(wire)
 
     def _find_pin(self, component, pin_id: str):
         """Find a pin on a component by its ID"""

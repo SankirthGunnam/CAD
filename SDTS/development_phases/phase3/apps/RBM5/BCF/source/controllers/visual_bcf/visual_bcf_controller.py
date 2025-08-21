@@ -232,6 +232,11 @@ class VisualBCFController(QObject):
             self._on_model_connection_added)
         self.data_model.connection_removed.connect(
             self._on_model_connection_removed)
+        
+        # Connect to scene signals for new wires
+        if self.scene:
+            self.scene.wire_added.connect(self._on_scene_wire_added)
+            self.scene.wire_removed.connect(self._on_scene_wire_removed)
 
     def _on_model_component_added(self, component_id: str):
         """Handle component added to model"""
@@ -532,6 +537,9 @@ class VisualBCFController(QObject):
     def save_scene(self, file_path: str = None) -> bool:
         """Save current scene via data model"""
         try:
+            # First, ensure all current graphics state is synced to the data model
+            self._sync_graphics_to_model()
+            
             stats = self.get_statistics()
             component_count = stats.get('component_count', 0)
             connection_count = stats.get('connection_count', 0)
@@ -708,6 +716,73 @@ class VisualBCFController(QObject):
         return self.load_scene(file_path)
 
     # Private helper methods
+
+    def _sync_graphics_to_model(self):
+        """Sync current graphics state to the data model before saving"""
+        try:
+            logger.info(f"Starting graphics-to-model sync. Found {len(self._component_graphics_items)} components and {len(self._connection_graphics_items)} connections")
+            
+            # Sync component positions
+            for component_id, wrapper in self._component_graphics_items.items():
+                if wrapper and wrapper.graphics_item:
+                    try:
+                        pos = wrapper.graphics_item.pos()
+                        self.data_model.update_component_position(component_id, (pos.x(), pos.y()))
+                    except Exception as e:
+                        logger.warning(f"Error syncing position for component {component_id}: {e}")
+            
+            # Sync connections - ensure all visible connections are in the data model
+            connections_synced = 0
+            for connection_id, wrapper in self._connection_graphics_items.items():
+                if wrapper and wrapper.graphics_item:
+                    try:
+                        wire = wrapper.graphics_item
+                        logger.info(f"Processing connection {connection_id}: wire={wire}, start_pin={getattr(wire, 'start_pin', None)}, end_pin={getattr(wire, 'end_pin', None)}")
+                        
+                        if hasattr(wire, 'start_pin') and hasattr(wire, 'end_pin') and wire.start_pin and wire.end_pin:
+                            # Check if this connection exists in the data model
+                            connection_data = self.data_model.get_connection(connection_id)
+                            logger.info(f"Connection {connection_id} in data model: {connection_data is not None}")
+                            
+                            if not connection_data:
+                                # Create the connection in the data model if it doesn't exist
+                                start_comp_id = None
+                                end_comp_id = None
+                                
+                                # Find component IDs for the pins
+                                for cid, comp_wrapper in self._component_graphics_items.items():
+                                    if comp_wrapper.graphics_item == wire.start_pin.parent_component:
+                                        start_comp_id = cid
+                                        logger.info(f"Found start component ID: {start_comp_id} for pin {wire.start_pin.pin_id}")
+                                    if comp_wrapper.graphics_item == wire.end_pin.parent_component:
+                                        end_comp_id = cid
+                                        logger.info(f"Found end component ID: {end_comp_id} for pin {wire.end_pin.pin_id}")
+                                
+                                if start_comp_id and end_comp_id:
+                                    logger.info(f"Adding connection to data model: {start_comp_id}:{wire.start_pin.pin_id} -> {end_comp_id}:{wire.end_pin.pin_id}")
+                                    result = self.data_model.add_connection(
+                                        start_comp_id, wire.start_pin.pin_id,
+                                        end_comp_id, wire.end_pin.pin_id
+                                    )
+                                    if result:
+                                        connections_synced += 1
+                                        logger.info(f"Successfully added connection {result} to data model")
+                                    else:
+                                        logger.warning(f"Failed to add connection to data model")
+                                else:
+                                    logger.warning(f"Could not find component IDs: start={start_comp_id}, end={end_comp_id}")
+                            else:
+                                logger.info(f"Connection {connection_id} already exists in data model")
+                        else:
+                            logger.warning(f"Wire {connection_id} missing pins: start_pin={getattr(wire, 'start_pin', None)}, end_pin={getattr(wire, 'end_pin', None)}")
+                    except Exception as e:
+                        logger.warning(f"Error syncing connection {connection_id}: {e}")
+                        logger.exception("Full traceback:")
+            
+            logger.info(f"Graphics state synced to data model. Synced {connections_synced} new connections")
+        except Exception as e:
+            logger.error(f"Error syncing graphics to model: {e}")
+            logger.exception("Full traceback:")
 
     def _clear_graphics_items(self):
         """Clear all graphics items from the scene and tracking dictionaries"""
@@ -910,3 +985,110 @@ class VisualBCFController(QObject):
     def get_toolbar(self) -> FloatingToolbar:
         """Get the floating toolbar"""
         return self.floating_toolbar
+
+    def _on_scene_wire_added(self, start_component: str, start_pin: str, end_component: str, end_pin: str):
+        """Handle new wire added to scene - add it to data model and tracking"""
+        try:
+            logger.info(f"Scene wire added: {start_component}.{start_pin} -> {end_component}.{end_pin}")
+            
+            # Find the component IDs by name
+            start_comp_id = None
+            end_comp_id = None
+            
+            for comp_id, comp_data in self.data_model.get_all_components().items():
+                if comp_data.name == start_component:
+                    start_comp_id = comp_id
+                if comp_data.name == end_component:
+                    end_comp_id = comp_id
+                if start_comp_id and end_comp_id:
+                    break
+            
+            if start_comp_id and end_comp_id:
+                # Add connection to data model
+                connection_id = self.data_model.add_connection(
+                    start_comp_id, start_pin, end_comp_id, end_pin
+                )
+                
+                if connection_id:
+                    logger.info(f"Added new connection {connection_id} to data model")
+                    
+                    # Find the wire in the scene and add it to controller tracking
+                    wire_found = False
+                    for wire in self.scene.wires:
+                        if (hasattr(wire, 'start_pin') and wire.start_pin and 
+                            hasattr(wire, 'end_pin') and wire.end_pin):
+                            
+                            start_comp_name = wire.start_pin.parent_component.name
+                            start_pin_id = wire.start_pin.pin_id
+                            end_comp_name = wire.end_pin.parent_component.name
+                            end_pin_id = wire.end_pin.pin_id
+                            
+                            if (start_comp_name == start_component and
+                                start_pin_id == start_pin and
+                                end_comp_name == end_component and
+                                end_pin_id == end_pin):
+                                
+                                # Add to controller tracking
+                                connection_graphics_item = ConnectionGraphicsItem(connection_id, wire)
+                                self._connection_graphics_items[connection_id] = connection_graphics_item
+                                
+                                logger.info(f"Added wire to controller tracking: {connection_id}")
+                                wire_found = True
+                                break
+                    
+                    if not wire_found:
+                        logger.warning(f"Could not find wire in scene.wires for connection: {start_component}.{start_pin} -> {end_component}.{end_pin}")
+                        # Try to find any wire that might match (fallback)
+                        for wire in self.scene.wires:
+                            if (hasattr(wire, 'start_pin') and wire.start_pin and 
+                                hasattr(wire, 'end_pin') and wire.end_pin):
+                                logger.info(f"Fallback: Found wire {wire.start_pin.parent_component.name}.{wire.start_pin.pin_id} -> {wire.end_pin.parent_component.name}.{wire.end_pin.pin_id}")
+                                # Add to controller tracking anyway
+                                connection_graphics_item = ConnectionGraphicsItem(connection_id, wire)
+                                self._connection_graphics_items[connection_id] = connection_graphics_item
+                                logger.info(f"Added wire to controller tracking (fallback): {connection_id}")
+                                break
+                else:
+                    logger.warning(f"Failed to add connection to data model")
+            else:
+                logger.warning(f"Could not find component IDs for wire: {start_component} -> {end_component}")
+                
+        except Exception as e:
+            logger.error(f"Error handling scene wire added: {e}")
+            logger.exception("Full traceback:")
+
+    def _on_scene_wire_removed(self, start_component: str, start_pin: str, end_component: str, end_pin: str):
+        """Handle wire removed from scene - remove it from data model and tracking"""
+        try:
+            logger.info(f"Scene wire removed: {start_component}.{start_pin} -> {end_component}.{end_pin}")
+            
+            # Find the connection ID in our tracking
+            connection_id_to_remove = None
+            for connection_id, wrapper in self._connection_graphics_items.items():
+                if wrapper and wrapper.graphics_item:
+                    wire = wrapper.graphics_item
+                    if (hasattr(wire, 'start_pin') and wire.start_pin and 
+                        hasattr(wire, 'end_pin') and wire.end_pin and
+                        wire.start_pin.parent_component.name == start_component and
+                        wire.start_pin.pin_id == start_pin and
+                        wire.end_pin.parent_component.name == end_component and
+                        wire.end_pin.pin_id == end_pin):
+                        connection_id_to_remove = connection_id
+                        break
+            
+            if connection_id_to_remove:
+                # Remove from controller tracking
+                del self._connection_graphics_items[connection_id_to_remove]
+                
+                # Remove from data model
+                success = self.data_model.remove_connection(connection_id_to_remove)
+                if success:
+                    logger.info(f"Removed connection {connection_id_to_remove} from data model")
+                else:
+                    logger.warning(f"Failed to remove connection {connection_id_to_remove} from data model")
+            else:
+                logger.warning(f"Could not find connection to remove: {start_component}.{start_pin} -> {end_component}.{end_pin}")
+                
+        except Exception as e:
+            logger.error(f"Error handling scene wire removed: {e}")
+            logger.exception("Full traceback:")

@@ -55,7 +55,7 @@
           },
           "visual_properties": {
             "position": {
-              "x": -190.0,
+              "x": -198.0,
               "y": 0.0
             },
             "size": {
@@ -65,7 +65,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "7c1b3ecf-238e-45b0-8025-7bd2514c41b1"
+          "id": "8c360560-7fb1-4728-bac8-ce19561f24a8"
         },
         {
           "name": "Capacitor3",
@@ -86,7 +86,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "ca99f33d-c1ee-4f7c-96d1-aa6c289393d0"
+          "id": "ad022080-bbcf-4afd-862b-0b91c0168788"
         },
         {
           "name": "Resistor4",
@@ -107,7 +107,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "1b0f6521-ecf6-4232-8bef-d988f5ee8336"
+          "id": "463e0b84-9c59-4a48-bd74-f1e34c123604"
         },
         {
           "name": "Chip4",
@@ -128,7 +128,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "eee51350-dcaa-4ee8-bba1-a012250ea6c0"
+          "id": "ce666f49-34b5-4482-9711-524a9aae3a71"
         },
         {
           "name": "Chip5",
@@ -139,8 +139,8 @@
           },
           "visual_properties": {
             "position": {
-              "x": -231.0,
-              "y": 211.0
+              "x": -184.0,
+              "y": 180.0
             },
             "size": {
               "width": 100,
@@ -149,14 +149,35 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "b45ea9e6-652e-45bf-ad16-af8b407ef37f"
+          "id": "b8fdc480-a1b8-495c-ad32-d3d30da0e5f2"
+        },
+        {
+          "name": "Resistor6",
+          "component_type": "resistor",
+          "function_type": "passive",
+          "properties": {
+            "function_type": "passive"
+          },
+          "visual_properties": {
+            "position": {
+              "x": 164.0,
+              "y": 165.0
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "3efee5d2-37b4-4794-b648-c54a5fb65275"
         }
       ],
       "connections": [
         {
-          "from_component_id": "7c1b3ecf-238e-45b0-8025-7bd2514c41b1",
+          "from_component_id": "8c360560-7fb1-4728-bac8-ce19561f24a8",
           "from_pin_id": "R1",
-          "to_component_id": "ca99f33d-c1ee-4f7c-96d1-aa6c289393d0",
+          "to_component_id": "ad022080-bbcf-4afd-862b-0b91c0168788",
           "to_pin_id": "POS",
           "connection_type": "wire",
           "properties": {},
@@ -165,12 +186,12 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "fbe3133c-498f-469a-99bf-78e3b928ae75"
+          "id": "de46e7e0-95c9-4a9a-91f8-66edd8f5b260"
         },
         {
-          "from_component_id": "1b0f6521-ecf6-4232-8bef-d988f5ee8336",
+          "from_component_id": "463e0b84-9c59-4a48-bd74-f1e34c123604",
           "from_pin_id": "A",
-          "to_component_id": "7c1b3ecf-238e-45b0-8025-7bd2514c41b1",
+          "to_component_id": "8c360560-7fb1-4728-bac8-ce19561f24a8",
           "to_pin_id": "R3",
           "connection_type": "wire",
           "properties": {},
@@ -179,12 +200,12 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "37fca641-5bd3-4172-a79a-583f70f041f8"
+          "id": "73097ea1-e640-49b8-bcd6-05f741a6d4b0"
         },
         {
-          "from_component_id": "7c1b3ecf-238e-45b0-8025-7bd2514c41b1",
+          "from_component_id": "8c360560-7fb1-4728-bac8-ce19561f24a8",
           "from_pin_id": "R6",
-          "to_component_id": "eee51350-dcaa-4ee8-bba1-a012250ea6c0",
+          "to_component_id": "ce666f49-34b5-4482-9711-524a9aae3a71",
           "to_pin_id": "L4",
           "connection_type": "wire",
           "properties": {},
@@ -193,7 +214,35 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "7935370b-601f-4365-8c73-cab464c8f7b0"
+          "id": "48b015d8-7168-4966-8443-a4e22dd7180c"
+        },
+        {
+          "from_component_id": "8c360560-7fb1-4728-bac8-ce19561f24a8",
+          "from_pin_id": "B4",
+          "to_component_id": "b8fdc480-a1b8-495c-ad32-d3d30da0e5f2",
+          "to_pin_id": "T3",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "id": "b0cc820a-43c3-4e2d-b01a-6bbc9986007b"
+        },
+        {
+          "from_component_id": "8c360560-7fb1-4728-bac8-ce19561f24a8",
+          "from_pin_id": "B6",
+          "to_component_id": "3efee5d2-37b4-4794-b648-c54a5fb65275",
+          "to_pin_id": "A",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "id": "19c9467e-8ca9-4078-be3b-e9b7e0e5b297"
         }
       ],
       "layout": {

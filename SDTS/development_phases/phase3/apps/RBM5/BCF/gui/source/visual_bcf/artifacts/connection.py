@@ -71,5 +71,8 @@ class Wire(QGraphicsLineItem):
 
         if action == delete_action:
             scene = self.scene()
-            if scene:
+            if scene and hasattr(scene, 'remove_wire'):
+                scene.remove_wire(self)
+            elif scene:
+                # Fallback to direct removal if scene doesn't have remove_wire method
                 scene.removeItem(self)
