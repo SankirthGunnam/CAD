@@ -11,8 +11,8 @@ from typing import Optional, List, Tuple
 import math
 
 from PySide6.QtCore import QPointF, Qt, QRectF
-from PySide6.QtGui import QPen, QColor, QPainter, QPainterPath
-from PySide6.QtWidgets import QGraphicsPathItem, QMenu
+from PySide6.QtGui import QPen, QColor, QPainter, QPainterPath, QPainterPathStroker
+from PySide6.QtWidgets import QGraphicsPathItem, QMenu, QGraphicsItem
 
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
 
@@ -779,6 +779,40 @@ class EnhancedWire(QGraphicsPathItem):
                 # Fallback to direct removal if scene doesn't have remove_wire method
                 scene.removeItem(self)
 
+    def itemChange(self, change, value):
+        """Handle item state changes, particularly selection"""
+        if change == QGraphicsItem.GraphicsItemChange.ItemSelectedChange:
+            # Change line format based on selection state
+            if value:  # Selected
+                # Change to dot-dash line when selected
+                current_pen = self.pen()
+                current_pen.setStyle(Qt.PenStyle.DashDotLine)
+                self.setPen(current_pen)
+                print(f"🔍 Wire selected: Changed to dot-dash line")
+            else:  # Not selected
+                # Restore normal line when deselected
+                if self.is_temporary:
+                    self.setPen(QPen(self.temp_color, self.wire_width))
+                else:
+                    self.setPen(QPen(self.wire_color, self.wire_width))
+                print(f"🔍 Wire deselected: Restored normal line")
+        
+        return super().itemChange(change, value)
+    
+    def shape(self):
+        """Override shape to make selection more precise - only select when clicking on the actual line"""
+        if not self.wire_path:
+            return super().shape()
+        
+        # Create a precise shape that follows the wire path
+        path = self.wire_path.get_path()
+        if path.isEmpty():
+            return super().shape()
+        
+        # Create a stroked path with a small tolerance for easier clicking
+        stroker = QPainterPathStroker()
+        stroker.setWidth(max(4, self.wire_width + 2))  # Small tolerance around the line
+        return stroker.createStroke(path)
 
 # Keep the old Wire class for backward compatibility
 class Wire(EnhancedWire):

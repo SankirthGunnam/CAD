@@ -341,23 +341,36 @@ class ComponentScene(QGraphicsScene):
 
     def clear_scene(self):
         """Clear all components and connections from scene"""
-        # Notify controller first to clear its tracking dictionaries
-        if hasattr(self, 'controller') and self.controller:
-            try:
-                self.controller._clear_graphics_items()
-            except Exception as e:
-                print(f"Warning: Could not notify controller to clear graphics items: {e}")
+        print("🧹 Clearing scene...")
         
-        # Remove all items from the scene
+        # Get count before clearing for logging
+        component_count = len(self.components)
+        wire_count = len(self.wires)
+        
+        # Remove all items from the scene first
         self.clear()
-
+        
         # Clear lists
         self.components.clear()
         self.wires.clear()
-
+        
         # Reset counter
         self.component_counter = 1
         self.current_wire = None
+        
+        # Notify controller to clear its tracking dictionaries (but don't let it modify scene)
+        if hasattr(self, 'controller') and self.controller:
+            try:
+                # Just clear the controller's tracking dictionaries, don't let it modify scene
+                if hasattr(self.controller, '_component_graphics_items'):
+                    self.controller._component_graphics_items.clear()
+                if hasattr(self.controller, '_connection_graphics_items'):
+                    self.controller._connection_graphics_items.clear()
+                print("✅ Controller tracking dictionaries cleared")
+            except Exception as e:
+                print(f"⚠️  Warning: Could not clear controller tracking dictionaries: {e}")
+        
+        print(f"🧹 Scene cleared: {component_count} components, {wire_count} wires removed")
         
 
 

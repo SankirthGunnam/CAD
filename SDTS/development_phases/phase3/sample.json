@@ -55,8 +55,8 @@
           },
           "visual_properties": {
             "position": {
-              "x": -155.0,
-              "y": -93.0
+              "x": -118.0,
+              "y": -110.0
             },
             "size": {
               "width": 100,
@@ -65,7 +65,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "accd206c-96e5-4309-ab66-d6845815d1ba"
+          "id": "f75e7bcc-b8cd-4ab0-80ec-9883eac3f40f"
         },
         {
           "name": "Capacitor3",
@@ -86,7 +86,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "6ee2e2d5-6bf2-46aa-ba75-10ac493fa9c7"
+          "id": "066fff54-d0da-473e-9f9d-7fc5d54a0e90"
         },
         {
           "name": "Resistor4",
@@ -107,7 +107,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "0e0c91d6-6cdc-421b-8389-133a570e23b1"
+          "id": "e2227abd-58c8-4213-84ff-b96c49d7886f"
         },
         {
           "name": "Chip4",
@@ -118,8 +118,8 @@
           },
           "visual_properties": {
             "position": {
-              "x": 342.0642722117202,
-              "y": 70.99621928166357
+              "x": 451.0642722117202,
+              "y": 67.99621928166357
             },
             "size": {
               "width": 100,
@@ -128,7 +128,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "d27bf3f9-786f-4352-98d8-555981175301"
+          "id": "acf92f0e-16aa-4e27-8338-4bd854655492"
         },
         {
           "name": "Chip5",
@@ -139,8 +139,8 @@
           },
           "visual_properties": {
             "position": {
-              "x": -163.0,
-              "y": 201.0
+              "x": -185.0,
+              "y": 208.0
             },
             "size": {
               "width": 100,
@@ -149,7 +149,7 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "b45889c7-8bda-4d10-b16b-427a5e099243"
+          "id": "2d7bfdf3-8ba4-4a81-8a25-b5143f120f23"
         },
         {
           "name": "Resistor6",
@@ -160,8 +160,8 @@
           },
           "visual_properties": {
             "position": {
-              "x": 267.58691542697466,
-              "y": 206.60261362702386
+              "x": 303.58691542697466,
+              "y": 274.60261362702386
             },
             "size": {
               "width": 100,
@@ -170,14 +170,14 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "e67710dd-775b-453b-a2cc-1d7e392d40ac"
+          "id": "00e1752c-7347-42f7-999b-7be39d5ce54a"
         }
       ],
       "connections": [
         {
-          "from_component_id": "accd206c-96e5-4309-ab66-d6845815d1ba",
+          "from_component_id": "f75e7bcc-b8cd-4ab0-80ec-9883eac3f40f",
           "from_pin_id": "R1",
-          "to_component_id": "6ee2e2d5-6bf2-46aa-ba75-10ac493fa9c7",
+          "to_component_id": "066fff54-d0da-473e-9f9d-7fc5d54a0e90",
           "to_pin_id": "POS",
           "connection_type": "wire",
           "properties": {},
@@ -186,12 +186,12 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "45055fdf-dbbb-4a8e-bb23-e805b6152f46"
+          "id": "9a3c1b7f-a6e9-4379-adbf-ea8ade640e2f"
         },
         {
-          "from_component_id": "0e0c91d6-6cdc-421b-8389-133a570e23b1",
+          "from_component_id": "e2227abd-58c8-4213-84ff-b96c49d7886f",
           "from_pin_id": "A",
-          "to_component_id": "accd206c-96e5-4309-ab66-d6845815d1ba",
+          "to_component_id": "f75e7bcc-b8cd-4ab0-80ec-9883eac3f40f",
           "to_pin_id": "R3",
           "connection_type": "wire",
           "properties": {},
@@ -200,12 +200,12 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "fbfb1182-ea98-486a-88de-0956963475ef"
+          "id": "f568ac26-f9c8-48fd-ab50-925e9939f1aa"
         },
         {
-          "from_component_id": "accd206c-96e5-4309-ab66-d6845815d1ba",
+          "from_component_id": "f75e7bcc-b8cd-4ab0-80ec-9883eac3f40f",
           "from_pin_id": "R6",
-          "to_component_id": "d27bf3f9-786f-4352-98d8-555981175301",
+          "to_component_id": "acf92f0e-16aa-4e27-8338-4bd854655492",
           "to_pin_id": "L4",
           "connection_type": "wire",
           "properties": {},
@@ -214,12 +214,12 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "dfc5408b-548d-4288-925a-48eb84ac06fa"
+          "id": "3066d991-5d59-4967-8191-d9ba83ebbf27"
         },
         {
-          "from_component_id": "accd206c-96e5-4309-ab66-d6845815d1ba",
+          "from_component_id": "f75e7bcc-b8cd-4ab0-80ec-9883eac3f40f",
           "from_pin_id": "B4",
-          "to_component_id": "b45889c7-8bda-4d10-b16b-427a5e099243",
+          "to_component_id": "2d7bfdf3-8ba4-4a81-8a25-b5143f120f23",
           "to_pin_id": "T3",
           "connection_type": "wire",
           "properties": {},
@@ -228,12 +228,12 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "d1185938-61c8-4fac-9031-6718cd0d6828"
+          "id": "19a26bc5-8fa7-4c9c-bdba-821892d53537"
         },
         {
-          "from_component_id": "accd206c-96e5-4309-ab66-d6845815d1ba",
+          "from_component_id": "f75e7bcc-b8cd-4ab0-80ec-9883eac3f40f",
           "from_pin_id": "B6",
-          "to_component_id": "e67710dd-775b-453b-a2cc-1d7e392d40ac",
+          "to_component_id": "00e1752c-7347-42f7-999b-7be39d5ce54a",
           "to_pin_id": "A",
           "connection_type": "wire",
           "properties": {},
@@ -242,12 +242,12 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "30db9d17-94f5-4bd2-864c-e3be1c93d8e4"
+          "id": "13c0136f-2a1f-4c2e-8c9d-21d890c3cca4"
         },
         {
-          "from_component_id": "b45889c7-8bda-4d10-b16b-427a5e099243",
+          "from_component_id": "2d7bfdf3-8ba4-4a81-8a25-b5143f120f23",
           "from_pin_id": "R2",
-          "to_component_id": "d27bf3f9-786f-4352-98d8-555981175301",
+          "to_component_id": "acf92f0e-16aa-4e27-8338-4bd854655492",
           "to_pin_id": "L5",
           "connection_type": "wire",
           "properties": {},
@@ -256,7 +256,7 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "53a3a706-cdc7-4b3e-b97b-2b17cc8aa2b9"
+          "id": "cd76f3ec-c390-415a-8fdf-601e8fdd003d"
         }
       ],
       "layout": {
