@@ -23,38 +23,50 @@ class ComponentScene(QGraphicsScene):
     component_removed = Signal(str)  # name
     wire_added = Signal(str, str, str, str)  # start_component, start_pin, end_component, end_pin
     
-    def __init__(self):
+    def __init__(self, controller=None):
         super().__init__()
         self.components = []
         self.wires = []
         self.component_counter = 1
         self.current_wire = None  # Wire being drawn
         self.mouse_position = QPointF(0, 0)
+        self.controller = controller  # Optional controller reference for callbacks
         
     def mousePressEvent(self, event):
         """Handle mouse press for component placement mode"""
-        if hasattr(self.parent(), 'placement_mode') and self.parent().placement_mode:
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.add_component_at_position(event.scenePos())
+        # Check placement mode from controller first, then parent as fallback
+        placement_mode = False
+        if self.controller and hasattr(self.controller, 'placement_mode'):
+            placement_mode = self.controller.placement_mode
+        elif hasattr(self.parent(), 'placement_mode'):
+            placement_mode = self.parent().placement_mode
+            
+        if placement_mode and event.button() == Qt.MouseButton.LeftButton:
+            self.add_component_at_position(event.scenePos())
         
         super().mousePressEvent(event)
         
     def add_component_at_position(self, position: QPointF):
         """Add component at the specified position"""
-        if hasattr(self.parent(), 'selected_component_type'):
+        # Get component type from controller first, then parent as fallback
+        component_type = "chip"  # default
+        if self.controller and hasattr(self.controller, 'selected_component_type'):
+            component_type = self.controller.selected_component_type
+        elif hasattr(self.parent(), 'selected_component_type'):
             component_type = self.parent().selected_component_type
-            name = f"{component_type.title()}{self.component_counter}"
             
-            component = ComponentWithPins(name, component_type)
-            component.setPos(position.x() - component.rect().width()/2, 
-                           position.y() - component.rect().height()/2)
-            
-            self.addItem(component)
-            self.components.append(component)
-            self.component_counter += 1
-            
-            self.component_added.emit(name, component_type, position)
-            
+        name = f"{component_type.title()}{self.component_counter}"
+        
+        component = ComponentWithPins(name, component_type)
+        component.setPos(position.x() - component.rect().width()/2, 
+                       position.y() - component.rect().height()/2)
+        
+        self.addItem(component)
+        self.components.append(component)
+        self.component_counter += 1
+        
+        self.component_added.emit(name, component_type, position)
+        
     def remove_component(self, component: ComponentWithPins):
         """Remove component from scene"""
         if component in self.components:

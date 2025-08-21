@@ -411,7 +411,44 @@ class VisualBCFDataModel(QObject):
     def save_scene_data(self, scene_data: Dict[str, Any]) -> bool:
         """Save scene data to default location"""
         try:
-            self.rdb_manager.set_value("config.visual_bcf.current_scene", scene_data)
+            # Save only via normalized tables (components/connections)
+            # Convert scene components to table form
+            components_list = []
+            for comp in scene_data.get("components", []):
+                comp_dict = {
+                    'id': comp.get('id', comp.get('name', '')),
+                    'name': comp.get('name', ''),
+                    'component_type': comp.get('type', comp.get('component_type', 'chip')),
+                    'function_type': comp.get('properties', {}).get('function_type', ''),
+                    'properties': comp.get('properties', {}),
+                    'visual_properties': comp.get('visual_properties', {
+                        'position': comp.get('position', {'x': 0, 'y': 0}),
+                        'size': {'width': 100, 'height': 80},
+                        'rotation': 0
+                    }),
+                    'pins': comp.get('pins', [])
+                }
+                components_list.append(comp_dict)
+            connections_list = []
+            for conn in scene_data.get("connections", []):
+                # Map by component names -> we'll resolve to IDs if present in components_list
+                connections_list.append({
+                    'id': conn.get('id', ''),
+                    'from_component_id': conn.get('from_component_id', ''),
+                    'from_pin_id': conn.get('start_pin', conn.get('from_pin_id', '')),
+                    'to_component_id': conn.get('to_component_id', ''),
+                    'to_pin_id': conn.get('end_pin', conn.get('to_pin_id', '')),
+                    'connection_type': conn.get('connection_type', 'wire'),
+                    'properties': conn.get('properties', {}),
+                    'visual_properties': conn.get('visual_properties', {
+                        'path_points': [], 'line_style': 'solid', 'color': '#000000'
+                    })
+                })
+            self.rdb_manager.set_table(self.components_table_path, components_list)
+            self.rdb_manager.set_table(self.connections_table_path, connections_list)
+            # Explicitly persist to disk
+            if hasattr(self.rdb_manager.db, 'save'):
+                self.rdb_manager.db.save()
             logger.info("Scene data saved to database")
             return True
         except Exception as e:
@@ -421,10 +458,35 @@ class VisualBCFDataModel(QObject):
     def load_scene_data(self) -> Optional[Dict[str, Any]]:
         """Load scene data from default location"""
         try:
-            scene_data = self.rdb_manager.get_value("config.visual_bcf.current_scene")
-            if scene_data:
-                logger.info("Scene data loaded from database")
-            return scene_data
+            # Build scene-like dict from normalized tables only
+            components = self.rdb_manager.get_table(self.components_table_path) or []
+            connections = self.rdb_manager.get_table(self.connections_table_path) or []
+            id_to_name = {c.get('id', c.get('name','')): c.get('name','') for c in components}
+            scene_components = []
+            for comp in components:
+                pos = comp.get('visual_properties', {}).get('position', {'x': 0, 'y': 0})
+                scene_components.append({
+                    'id': comp.get('id', comp.get('name','')),
+                    'name': comp.get('name',''),
+                    'type': comp.get('component_type','chip'),
+                    'position': {'x': pos.get('x',0), 'y': pos.get('y',0)},
+                    'properties': comp.get('properties', {}),
+                    'visual_properties': comp.get('visual_properties', {})
+                })
+            scene_connections = []
+            for conn in connections:
+                scene_connections.append({
+                    'id': conn.get('id',''),
+                    'start_component': id_to_name.get(conn.get('from_component_id',''), ''),
+                    'end_component': id_to_name.get(conn.get('to_component_id',''), ''),
+                    'start_pin': conn.get('from_pin_id',''),
+                    'end_pin': conn.get('to_pin_id',''),
+                    'properties': conn.get('properties', {}),
+                    'visual_properties': conn.get('visual_properties', {})
+                })
+            scene = {'components': scene_components, 'connections': scene_connections}
+            logger.info("Scene data reconstructed from tables")
+            return scene
         except Exception as e:
             logger.error(f"Error loading scene data: {e}")
             return None
@@ -435,6 +497,8 @@ class VisualBCFDataModel(QObject):
             # Update components and connections tables through RDB manager
             self._update_components_table()
             self._update_connections_table()
+            if hasattr(self.rdb_manager.db, 'save'):
+                self.rdb_manager.db.save()
             
             logger.info("Visual BCF data saved to database")
             return True
@@ -598,9 +662,8 @@ class VisualBCFDataModel(QObject):
         try:
             self._components_cache.clear()
             self._connections_cache.clear()
-            
-            self._update_components_table()
-            self._update_connections_table()
+            # Do NOT persist to disk on clear; keep this as an in-memory operation
+            # and let explicit save/update calls persist when requested by user.
             
             logger.info("Cleared all Visual BCF data")
             self.data_synchronized.emit()

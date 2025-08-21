@@ -19,6 +19,9 @@ class JSONDatabase(QObject):
         self.db_file = db_file
         self.data: Dict[str, Any] = {}
         self.connected = False
+        # Control whether to save to disk on every mutation. Default is disabled
+        # to avoid frequent unintended writes; callers should invoke save() explicitly.
+        self.auto_save: bool = False
 
     def connect(self) -> None:
         """Connect to the database"""
@@ -49,6 +52,14 @@ class JSONDatabase(QObject):
                 json.dump(self.data, f, indent=2)
         except Exception as e:
             print(f"Error saving database: {e}")
+
+    def save(self) -> bool:
+        """Explicitly persist current in-memory DB to disk"""
+        try:
+            self._save_db()
+            return True
+        except Exception:
+            return False
 
     def _get_path_parts(self, path: str) -> List[str]:
         """Split path into parts, handling both dot and slash notation"""
@@ -113,7 +124,10 @@ class JSONDatabase(QObject):
         else:
             return False
 
-        self._save_db()
+        # Only persist immediately if auto_save is enabled; otherwise caller should
+        # explicitly call save() when appropriate (e.g., on user save action)
+        if self.auto_save:
+            self._save_db()
         self.data_changed.emit(path)
         return True
 
@@ -175,6 +189,15 @@ class JSONDatabase(QObject):
                     "band": {"settings": [], "properties": {}},
                     "board": {"settings": [], "properties": {}},
                     "rcc": {"settings": [], "properties": {}},
+                    # Ensure visual_bcf root exists for first-time runs (no current_scene)
+                    "visual_bcf": {
+                        "components": [],
+                        "connections": [],
+                        "layout": {
+                            "scene_rect": {"x": -1000, "y": -1000, "width": 2000, "height": 2000},
+                            "grid_settings": {"enabled": True, "size": 20}
+                        }
+                    },
                 }
             }
             self._save_db()

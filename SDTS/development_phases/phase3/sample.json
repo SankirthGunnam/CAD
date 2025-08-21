@@ -3,7 +3,7 @@
     "device": {
       "settings": [
         {
-          "name": "TestChip1",
+          "name": "Chip1",
           "function_type": "generic",
           "interface_type": "Generic",
           "interface": {},
@@ -12,21 +12,12 @@
           }
         },
         {
-          "name": "Chip1",
+          "name": "Chip4",
           "function_type": "generic",
           "interface_type": "Generic",
           "interface": {},
           "config": {
             "usid": "GENERIC002"
-          }
-        },
-        {
-          "name": "Chip5",
-          "function_type": "generic",
-          "interface_type": "Generic",
-          "interface": {},
-          "config": {
-            "usid": "GENERIC003"
           }
         }
       ],
@@ -47,14 +38,16 @@
     "visual_bcf": {
       "components": [
         {
-          "name": "TestChip1",
+          "name": "Chip1",
           "component_type": "chip",
-          "function_type": "",
-          "properties": {},
+          "function_type": "generic",
+          "properties": {
+            "function_type": "generic"
+          },
           "visual_properties": {
             "position": {
-              "x": -259.0,
-              "y": -27.0
+              "x": -190.0,
+              "y": 0.0
             },
             "size": {
               "width": 100,
@@ -63,36 +56,19 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "50fe976a-7962-446a-97ef-41ee678ed41a"
+          "id": "e5b2c07d-aaad-40a8-b096-2e6fe0a26fd9"
         },
         {
-          "name": "TestResistor1",
-          "component_type": "resistor",
-          "function_type": "",
-          "properties": {},
-          "visual_properties": {
-            "position": {
-              "x": 150.0,
-              "y": -154.0
-            },
-            "size": {
-              "width": 100,
-              "height": 80
-            },
-            "rotation": 0
-          },
-          "pins": [],
-          "id": "6f3e0c9f-4ec7-4b85-9488-b2f272fcc361"
-        },
-        {
-          "name": "TestCapacitor1",
+          "name": "Capacitor3",
           "component_type": "capacitor",
-          "function_type": "",
-          "properties": {},
+          "function_type": "passive",
+          "properties": {
+            "function_type": "passive"
+          },
           "visual_properties": {
             "position": {
-              "x": 208.0,
-              "y": 258.0
+              "x": 219.0706008054574,
+              "y": -189.092791978302
             },
             "size": {
               "width": 100,
@@ -101,17 +77,19 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "9409a129-dac9-4fa5-8a52-6e47a8eddeb2"
+          "id": "31047787-4212-4484-8743-b54cf57c0e85"
         },
         {
-          "name": "Resistor1",
+          "name": "Resistor4",
           "component_type": "resistor",
-          "function_type": "",
-          "properties": {},
+          "function_type": "passive",
+          "properties": {
+            "function_type": "passive"
+          },
           "visual_properties": {
             "position": {
-              "x": 184.0,
-              "y": -6.0
+              "x": 252.12098298676756,
+              "y": -10.943289224952707
             },
             "size": {
               "width": 100,
@@ -120,28 +98,35 @@
             "rotation": 0
           },
           "pins": [],
-          "id": "71004952-5265-456e-93b6-b6d3b27f752b"
+          "id": "12fd434c-3acf-4447-afd8-3304be1cb377"
+        },
+        {
+          "name": "Chip4",
+          "component_type": "chip",
+          "function_type": "generic",
+          "properties": {
+            "function_type": "generic"
+          },
+          "visual_properties": {
+            "position": {
+              "x": 211.0642722117202,
+              "y": 244.9962192816635
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "id": "437b80e2-d491-4ff1-a20d-2d2b7608b1f7"
         }
       ],
       "connections": [
         {
-          "from_component_id": "50fe976a-7962-446a-97ef-41ee678ed41a",
+          "from_component_id": "e5b2c07d-aaad-40a8-b096-2e6fe0a26fd9",
           "from_pin_id": "R1",
-          "to_component_id": "6f3e0c9f-4ec7-4b85-9488-b2f272fcc361",
-          "to_pin_id": "A",
-          "connection_type": "wire",
-          "properties": {},
-          "visual_properties": {
-            "path_points": [],
-            "line_style": "solid",
-            "color": "#000000"
-          },
-          "id": "8f555806-8e05-424c-9c52-9527c190123a"
-        },
-        {
-          "from_component_id": "50fe976a-7962-446a-97ef-41ee678ed41a",
-          "from_pin_id": "R6",
-          "to_component_id": "9409a129-dac9-4fa5-8a52-6e47a8eddeb2",
+          "to_component_id": "31047787-4212-4484-8743-b54cf57c0e85",
           "to_pin_id": "POS",
           "connection_type": "wire",
           "properties": {},
@@ -150,13 +135,13 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "8d0192f4-5f65-4f06-aba8-b984e286fadc"
+          "id": "1075e0ab-4c0e-43ca-a9a4-39b05ca43acd"
         },
         {
-          "from_component_id": "50fe976a-7962-446a-97ef-41ee678ed41a",
-          "from_pin_id": "R4",
-          "to_component_id": "71004952-5265-456e-93b6-b6d3b27f752b",
-          "to_pin_id": "A",
+          "from_component_id": "12fd434c-3acf-4447-afd8-3304be1cb377",
+          "from_pin_id": "A",
+          "to_component_id": "e5b2c07d-aaad-40a8-b096-2e6fe0a26fd9",
+          "to_pin_id": "R3",
           "connection_type": "wire",
           "properties": {},
           "visual_properties": {
@@ -164,7 +149,21 @@
             "line_style": "solid",
             "color": "#000000"
           },
-          "id": "b3895dea-ac5e-4b22-b077-690a5f782153"
+          "id": "8ae07a46-b880-4bf8-a81c-77fc87c74763"
+        },
+        {
+          "from_component_id": "e5b2c07d-aaad-40a8-b096-2e6fe0a26fd9",
+          "from_pin_id": "R6",
+          "to_component_id": "437b80e2-d491-4ff1-a20d-2d2b7608b1f7",
+          "to_pin_id": "L4",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "id": "8042f5ef-885c-4887-912a-574fbf27410d"
         }
       ],
       "layout": {
@@ -178,287 +177,6 @@
           "enabled": true,
           "size": 20
         }
-      },
-      "current_scene": {
-        "components": [
-          {
-            "name": "TestChip1",
-            "type": "chip",
-            "position": {
-              "x": -259.0,
-              "y": -27.0
-            },
-            "properties": {},
-            "pins": [
-              {
-                "pin_id": "L1",
-                "position": {
-                  "x": -4.0,
-                  "y": 4.571428571428571
-                }
-              },
-              {
-                "pin_id": "L2",
-                "position": {
-                  "x": -4.0,
-                  "y": 13.142857142857142
-                }
-              },
-              {
-                "pin_id": "L3",
-                "position": {
-                  "x": -4.0,
-                  "y": 21.714285714285715
-                }
-              },
-              {
-                "pin_id": "L4",
-                "position": {
-                  "x": -4.0,
-                  "y": 30.285714285714285
-                }
-              },
-              {
-                "pin_id": "L5",
-                "position": {
-                  "x": -4.0,
-                  "y": 38.857142857142854
-                }
-              },
-              {
-                "pin_id": "L6",
-                "position": {
-                  "x": -4.0,
-                  "y": 47.42857142857143
-                }
-              },
-              {
-                "pin_id": "R1",
-                "position": {
-                  "x": 96.0,
-                  "y": 4.571428571428571
-                }
-              },
-              {
-                "pin_id": "R2",
-                "position": {
-                  "x": 96.0,
-                  "y": 13.142857142857142
-                }
-              },
-              {
-                "pin_id": "R3",
-                "position": {
-                  "x": 96.0,
-                  "y": 21.714285714285715
-                }
-              },
-              {
-                "pin_id": "R4",
-                "position": {
-                  "x": 96.0,
-                  "y": 30.285714285714285
-                }
-              },
-              {
-                "pin_id": "R5",
-                "position": {
-                  "x": 96.0,
-                  "y": 38.857142857142854
-                }
-              },
-              {
-                "pin_id": "R6",
-                "position": {
-                  "x": 96.0,
-                  "y": 47.42857142857143
-                }
-              },
-              {
-                "pin_id": "T1",
-                "position": {
-                  "x": 10.285714285714286,
-                  "y": -4.0
-                }
-              },
-              {
-                "pin_id": "T2",
-                "position": {
-                  "x": 24.571428571428573,
-                  "y": -4.0
-                }
-              },
-              {
-                "pin_id": "T3",
-                "position": {
-                  "x": 38.85714285714286,
-                  "y": -4.0
-                }
-              },
-              {
-                "pin_id": "T4",
-                "position": {
-                  "x": 53.142857142857146,
-                  "y": -4.0
-                }
-              },
-              {
-                "pin_id": "T5",
-                "position": {
-                  "x": 67.42857142857143,
-                  "y": -4.0
-                }
-              },
-              {
-                "pin_id": "T6",
-                "position": {
-                  "x": 81.71428571428572,
-                  "y": -4.0
-                }
-              },
-              {
-                "pin_id": "B1",
-                "position": {
-                  "x": 10.285714285714286,
-                  "y": 56.0
-                }
-              },
-              {
-                "pin_id": "B2",
-                "position": {
-                  "x": 24.571428571428573,
-                  "y": 56.0
-                }
-              },
-              {
-                "pin_id": "B3",
-                "position": {
-                  "x": 38.85714285714286,
-                  "y": 56.0
-                }
-              },
-              {
-                "pin_id": "B4",
-                "position": {
-                  "x": 53.142857142857146,
-                  "y": 56.0
-                }
-              },
-              {
-                "pin_id": "B5",
-                "position": {
-                  "x": 67.42857142857143,
-                  "y": 56.0
-                }
-              },
-              {
-                "pin_id": "B6",
-                "position": {
-                  "x": 81.71428571428572,
-                  "y": 56.0
-                }
-              }
-            ]
-          },
-          {
-            "name": "TestResistor1",
-            "type": "resistor",
-            "position": {
-              "x": 150.0,
-              "y": -154.0
-            },
-            "properties": {},
-            "pins": [
-              {
-                "pin_id": "A",
-                "position": {
-                  "x": -4.0,
-                  "y": 26.0
-                }
-              },
-              {
-                "pin_id": "B",
-                "position": {
-                  "x": 96.0,
-                  "y": 26.0
-                }
-              }
-            ]
-          },
-          {
-            "name": "TestCapacitor1",
-            "type": "capacitor",
-            "position": {
-              "x": 208.0,
-              "y": 258.0
-            },
-            "properties": {},
-            "pins": [
-              {
-                "pin_id": "POS",
-                "position": {
-                  "x": -4.0,
-                  "y": 26.0
-                }
-              },
-              {
-                "pin_id": "NEG",
-                "position": {
-                  "x": 96.0,
-                  "y": 26.0
-                }
-              }
-            ]
-          },
-          {
-            "name": "Resistor1",
-            "type": "resistor",
-            "position": {
-              "x": 184.0,
-              "y": -6.0
-            },
-            "properties": {},
-            "pins": [
-              {
-                "pin_id": "A",
-                "position": {
-                  "x": -4.0,
-                  "y": 26.0
-                }
-              },
-              {
-                "pin_id": "B",
-                "position": {
-                  "x": 96.0,
-                  "y": 26.0
-                }
-              }
-            ]
-          }
-        ],
-        "connections": [
-          {
-            "start_component": "TestChip1",
-            "start_pin": "R1",
-            "end_component": "TestResistor1",
-            "end_pin": "A",
-            "properties": {}
-          },
-          {
-            "start_component": "TestChip1",
-            "start_pin": "R6",
-            "end_component": "TestCapacitor1",
-            "end_pin": "POS",
-            "properties": {}
-          },
-          {
-            "start_component": "TestChip1",
-            "start_pin": "R4",
-            "end_component": "Resistor1",
-            "end_pin": "A",
-            "properties": {}
-          }
-        ]
       }
     }
   }

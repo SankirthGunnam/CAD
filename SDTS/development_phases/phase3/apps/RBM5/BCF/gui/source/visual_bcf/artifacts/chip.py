@@ -193,4 +193,31 @@ class ComponentWithPins(QGraphicsRectItem):
             # Update connected wires when component is about to move
             # Use QTimer.singleShot to defer the update until after the move
             QTimer.singleShot(0, self.update_connected_wires)
+            
+            # Notify controller to sync model position (deferred)
+            # Use a safer approach that doesn't capture controller by reference
+            try:
+                scene = self.scene()
+                if scene and hasattr(scene, 'controller'):
+                    controller = scene.controller
+                    # Check if controller is still valid and has the required method
+                    if (controller and 
+                        hasattr(controller, 'on_graphics_component_moved') and 
+                        callable(getattr(controller, 'on_graphics_component_moved', None))):
+                        
+                        # Use a safer lambda that doesn't capture the controller reference
+                        QTimer.singleShot(0, lambda: self._notify_controller_position_change(controller))
+                        
+            except Exception as e:
+                # Log the error but don't let it crash the component
+                print(f"Warning: Could not notify controller of position change: {e}")
+                
         return super().itemChange(change, value)
+    
+    def _notify_controller_position_change(self, controller):
+        """Safely notify controller of position change"""
+        try:
+            if controller and hasattr(controller, 'on_graphics_component_moved'):
+                controller.on_graphics_component_moved(self)
+        except Exception as e:
+            print(f"Error notifying controller of position change: {e}")
