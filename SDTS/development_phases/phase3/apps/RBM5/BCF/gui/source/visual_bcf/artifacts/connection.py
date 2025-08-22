@@ -246,6 +246,12 @@ class EnhancedWire(QGraphicsPathItem):
         # Make wires selectable and deletable
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable, True)
         
+        # Disable bounding rect display and geometry changes for cleaner appearance
+        self.setFlag(self.GraphicsItemFlag.ItemSendsGeometryChanges, False)
+        
+        # Disable any default selection rectangle display
+        self.setFlag(self.GraphicsItemFlag.ItemIsFocusable, False)
+        
         # Wire path and routing
         self.wire_path = None
         self.avoided_components = []
@@ -813,6 +819,30 @@ class EnhancedWire(QGraphicsPathItem):
         stroker = QPainterPathStroker()
         stroker.setWidth(max(4, self.wire_width + 2))  # Small tolerance around the line
         return stroker.createStroke(path)
+    
+    def boundingRect(self):
+        """Override boundingRect to return a minimal rectangle that covers only the wire path"""
+        if not self.wire_path:
+            return super().boundingRect()
+        
+        # Get the wire path
+        path = self.wire_path.get_path()
+        if path.isEmpty():
+            return super().boundingRect()
+        
+        # Return the bounding rectangle of the actual path
+        # This eliminates the default bounding rect display
+        return path.boundingRect()
+    
+    def paint(self, painter, option, widget):
+        """Override paint to ensure no selection rectangle is drawn"""
+        # Don't draw selection rectangle or bounding rect
+        # Just draw the wire path itself
+        if self.wire_path:
+            path = self.wire_path.get_path()
+            if not path.isEmpty():
+                painter.setPen(self.pen())
+                painter.drawPath(path)
 
 # Keep the old Wire class for backward compatibility
 class Wire(EnhancedWire):
