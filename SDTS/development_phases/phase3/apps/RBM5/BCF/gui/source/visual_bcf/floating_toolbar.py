@@ -30,6 +30,8 @@ class FloatingToolbar(QWidget):
     select_mode_requested = Signal()
     connection_mode_requested = Signal()
     phase_info_requested = Signal()
+    save_scene_requested = Signal()
+    load_scene_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -220,6 +222,25 @@ class FloatingToolbar(QWidget):
         self.phase_info_btn.setFixedSize(30, 30)
         self.phase_info_btn.clicked.connect(self.phase_info_requested.emit)
         layout.addWidget(self.phase_info_btn)
+
+        # Separator
+        sep6 = QFrame()
+        sep6.setFrameShape(QFrame.VLine)
+        sep6.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(sep6)
+
+        # Scene operations
+        self.save_scene_btn = QPushButton("💾", self)
+        self.save_scene_btn.setToolTip("Save Scene")
+        self.save_scene_btn.setFixedSize(30, 30)
+        self.save_scene_btn.clicked.connect(self.save_scene_requested.emit)
+        layout.addWidget(self.save_scene_btn)
+
+        self.load_scene_btn = QPushButton("📂", self)
+        self.load_scene_btn.setToolTip("Load Scene")
+        self.load_scene_btn.setFixedSize(30, 30)
+        self.load_scene_btn.clicked.connect(self.load_scene_requested.emit)
+        layout.addWidget(self.load_scene_btn)
 
     def _apply_styling(self):
         """Apply custom styling to the toolbar"""

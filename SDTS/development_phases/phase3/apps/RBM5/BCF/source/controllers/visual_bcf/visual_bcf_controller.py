@@ -115,6 +115,12 @@ class VisualBCFController(QObject):
         self.floating_toolbar.clear_scene_requested.connect(
             self._on_clear_scene)
         self.floating_toolbar.zoom_fit_requested.connect(self._on_zoom_fit)
+        
+        # Connect scene operation signals
+        self.floating_toolbar.save_scene_requested.connect(
+            self._on_save_scene)
+        self.floating_toolbar.load_scene_requested.connect(
+            self._on_load_scene)
 
         # Connect zoom signals to view
         if self.view:
@@ -214,6 +220,32 @@ class VisualBCFController(QObject):
         except Exception as e:
             logger.error(f"Error clearing scene: {e}")
             self.error_occurred.emit(f"Failed to clear scene: {str(e)}")
+
+    def _on_save_scene(self):
+        """Handle save scene request from toolbar"""
+        try:
+            # Use the existing save_scene method
+            success = self.save_scene()
+            if success:
+                self.operation_completed.emit("save", "Scene saved successfully")
+            else:
+                self.error_occurred.emit("Failed to save scene")
+        except Exception as e:
+            logger.error(f"Error saving scene: {e}")
+            self.error_occurred.emit(f"Failed to save scene: {str(e)}")
+
+    def _on_load_scene(self):
+        """Handle load scene request from toolbar"""
+        try:
+            # Use the existing load_scene method
+            success = self.load_scene()
+            if success:
+                self.operation_completed.emit("load", "Scene loaded successfully")
+            else:
+                self.error_occurred.emit("Failed to load scene")
+        except Exception as e:
+            logger.error(f"Error loading scene: {e}")
+            self.error_occurred.emit(f"Failed to load scene: {str(e)}")
 
     def _on_zoom_fit(self):
         """Handle zoom fit request from toolbar"""
