@@ -347,7 +347,22 @@ class ComponentScene(QGraphicsScene):
         component_count = len(self.components)
         wire_count = len(self.wires)
         
-        # Remove all items from the scene first
+        # Use controller's clear method if available, otherwise fall back to local clearing
+        if hasattr(self, 'controller') and self.controller and hasattr(self.controller, 'clear_scene'):
+            try:
+                # Use controller's comprehensive clear method
+                self.controller.clear_scene(show_confirmation=False)
+                print(f"🧹 Scene cleared via controller: {component_count} components, {wire_count} wires removed")
+            except Exception as e:
+                print(f"⚠️  Controller clear failed, using local clear: {e}")
+                self._local_clear_scene()
+        else:
+            # Fall back to local clearing if no controller
+            self._local_clear_scene()
+    
+    def _local_clear_scene(self):
+        """Local fallback method for clearing scene"""
+        # Remove all items from the scene
         self.clear()
         
         # Clear lists
@@ -358,19 +373,7 @@ class ComponentScene(QGraphicsScene):
         self.component_counter = 1
         self.current_wire = None
         
-        # Notify controller to clear its tracking dictionaries (but don't let it modify scene)
-        if hasattr(self, 'controller') and self.controller:
-            try:
-                # Just clear the controller's tracking dictionaries, don't let it modify scene
-                if hasattr(self.controller, '_component_graphics_items'):
-                    self.controller._component_graphics_items.clear()
-                if hasattr(self.controller, '_connection_graphics_items'):
-                    self.controller._connection_graphics_items.clear()
-                print("✅ Controller tracking dictionaries cleared")
-            except Exception as e:
-                print(f"⚠️  Warning: Could not clear controller tracking dictionaries: {e}")
-        
-        print(f"🧹 Scene cleared: {component_count} components, {wire_count} wires removed")
+        print("🧹 Scene cleared using local method")
         
 
 

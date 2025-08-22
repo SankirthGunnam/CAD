@@ -819,34 +819,25 @@ class VisualBCFController(QObject):
     def _clear_graphics_items(self):
         """Clear all graphics items from the scene and tracking dictionaries"""
         try:
-            # Remove all graphics items from the scene
-            for component_id, wrapper in list(
-                    self._component_graphics_items.items()):
-                try:
-                    if wrapper and wrapper.graphics_item:
-                        self.scene.removeItem(wrapper.graphics_item)
-                except Exception as e:
-                    logger.warning(
-                        f"Error removing component graphics item {component_id}: {e}")
-
-            for connection_id, wrapper in list(
-                    self._connection_graphics_items.items()):
-                try:
-                    if wrapper and wrapper.graphics_item:
-                        self.scene.removeItem(wrapper.graphics_item)
-                except Exception as e:
-                    logger.warning(
-                        f"Error removing connection graphics item {connection_id}: {e}")
-
+            # First, clear all items from the scene using QGraphicsScene.clear()
+            # This ensures all graphics items are properly removed
+            self.scene.clear()
+            
             # Clear the tracking dictionaries
             self._component_graphics_items.clear()
             self._connection_graphics_items.clear()
 
-            # Clear scene's component and wire lists
+            # Clear scene's internal component and wire lists
             if hasattr(self.scene, 'components'):
                 self.scene.components.clear()
             if hasattr(self.scene, 'wires'):
                 self.scene.wires.clear()
+                
+            # Reset scene state
+            if hasattr(self.scene, 'component_counter'):
+                self.scene.component_counter = 1
+            if hasattr(self.scene, 'current_wire'):
+                self.scene.current_wire = None
 
             logger.info(
                 "Cleared all graphics items from scene and tracking dictionaries")
