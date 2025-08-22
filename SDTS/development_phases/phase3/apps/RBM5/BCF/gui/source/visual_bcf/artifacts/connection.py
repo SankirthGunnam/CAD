@@ -302,8 +302,9 @@ class EnhancedWire(QGraphicsPathItem):
         # Apply collision avoidance
         self._avoid_component_collisions()
         
-        # Handle wire intersections
-        self._handle_wire_intersections()
+        # Only handle wire intersections for permanent wires (not temporary ones being drawn)
+        if not self.is_temporary:
+            self._handle_wire_intersections()
     
     def _avoid_component_collisions(self):
         """Modify wire path to avoid passing over components"""
@@ -324,32 +325,24 @@ class EnhancedWire(QGraphicsPathItem):
             if is_component and item != self.start_pin.parent_component:
                 components.append(item)
         
-        # Debug: Print component detection
-        print(f"🔍 Wire collision detection: Found {len(components)} components to avoid")
-        for comp in components:
-            comp_name = getattr(comp, 'name', 'Unknown')
-            comp_type = getattr(comp, 'component_type', 'Unknown')
-            print(f"   - {comp_name} ({comp_type})")
+        # Only run collision detection if there are components to avoid
+        if not components:
+            return
         
         # Check each segment for collisions
         new_segments = []
-        for i, (segment_start, segment_end) in enumerate(self.wire_path.segments):
-            print(f"🔍 Checking segment {i+1}: ({segment_start.x():.1f}, {segment_start.y():.1f}) → ({segment_end.x():.1f}, {segment_end.y():.1f})")
-            
+        for segment_start, segment_end in self.wire_path.segments:
             if self._segment_collides_with_components(segment_start, segment_end, components):
-                print(f"   ❌ Collision detected! Rerouting segment {i+1}")
                 # Reroute this segment to avoid collision
                 rerouted_segments = self._reroute_segment_around_components(
                     segment_start, segment_end, components
                 )
                 new_segments.extend(rerouted_segments)
             else:
-                print(f"   ✅ No collision for segment {i+1}")
                 new_segments.append((segment_start, segment_end))
         
         # Update wire path with new segments
         self.wire_path.segments = new_segments
-        print(f"🔍 Wire path updated: {len(new_segments)} segments")
     
     def _segment_collides_with_components(self, start: QPointF, end: QPointF, components: list) -> bool:
         """Check if a line segment collides with any component"""
@@ -452,7 +445,6 @@ class EnhancedWire(QGraphicsPathItem):
     def _handle_wire_intersections(self):
         """Handle intersections with other wires by adding bumps"""
         if not self.scene:
-            print("⚠️  No scene reference for intersection detection")
             return
         
         # Get all other wires in the scene - look for multiple wire types
@@ -468,19 +460,19 @@ class EnhancedWire(QGraphicsPathItem):
             if is_wire and item != self:
                 other_wires.append(item)
         
-        print(f"🔍 Wire intersection detection: Found {len(other_wires)} other wires to check")
+        # Only process intersections if there are other wires
+        if not other_wires:
+            return
         
         # Process intersections with other wires
-        intersection_count = 0
+
         for other_wire in other_wires:
             # Check if the other wire has a path to analyze
             if hasattr(other_wire, 'wire_path') and other_wire.wire_path:
                 intersection_data = self._find_wire_intersections_with_angles(other_wire)
                 if intersection_data:
-                    print(f"   🔍 Found {len(intersection_data)} intersections with enhanced wire")
                     for point, direction in intersection_data:
                         self.wire_path.add_intersection_bump(point, direction)
-                        intersection_count += 1
             elif hasattr(other_wire, 'line'):  # Fallback for old wire types
                 # Convert old wire line to segments for intersection detection
                 old_wire_segments = self._convert_old_wire_to_segments(other_wire)
@@ -490,15 +482,8 @@ class EnhancedWire(QGraphicsPathItem):
                         print(f"   🔍 Found {len(intersection_data)} intersections with old wire")
                         for point, direction in intersection_data:
                             self.wire_path.add_intersection_bump(point, direction)
-                            intersection_count += 1
         
-        print(f"🔍 Wire intersection detection complete: Added {intersection_count} bumps")
-        
-        # Debug: Show final bump count
-        if self.wire_path:
-            print(f"🔍 Final wire path has {len(self.wire_path.intersection_bumps)} bumps")
-            for i, (point, direction) in enumerate(self.wire_path.intersection_bumps):
-                print(f"   Bump {i+1}: ({point.x():.1f}, {point.y():.1f}) - {direction}")
+
     
     def _find_wire_intersections(self, other_wire) -> List[Tuple[QPointF, str]]:
         """Find intersection points between this wire and another wire (legacy method)"""
@@ -717,7 +702,13 @@ class EnhancedWire(QGraphicsPathItem):
         
         self.end_pin = end_pin
         self.is_temporary = False
-        self.update_path()
+        
+        # Now that the wire is permanent, calculate intersections
+        if self.wire_path:
+            self._handle_wire_intersections()
+            # Update the graphics with the final path including bumps
+            self.setPath(self.wire_path.get_path())
+        
         return True
     
     def update_wire_position(self):
@@ -730,8 +721,6 @@ class EnhancedWire(QGraphicsPathItem):
         if not self.wire_path:
             return
         
-        print(f"🔄 Forcing intersection recalculation for wire")
-        
         # Clear old bumps
         self.wire_path.intersection_bumps.clear()
         
@@ -740,8 +729,6 @@ class EnhancedWire(QGraphicsPathItem):
         
         # Update the graphics
         self.setPath(self.wire_path.get_path())
-        
-        print(f"🔄 Intersection recalculation complete")
     
     def update_wire_position_lightweight(self):
         """Lightweight update that only recalculates wire positions without full routing"""
@@ -794,14 +781,12 @@ class EnhancedWire(QGraphicsPathItem):
                 current_pen = self.pen()
                 current_pen.setStyle(Qt.PenStyle.DashDotLine)
                 self.setPen(current_pen)
-                print(f"🔍 Wire selected: Changed to dot-dash line")
             else:  # Not selected
                 # Restore normal line when deselected
                 if self.is_temporary:
                     self.setPen(QPen(self.temp_color, self.wire_width))
                 else:
                     self.setPen(QPen(self.wire_color, self.wire_width))
-                print(f"🔍 Wire deselected: Restored normal line")
         
         return super().itemChange(change, value)
     
