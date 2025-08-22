@@ -10,12 +10,12 @@ import logging
 from typing import Dict, List, Any, Tuple
 
 from PySide6.QtCore import QObject, Signal, QTimer, Qt, QPoint
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QGraphicsTextItem
 
 from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualBCFDataModel
 from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
 from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
-from apps.RBM5.BCF.gui.source.visual_bcf.artifacts import ComponentWithPins, Wire
+from apps.RBM5.BCF.gui.source.visual_bcf.artifacts import ComponentWithPins, Wire, ComponentPin
 from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import FloatingToolbar
 
 logger = logging.getLogger(__name__)
@@ -877,9 +877,7 @@ class VisualBCFController(QObject):
                 print('calling load_scene')
                 scene_data = self.data_model.load_scene_data()
                 if scene_data:
-                    print(scene_data)
-                    logger.info(
-                        "Scene loaded from default location through model")
+                    logger.info(f"Scene loaded from default location through model")
                 else:
                     logger.info("No default scene found in model")
                     return False
@@ -896,15 +894,15 @@ class VisualBCFController(QObject):
                     try:
                         # Get component ID from the loaded data
                         component_id = comp_data.get("id")
+                        component_name = comp_data.get("name", "Unknown")
+                        component_type = comp_data.get("type", "chip")
+                        
                         if not component_id:
-                            logger.warning(f"Component missing ID: {comp_data.get('name', 'Unknown')}")
+                            logger.warning(f"Component missing ID: {component_name}")
                             continue
                             
                         # Create the component graphics item directly (like the scene does)
-                        component = ComponentWithPins(
-                            comp_data.get("name", ""), 
-                            comp_data.get("type", "chip")
-                        )
+                        component = ComponentWithPins(component_name, component_type)
                         
                         # Set position
                         pos = comp_data.get("position", {"x": 0, "y": 0})
@@ -921,7 +919,7 @@ class VisualBCFController(QObject):
                         component.component_id = component_id
                         component.properties = comp_data.get("properties", {})
                         
-                        logger.info(f"Component {component_id} ({comp_data.get('name', 'Unknown')}) added to scene")
+                        logger.info(f"Component {component_id} ({component_name}) added to scene")
                             
                     except Exception as e:
                         logger.error(f"Error loading component {comp_data.get('name', 'Unknown')}: {e}")
@@ -934,6 +932,7 @@ class VisualBCFController(QObject):
                     try:
                         # Get connection ID from the loaded data
                         connection_id = conn_data.get("id")
+                        
                         if not connection_id:
                             logger.warning(f"Connection missing ID: {conn_data}")
                             continue
@@ -977,8 +976,15 @@ class VisualBCFController(QObject):
                         # Create the wire using the scene's wire creation logic
                         wire = Wire(from_pin, scene=self.scene)
                         if wire.complete_wire(to_pin):
+                            # Force wire to recalculate its path and update graphics
+                            wire.update_path()
+                            wire.force_intersection_recalculation()
+                            
                             # Add wire to scene
                             self.scene.addItem(wire)
+                            
+                            # Force wire to update its geometry
+                            wire.update()
                             
                             # Register wire with both connected components
                             from_comp_wrapper.graphics_item.add_wire(wire)
@@ -992,19 +998,36 @@ class VisualBCFController(QObject):
                             wire.connection_id = connection_id
                             wire.properties = conn_data.get("properties", {})
                             
+                            # Force scene update for this wire and ensure it's visible
+                            self.scene.update(wire.sceneBoundingRect())
+                            
+                            # Additional visibility fixes
+                            wire.setVisible(True)
+                            wire.show()
+                            
                             logger.info(f"Connection {connection_id} added to scene")
                         else:
                             logger.warning(f"Failed to complete wire for connection {connection_id}")
                             
                     except Exception as e:
                         logger.error(f"Error loading connection {connection_id}: {e}")
-                        logger.exception("Full traceback:")
 
                 # Get final statistics
                 stats = self.get_statistics()
                 component_count = stats.get('component_count', 0)
                 connection_count = stats.get('connection_count', 0)
 
+                # Update all wires to ensure they're properly positioned and visible
+                for connection_id, wrapper in self._connection_graphics_items.items():
+                    if wrapper and wrapper.graphics_item:
+                        wire = wrapper.graphics_item
+                        wire.update_path()
+                        wire.update()
+                
+                # Force scene and viewport updates
+                self.scene.update()
+                self.view.viewport().update()
+                
                 # Clean up any stale graphics items to prevent C++ object
                 # deletion errors
                 self._cleanup_stale_graphics_items()
@@ -1015,8 +1038,7 @@ class VisualBCFController(QObject):
                 self.operation_completed.emit(
                     "load_scene",
                     f"Scene loaded: {component_count} components, {connection_count} connections")
-                logger.info(
-                    f"Successfully loaded {component_count} components and {connection_count} connections")
+                logger.info(f"Successfully loaded {component_count} components and {connection_count} connections")
                 return True
             else:
                 logger.warning("No scene data to load")
@@ -1319,15 +1341,28 @@ class VisualBCFController(QObject):
                 if wrapper and wrapper.graphics_item:
                     wire = wrapper.graphics_item
                     if hasattr(wire, 'start_pin') and hasattr(wire, 'end_pin') and wire.start_pin and wire.end_pin:
-                        # Find component IDs for the pins
+                        # Find component IDs for the pins using a more reliable method
                         start_comp_id = None
                         end_comp_id = None
                         
-                        for cid, comp_wrapper in self._component_graphics_items.items():
-                            if comp_wrapper.graphics_item == wire.start_pin.parent_component:
-                                start_comp_id = cid
-                            if comp_wrapper.graphics_item == wire.end_pin.parent_component:
-                                end_comp_id = cid
+                        # Method 1: Try to get component ID from the wire's connection_id if available
+                        if hasattr(wire, 'connection_id') and wire.connection_id:
+                            # Look up the connection in the data model to get component IDs
+                            connection_data = self.data_model.get_connection(wire.connection_id)
+                            if connection_data:
+                                start_comp_id = connection_data.get('from_component_id')
+                                end_comp_id = connection_data.get('to_component_id')
+                                logger.info(f"Found component IDs from data model: {start_comp_id} -> {end_comp_id}")
+                        
+                        # Method 2: Fallback to graphics item lookup if Method 1 failed
+                        if not start_comp_id or not end_comp_id:
+                            for cid, comp_wrapper in self._component_graphics_items.items():
+                                if comp_wrapper.graphics_item == wire.start_pin.parent_component:
+                                    start_comp_id = cid
+                                    logger.info(f"Found start component ID via graphics lookup: {start_comp_id}")
+                                if comp_wrapper.graphics_item == wire.end_pin.parent_component:
+                                    end_comp_id = cid
+                                    logger.info(f"Found end component ID via graphics lookup: {end_comp_id}")
                         
                         if start_comp_id and end_comp_id:
                             connection_data = {

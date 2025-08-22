@@ -29,15 +29,15 @@
     "visual_bcf": {
       "components": [
         {
-          "id": "275651d8-ad4d-4214-b08b-92e322a82bfd",
+          "id": "981a5b9e-301a-4eab-af89-c77962272933",
           "name": "Chip_temp",
           "component_type": "chip",
           "function_type": "",
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": -216.0,
-              "y": -84.0
+              "x": -203.0,
+              "y": -106.0
             },
             "size": {
               "width": 100,
@@ -241,15 +241,15 @@
           ]
         },
         {
-          "id": "1e98c9f3-fbac-49b3-ad6a-4a6a30308b2e",
+          "id": "58291af8-78fc-41b4-a079-d83d4ebc53a5",
           "name": "Resistor_temp",
           "component_type": "resistor",
           "function_type": "",
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 84.0,
-              "y": -196.0
+              "x": 168.0,
+              "y": -79.0
             },
             "size": {
               "width": 100,
@@ -277,15 +277,15 @@
           ]
         },
         {
-          "id": "f930503f-1e56-42e6-9eab-4f479a1a8c8d",
-          "name": "Chip_temp",
-          "component_type": "chip",
+          "id": "6829ba0d-7e35-4ea8-a1a8-86420604dae7",
+          "name": "Capacitor_temp",
+          "component_type": "capacitor",
           "function_type": "",
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 67.0,
-              "y": 8.0
+              "x": 113.0,
+              "y": -175.0
             },
             "size": {
               "width": 100,
@@ -295,201 +295,54 @@
           },
           "pins": [
             {
-              "pin_id": "L1",
+              "pin_id": "POS",
               "position": {
                 "x": -4.0,
-                "y": 4.571428571428571
+                "y": 26.0
               },
               "edge": "left"
             },
             {
-              "pin_id": "L2",
-              "position": {
-                "x": -4.0,
-                "y": 13.142857142857142
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "L3",
-              "position": {
-                "x": -4.0,
-                "y": 21.714285714285715
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "L4",
-              "position": {
-                "x": -4.0,
-                "y": 30.285714285714285
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "L5",
-              "position": {
-                "x": -4.0,
-                "y": 38.857142857142854
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "L6",
-              "position": {
-                "x": -4.0,
-                "y": 47.42857142857143
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "R1",
+              "pin_id": "NEG",
               "position": {
                 "x": 96.0,
-                "y": 4.571428571428571
+                "y": 26.0
               },
               "edge": "right"
-            },
-            {
-              "pin_id": "R2",
-              "position": {
-                "x": 96.0,
-                "y": 13.142857142857142
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "R3",
-              "position": {
-                "x": 96.0,
-                "y": 21.714285714285715
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "R4",
-              "position": {
-                "x": 96.0,
-                "y": 30.285714285714285
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "R5",
-              "position": {
-                "x": 96.0,
-                "y": 38.857142857142854
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "R6",
-              "position": {
-                "x": 96.0,
-                "y": 47.42857142857143
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "T1",
-              "position": {
-                "x": 10.285714285714286,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T2",
-              "position": {
-                "x": 24.571428571428573,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T3",
-              "position": {
-                "x": 38.85714285714286,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T4",
-              "position": {
-                "x": 53.142857142857146,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T5",
-              "position": {
-                "x": 67.42857142857143,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T6",
-              "position": {
-                "x": 81.71428571428572,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "B1",
-              "position": {
-                "x": 10.285714285714286,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B2",
-              "position": {
-                "x": 24.571428571428573,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B3",
-              "position": {
-                "x": 38.85714285714286,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B4",
-              "position": {
-                "x": 53.142857142857146,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B5",
-              "position": {
-                "x": 67.42857142857143,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B6",
-              "position": {
-                "x": 81.71428571428572,
-                "y": 56.0
-              },
-              "edge": "bottom"
             }
           ]
         }
       ],
-      "connections": [],
+      "connections": [
+        {
+          "id": "79b4ef1e-04f3-4026-96c1-bcc67757e921",
+          "from_component_id": "981a5b9e-301a-4eab-af89-c77962272933",
+          "from_pin_id": "R1",
+          "to_component_id": "58291af8-78fc-41b4-a079-d83d4ebc53a5",
+          "to_pin_id": "A",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          }
+        },
+        {
+          "id": "382ba375-6c19-411f-ac4e-f0e19ed72621",
+          "from_component_id": "981a5b9e-301a-4eab-af89-c77962272933",
+          "from_pin_id": "R6",
+          "to_component_id": "6829ba0d-7e35-4ea8-a1a8-86420604dae7",
+          "to_pin_id": "POS",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          }
+        }
+      ],
       "layout": {
         "scene_rect": {
           "x": -1000,

@@ -482,18 +482,15 @@ class VisualBCFDataModel(QObject):
                 })
             scene_connections = []
             for conn in connections:
-                scene_connections.append(
-                    {
-                        'id': conn.get(
-                            'id', ''), 'start_component': id_to_name.get(
-                            conn.get(
-                                'from_component_id', ''), ''), 'end_component': id_to_name.get(
-                            conn.get(
-                                'to_component_id', ''), ''), 'start_pin': conn.get(
-                                'from_pin_id', ''), 'end_pin': conn.get(
-                                    'to_pin_id', ''), 'properties': conn.get(
-                                        'properties', {}), 'visual_properties': conn.get(
-                                            'visual_properties', {})})
+                scene_connections.append({
+                    'id': conn.get('id', ''),
+                    'from_component_id': conn.get('from_component_id', ''),  # ✅ Keep component ID
+                    'to_component_id': conn.get('to_component_id', ''),     # ✅ Keep component ID
+                    'from_pin_id': conn.get('from_pin_id', ''),            # ✅ Use correct key name
+                    'to_pin_id': conn.get('to_pin_id', ''),                # ✅ Use correct key name
+                    'properties': conn.get('properties', {}),
+                    'visual_properties': conn.get('visual_properties', {})
+                })
             scene = {
                 'components': scene_components,
                 'connections': scene_connections}
