@@ -719,6 +719,13 @@ class VisualBCFController(QObject):
             component_count = stats.get('component_count', 0)
             connection_count = stats.get('connection_count', 0)
 
+            # First save the scene data to RDB tables so it can be loaded later
+            scene_data = self.serialize_scene_data()
+            if scene_data:
+                self.data_model.save_scene_data(scene_data)
+                logger.info(f"Scene data saved to RDB tables: {len(scene_data.get('components', []))} components, {len(scene_data.get('connections', []))} connections")
+
+            # Then save to file or persist to disk
             success = self.data_model.save_visual_bcf_to_file(
                 file_path) if file_path else self.data_model.save_visual_bcf_data()
 
