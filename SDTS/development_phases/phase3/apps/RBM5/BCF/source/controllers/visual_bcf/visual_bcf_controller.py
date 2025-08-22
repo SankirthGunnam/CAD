@@ -12,9 +12,7 @@ from typing import Dict, List, Any, Tuple
 from PySide6.QtCore import QObject, Signal, QTimer, Qt, QPoint
 from PySide6.QtWidgets import QWidget
 
-from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import (
-
-    VisualBCFDataModel, ComponentData, ConnectionData)
+from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualBCFDataModel
 from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
 from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts import ComponentWithPins, Wire
@@ -265,17 +263,18 @@ class VisualBCFController(QObject):
         self.data_model.connection_removed.connect(
             self._on_model_connection_removed)
         
-        # Connect to scene signals for new wires
-        if self.scene:
-            self.scene.wire_added.connect(self._on_scene_wire_added)
-            self.scene.wire_removed.connect(self._on_scene_wire_removed)
+        # Note: Scene signals are now handled directly in the new methods:
+        # - component_added -> add_component_from_scene()
+        # - wire_added -> add_wire_from_scene()
+        # - component_removed -> handled by scene directly
+        # - wire_removed -> handled by scene directly
 
     def _on_model_component_added(self, component_id: str):
         """Handle component added to model"""
         try:
-            component_data = self.data_model.get_component(component_id)
-            if component_data:
-                self._create_graphics_component(component_id, component_data)
+            # Components are now created by the scene, not by the controller
+            # The controller just tracks what's already in the scene
+            logger.info(f"Component {component_id} added to model - graphics already exist in scene")
         except Exception as e:
             logger.error(f"Error handling model component added: {e}")
 
@@ -291,10 +290,7 @@ class VisualBCFController(QObject):
                             graphics_item.graphics_item.connected_wires):
                         try:
                             self.scene.removeItem(wire)
-                            if hasattr(
-                                    self.scene,
-                                    'wires') and wire in self.scene.wires:
-                                self.scene.wires.remove(wire)
+                            # Wire is already removed from scene graphics, no need to manage separate lists
                             # Remove wire from other connected component
                             if hasattr(
                                     wire, 'start_pin') and wire.start_pin and hasattr(
@@ -315,8 +311,7 @@ class VisualBCFController(QObject):
                                 f"Error cleaning up wire during component removal: {e}")
 
                 self.scene.removeItem(graphics_item.graphics_item)
-                if graphics_item.graphics_item in self.scene.components:
-                    self.scene.components.remove(graphics_item.graphics_item)
+                # Component is already removed from scene graphics, no need to manage separate lists
 
                 del self._component_graphics_items[component_id]
         except Exception as e:
@@ -325,10 +320,9 @@ class VisualBCFController(QObject):
     def _on_model_connection_added(self, connection_id: str):
         """Handle connection added to model"""
         try:
-            connection_data = self.data_model.get_connection(connection_id)
-            if connection_data:
-                self._create_graphics_connection(
-                    connection_id, connection_data)
+            # Connections are now created by the scene, not by the controller
+            # The controller just tracks what's already in the scene
+            logger.info(f"Connection {connection_id} added to model - graphics already exist in scene")
         except Exception as e:
             logger.error(f"Error handling model connection added: {e}")
 
@@ -375,7 +369,8 @@ class VisualBCFController(QObject):
                 try:
                     if (not wrapper or
                         not wrapper.graphics_item or
-                            not hasattr(wrapper.graphics_item, 'line')):
+                            not (hasattr(wrapper.graphics_item, 'line') or 
+                                 hasattr(wrapper.graphics_item, 'wire_path'))):
                         stale_connection_ids.append(connection_id)
                 except Exception:
                     stale_connection_ids.append(connection_id)
@@ -395,6 +390,154 @@ class VisualBCFController(QObject):
 
         except Exception as e:
             logger.error(f"Error during graphics items cleanup: {e}")
+
+    def _force_scene_refresh(self):
+        """Force a complete scene refresh to ensure no leftover items"""
+        try:
+            # Get all items currently in the scene
+            all_scene_items = list(self.scene.items())
+            
+            # Identify any items that shouldn't be there
+            unexpected_items = []
+            for item in all_scene_items:
+                # Skip certain item types that are expected during normal operation
+                if isinstance(item, (QGraphicsTextItem, ComponentPin)):
+                    # These are UI elements that are part of components, don't remove them
+                    continue
+                
+                # Check if this item is properly tracked
+                is_tracked = False
+                
+                # Check if it's a tracked component
+                for wrapper in self._component_graphics_items.values():
+                    if wrapper and wrapper.graphics_item == item:
+                        is_tracked = True
+                        break
+                
+                # Check if it's a tracked connection
+                if not is_tracked:
+                    for wrapper in self._connection_graphics_items.values():
+                        if wrapper and wrapper.graphics_item == item:
+                            is_tracked = True
+                            break
+                
+                # If item is not tracked, mark it for removal
+                if not is_tracked:
+                    unexpected_items.append(item)
+            
+            # Remove any unexpected items
+            for item in unexpected_items:
+                try:
+                    self.scene.removeItem(item)
+                    logger.info(f"Removed unexpected item during scene refresh: {type(item).__name__}")
+                except Exception as e:
+                    logger.warning(f"Error removing unexpected item during scene refresh: {e}")
+            
+            if unexpected_items:
+                logger.info(f"Scene refresh completed: removed {len(unexpected_items)} unexpected items")
+            
+        except Exception as e:
+            logger.error(f"Error during scene refresh: {e}")
+
+    def _track_wire_for_saving(self, wire):
+        """Track a wire created through the scene for proper saving"""
+        try:
+            if not wire or not hasattr(wire, 'start_pin') or not hasattr(wire, 'end_pin'):
+                logger.warning("Cannot track wire: missing pins")
+                return
+            
+            # Find the component IDs from the data model by name
+            start_comp_name = wire.start_pin.parent_component.name
+            end_comp_name = wire.end_pin.parent_component.name
+            start_pin_id = wire.start_pin.pin_id
+            end_pin_id = wire.end_pin.pin_id
+            
+            start_comp_id = None
+            end_comp_id = None
+            
+            # Find component IDs in the data model
+            for comp_id, comp_data in self.data_model.get_all_components().items():
+                if comp_data.get('name') == start_comp_name:
+                    start_comp_id = comp_id
+                if comp_data.get('name') == end_comp_name:
+                    end_comp_id = comp_id
+                if start_comp_id and end_comp_id:
+                    break
+            
+            if not start_comp_id or not end_comp_id:
+                logger.warning(f"Cannot track wire: component IDs not found for {start_comp_name} or {end_comp_name}")
+                return
+            
+            # Add the connection to the data model to get a proper connection ID
+            connection_id = self.data_model.add_connection(
+                start_comp_id, start_pin_id, end_comp_id, end_pin_id
+            )
+            
+            if not connection_id:
+                logger.warning(f"Failed to add connection to data model for wire tracking")
+                return
+            
+            # Create a wrapper for the wire using the data model's connection ID
+            wire_wrapper = ConnectionGraphicsItem(connection_id, wire)
+            
+            # Add to tracking dictionary
+            self._connection_graphics_items[connection_id] = wire_wrapper
+            
+            logger.info(f"Tracked wire for saving: {connection_id} ({start_comp_name}.{start_pin_id} -> {end_comp_name}.{end_pin_id})")
+            
+        except Exception as e:
+            logger.error(f"Error tracking wire for saving: {e}")
+
+    def _track_component_for_saving(self, component, name, component_type):
+        """Track a component created through the scene for proper saving"""
+        try:
+            if not component:
+                logger.warning("Cannot track component: component is None")
+                return
+            
+            # Add the component to the data model first to get the proper UUID
+            position = (component.pos().x(), component.pos().y())
+            properties = getattr(component, 'properties', {})
+            component_id = self.data_model.add_component(name, component_type, position, properties)
+            
+            if not component_id:
+                logger.warning(f"Failed to add component to data model: {name}")
+                return
+            
+            # Now update the component in the data model to include pin information
+            if hasattr(component, 'pins') and component.pins:
+                # Collect pin data
+                pins_data = []
+                for pin in component.pins:
+                    if hasattr(pin, 'pin_id'):
+                        pin_data = {
+                            'pin_id': pin.pin_id,
+                            'position': {
+                                'x': pin.pos().x(),
+                                'y': pin.pos().y()
+                            },
+                            'edge': getattr(pin, 'edge', 'unknown')
+                        }
+                        pins_data.append(pin_data)
+                
+                # Update the component with pin information
+                if pins_data:
+                    success = self.data_model.update_component_pins(component_id, pins_data)
+                    if success:
+                        logger.info(f"Updated component {name} with {len(pins_data)} pins")
+                    else:
+                        logger.warning(f"Failed to update component {name} with pins")
+            
+            # Create a wrapper for the component using the data model's UUID
+            component_wrapper = ComponentGraphicsItem(component_id, component)
+            
+            # Add to tracking dictionary
+            self._component_graphics_items[component_id] = component_wrapper
+            
+            logger.info(f"Tracked component for saving: {component_id} ({name}, {component_type})")
+            
+        except Exception as e:
+            logger.error(f"Error tracking component for saving: {e}")
 
     def on_graphics_component_moved(self, graphics_component):
         """Handle graphics component movement and sync to model"""
@@ -701,18 +844,12 @@ class VisualBCFController(QObject):
 
                 # Clear any existing graphics items to prevent conflicts
                 self._clear_graphics_items()
+                
+                # Scene is already cleared by scene.clear(), no need to manage separate lists
 
-                # Create graphics items through the controller to ensure proper
-                # tracking
-                components = self.data_model.get_all_components()
-                for component_id, component_data in components.items():
-                    self._create_graphics_component(
-                        component_id, component_data)
-
-                connections = self.data_model.get_all_connections()
-                for connection_id, connection_data in connections.items():
-                    self._create_graphics_connection(
-                        connection_id, connection_data)
+                # Scene already contains the graphics items, no need to recreate them
+                # The controller just needs to track what's already in the scene
+                logger.info("Scene already contains graphics items, skipping recreation")
 
                 # Get final statistics
                 stats = self.get_statistics()
@@ -722,6 +859,9 @@ class VisualBCFController(QObject):
                 # Clean up any stale graphics items to prevent C++ object
                 # deletion errors
                 self._cleanup_stale_graphics_items()
+                
+                # Force a complete scene refresh to ensure no leftover items
+                self._force_scene_refresh()
 
                 self.operation_completed.emit(
                     "load_scene",
@@ -765,7 +905,9 @@ class VisualBCFController(QObject):
             
             # Sync connections - ensure all visible connections are in the data model
             connections_synced = 0
-            for connection_id, wrapper in self._connection_graphics_items.items():
+            # Create a copy of the items to avoid dictionary size change during iteration
+            connection_items = list(self._connection_graphics_items.items())
+            for connection_id, wrapper in connection_items:
                 if wrapper and wrapper.graphics_item:
                     try:
                         wire = wrapper.graphics_item
@@ -827,15 +969,8 @@ class VisualBCFController(QObject):
             self._component_graphics_items.clear()
             self._connection_graphics_items.clear()
 
-            # Clear scene's internal component and wire lists
-            if hasattr(self.scene, 'components'):
-                self.scene.components.clear()
-            if hasattr(self.scene, 'wires'):
-                self.scene.wires.clear()
-                
+            # Scene is cleared by scene.clear(), no need to manage separate lists
             # Reset scene state
-            if hasattr(self.scene, 'component_counter'):
-                self.scene.component_counter = 1
             if hasattr(self.scene, 'current_wire'):
                 self.scene.current_wire = None
 
@@ -845,155 +980,7 @@ class VisualBCFController(QObject):
         except Exception as e:
             logger.error(f"Error clearing graphics items: {e}")
 
-    def _create_graphics_component(
-            self,
-            component_id: str,
-            component_data: ComponentData):
-        """Create graphics item for component"""
-        try:
-            # Create the actual graphics component
-            graphics_component = ComponentWithPins(
-                name=component_data.name,
-                component_type=component_data.component_type,
-                width=component_data.visual_properties.get(
-                    'size',
-                    {}).get(
-                    'width',
-                    100),
-                height=component_data.visual_properties.get(
-                    'size',
-                    {}).get(
-                    'height',
-                    60))
 
-            # Set position from component data
-            pos = component_data.visual_properties['position']
-            graphics_component.setPos(pos['x'], pos['y'])
-
-            # Add to scene
-            self.scene.addItem(graphics_component)
-
-            # Also add to scene's component list for serialization
-            if graphics_component not in self.scene.components:
-                self.scene.components.append(graphics_component)
-
-            # Create wrapper and store
-            graphics_item = ComponentGraphicsItem(
-                component_id, graphics_component)
-            self._component_graphics_items[component_id] = graphics_item
-
-            logger.info(
-                f"Created graphics item for component: {
-                    component_data.name} (type: {
-                    component_data.component_type})")
-
-        except Exception as e:
-            logger.error(f"Error creating graphics component: {e}")
-            logger.exception("Full traceback:")
-
-    def _create_graphics_connection(
-            self,
-            connection_id: str,
-            connection_data: ConnectionData):
-        """Create graphics item for connection"""
-        try:
-            # Find the source and target components
-            from_graphics = self._component_graphics_items.get(
-                connection_data.from_component_id)
-            to_graphics = self._component_graphics_items.get(
-                connection_data.to_component_id)
-
-            if from_graphics and to_graphics:
-                try:
-                    def _find_pin_by_id(graphics_item, pin_id):
-                        """Find pin by its specific ID instead of edge preference"""
-                        if hasattr(
-                                graphics_item,
-                                'pins') and graphics_item.pins:
-                            for pin in graphics_item.pins:
-                                if hasattr(
-                                        pin, 'pin_id') and pin.pin_id == pin_id:
-                                    return pin
-                        return None
-
-                    # Use the actual pin IDs from the connection data
-                    start_pin = _find_pin_by_id(
-                        from_graphics.graphics_item, connection_data.from_pin_id)
-                    end_pin = _find_pin_by_id(
-                        to_graphics.graphics_item, connection_data.to_pin_id)
-
-                    if start_pin is None or end_pin is None:
-                        logger.warning(
-                            f"Connection {connection_id}: Pin not found - from_pin_id: {
-                                connection_data.from_pin_id}, to_pin_id: {
-                                connection_data.to_pin_id}")
-                        # Fallback to edge-based pin selection if specific pins
-                        # not found
-
-                        def _find_pin_by_edge(graphics_item, preferred_edges):
-                            if hasattr(
-                                    graphics_item,
-                                    'pins') and graphics_item.pins:
-                                for edge in preferred_edges:
-                                    for pin in graphics_item.pins:
-                                        if getattr(pin, 'edge', None) == edge:
-                                            return pin
-                                # Fallback to first pin
-                                return graphics_item.pins[0]
-                            return None
-
-                        start_pin = _find_pin_by_edge(
-                            from_graphics.graphics_item, ['right'])
-                        end_pin = _find_pin_by_edge(
-                            to_graphics.graphics_item, ['left'])
-
-                        if start_pin is None or end_pin is None:
-                            logger.info(
-                                f"Connection {connection_id} exists but suitable pins not found for visual wire")
-                            return
-
-                    # Avoid duplicate wires for the same connection_id
-                    if connection_id in self._connection_graphics_items:
-                        return
-
-                    connection_graphics = Wire(start_pin, scene=self.scene)
-                    if connection_graphics.complete_wire(end_pin):
-                        self.scene.addItem(connection_graphics)
-                        if hasattr(
-                                self.scene,
-                                'wires') and connection_graphics not in self.scene.wires:
-                            self.scene.wires.append(connection_graphics)
-
-                        # Register wire with both connected components so they
-                        # can update it when moved
-                        start_component = start_pin.parent_component
-                        end_component = end_pin.parent_component
-                        if hasattr(start_component, 'add_wire'):
-                            start_component.add_wire(connection_graphics)
-                        if hasattr(end_component, 'add_wire'):
-                            end_component.add_wire(connection_graphics)
-
-                        connection_graphics_item = ConnectionGraphicsItem(
-                            connection_id, connection_graphics)
-                        self._connection_graphics_items[connection_id] = connection_graphics_item
-                        logger.info(
-                            f"Created graphics wire for connection: {connection_id}")
-                    else:
-                        logger.info(
-                            f"Connection {connection_id} could not complete visual wire")
-                except Exception as wire_error:
-                    logger.warning(
-                        f"Failed to create wire graphics for connection {connection_id}: {wire_error}")
-                    logger.info(
-                        f"Connection {connection_id} exists in data model but not visually displayed")
-            else:
-                logger.warning(
-                    f"Cannot create graphics connection - missing component graphics: from={
-                        connection_data.from_component_id}, to={
-                        connection_data.to_component_id}")
-
-        except Exception as e:
-            logger.error(f"Error creating graphics connection: {e}")
 
     # Getter methods
 
@@ -1009,109 +996,192 @@ class VisualBCFController(QObject):
         """Get the floating toolbar"""
         return self.floating_toolbar
 
-    def _on_scene_wire_added(self, start_component: str, start_pin: str, end_component: str, end_pin: str):
-        """Handle new wire added to scene - add it to data model and tracking"""
-        try:
-            logger.info(f"Scene wire added: {start_component}.{start_pin} -> {end_component}.{end_pin}")
+
+
+    def add_component_from_scene(self, component: ComponentWithPins, name: str, component_type: str) -> str:
+        """
+        Add a component that was created in the scene to the data model and tracking.
+        
+        Args:
+            component: The component graphics item
+            name: Component name
+            component_type: Component type
             
-            # Find the component IDs by name
+        Returns:
+            str: Component ID from data model, or None if failed
+        """
+        try:
+            logger.info(f"Adding component from scene: {name} ({component_type})")
+            
+            # Get component position
+            position = (component.pos().x(), component.pos().y())
+            
+            # Add to data model
+            component_id = self.data_model.add_component(name, component_type, position, {})
+            
+            if not component_id:
+                logger.error(f"Failed to add component {name} to data model")
+                return None
+            
+            # Add pins to data model if available
+            if hasattr(component, 'pins') and component.pins:
+                pins_data = []
+                for pin in component.pins:
+                    if hasattr(pin, 'pin_id'):
+                        pin_data = {
+                            'pin_id': pin.pin_id,
+                            'position': {
+                                'x': pin.pos().x(),
+                                'y': pin.pos().y()
+                            },
+                            'edge': getattr(pin, 'edge', 'unknown')
+                        }
+                        pins_data.append(pin_data)
+                
+                if pins_data:
+                    success = self.data_model.update_component_pins(component_id, pins_data)
+                    if success:
+                        logger.info(f"Updated component {name} with {len(pins_data)} pins")
+                    else:
+                        logger.warning(f"Failed to update component {name} with pins")
+            
+            # Track the graphics item
+            component_wrapper = ComponentGraphicsItem(component_id, component)
+            self._component_graphics_items[component_id] = component_wrapper
+            
+            # Update component name to match data model
+            component.name = name
+            component.component_id = component_id
+            
+            logger.info(f"Successfully added component from scene: {component_id} ({name})")
+            return component_id
+            
+        except Exception as e:
+            logger.error(f"Error adding component from scene: {e}")
+            logger.exception("Full traceback:")
+            return None
+
+    def add_wire_from_scene(self, wire: Wire, start_component_name: str, start_pin_id: str, 
+                           end_component_name: str, end_pin_id: str) -> str:
+        """
+        Add a wire that was created in the scene to the data model and tracking.
+        
+        Args:
+            wire: The wire graphics item
+            start_component_name: Name of start component
+            start_pin_id: ID of start pin
+            end_component_name: Name of end component
+            end_pin_id: ID of end pin
+            
+        Returns:
+            str: Connection ID from data model, or None if failed
+        """
+        try:
+            logger.info(f"Adding wire from scene: {start_component_name}.{start_pin_id} -> {end_component_name}.{end_pin_id}")
+            
+            # Find component IDs in data model
             start_comp_id = None
             end_comp_id = None
             
             for comp_id, comp_data in self.data_model.get_all_components().items():
-                if comp_data.name == start_component:
+                if comp_data.get('name') == start_component_name:
                     start_comp_id = comp_id
-                if comp_data.name == end_component:
+                if comp_data.get('name') == end_component_name:
                     end_comp_id = comp_id
                 if start_comp_id and end_comp_id:
                     break
             
-            if start_comp_id and end_comp_id:
-                # Add connection to data model
-                connection_id = self.data_model.add_connection(
-                    start_comp_id, start_pin, end_comp_id, end_pin
-                )
-                
-                if connection_id:
-                    logger.info(f"Added new connection {connection_id} to data model")
-                    
-                    # Find the wire in the scene and add it to controller tracking
-                    wire_found = False
-                    for wire in self.scene.wires:
-                        if (hasattr(wire, 'start_pin') and wire.start_pin and 
-                            hasattr(wire, 'end_pin') and wire.end_pin):
-                            
-                            start_comp_name = wire.start_pin.parent_component.name
-                            start_pin_id = wire.start_pin.pin_id
-                            end_comp_name = wire.end_pin.parent_component.name
-                            end_pin_id = wire.end_pin.pin_id
-                            
-                            if (start_comp_name == start_component and
-                                start_pin_id == start_pin and
-                                end_comp_name == end_component and
-                                end_pin_id == end_pin):
-                                
-                                # Add to controller tracking
-                                connection_graphics_item = ConnectionGraphicsItem(connection_id, wire)
-                                self._connection_graphics_items[connection_id] = connection_graphics_item
-                                
-                                logger.info(f"Added wire to controller tracking: {connection_id}")
-                                wire_found = True
-                                break
-                    
-                    if not wire_found:
-                        logger.warning(f"Could not find wire in scene.wires for connection: {start_component}.{start_pin} -> {end_component}.{end_pin}")
-                        # Try to find any wire that might match (fallback)
-                        for wire in self.scene.wires:
-                            if (hasattr(wire, 'start_pin') and wire.start_pin and 
-                                hasattr(wire, 'end_pin') and wire.end_pin):
-                                logger.info(f"Fallback: Found wire {wire.start_pin.parent_component.name}.{wire.start_pin.pin_id} -> {wire.end_pin.parent_component.name}.{wire.end_pin.pin_id}")
-                                # Add to controller tracking anyway
-                                connection_graphics_item = ConnectionGraphicsItem(connection_id, wire)
-                                self._connection_graphics_items[connection_id] = connection_graphics_item
-                                logger.info(f"Added wire to controller tracking (fallback): {connection_id}")
-                                break
-                else:
-                    logger.warning(f"Failed to add connection to data model")
-            else:
-                logger.warning(f"Could not find component IDs for wire: {start_component} -> {end_component}")
-                
-        except Exception as e:
-            logger.error(f"Error handling scene wire added: {e}")
-            logger.exception("Full traceback:")
-
-    def _on_scene_wire_removed(self, start_component: str, start_pin: str, end_component: str, end_pin: str):
-        """Handle wire removed from scene - remove it from data model and tracking"""
-        try:
-            logger.info(f"Scene wire removed: {start_component}.{start_pin} -> {end_component}.{end_pin}")
+            if not start_comp_id or not end_comp_id:
+                logger.error(f"Could not find component IDs for wire: {start_component_name} -> {end_component_name}")
+                return None
             
-            # Find the connection ID in our tracking
-            connection_id_to_remove = None
+            # Add connection to data model
+            connection_id = self.data_model.add_connection(
+                start_comp_id, start_pin_id, end_comp_id, end_pin_id
+            )
+            
+            if not connection_id:
+                logger.error(f"Failed to add connection to data model")
+                return None
+            
+            # Track the graphics item
+            connection_wrapper = ConnectionGraphicsItem(connection_id, wire)
+            self._connection_graphics_items[connection_id] = connection_wrapper
+            
+            # Update wire with connection ID
+            wire.connection_id = connection_id
+            
+            logger.info(f"Successfully added wire from scene: {connection_id}")
+            return connection_id
+            
+        except Exception as e:
+            logger.error(f"Error adding wire from scene: {e}")
+            logger.exception("Full traceback:")
+            return None
+
+    def serialize_scene_data(self) -> dict:
+        """
+        Serialize the current scene data from the controller's perspective.
+        This provides a clean interface for the scene to get serialized data.
+        
+        Returns:
+            dict: Scene data with components and connections
+        """
+        try:
+            scene_data = {
+                "components": [],
+                "connections": []
+            }
+            
+            # Serialize components from data model
+            for component_id, wrapper in self._component_graphics_items.items():
+                if wrapper and wrapper.graphics_item:
+                    component = wrapper.graphics_item
+                    component_data = {
+                        "name": getattr(component, 'name', 'Unknown'),
+                        "type": getattr(component, 'component_type', 'unknown'),
+                        "position": {
+                            "x": component.pos().x(),
+                            "y": component.pos().y()
+                        },
+                        "properties": getattr(component, 'properties', {}),
+                        "pins": []
+                    }
+                    
+                    # Serialize pins if available
+                    if hasattr(component, 'pins'):
+                        for pin in component.pins:
+                            if hasattr(pin, 'pin_id'):
+                                pin_data = {
+                                    "pin_id": pin.pin_id,
+                                    "position": {
+                                        "x": pin.pos().x(),
+                                        "y": pin.pos().y()
+                                    },
+                                    "edge": getattr(pin, 'edge', 'unknown')
+                                }
+                                component_data["pins"].append(pin_data)
+                    
+                    scene_data["components"].append(component_data)
+            
+            # Serialize connections from data model
             for connection_id, wrapper in self._connection_graphics_items.items():
                 if wrapper and wrapper.graphics_item:
                     wire = wrapper.graphics_item
-                    if (hasattr(wire, 'start_pin') and wire.start_pin and 
-                        hasattr(wire, 'end_pin') and wire.end_pin and
-                        wire.start_pin.parent_component.name == start_component and
-                        wire.start_pin.pin_id == start_pin and
-                        wire.end_pin.parent_component.name == end_component and
-                        wire.end_pin.pin_id == end_pin):
-                        connection_id_to_remove = connection_id
-                        break
+                    if hasattr(wire, 'start_pin') and hasattr(wire, 'end_pin') and wire.start_pin and wire.end_pin:
+                        connection_data = {
+                            "start_component": wire.start_pin.parent_component.name,
+                            "start_pin": wire.start_pin.pin_id,
+                            "end_component": wire.end_pin.parent_component.name,
+                            "end_pin": wire.end_pin.pin_id,
+                            "properties": getattr(wire, 'properties', {})
+                        }
+                        scene_data["connections"].append(connection_data)
             
-            if connection_id_to_remove:
-                # Remove from controller tracking
-                del self._connection_graphics_items[connection_id_to_remove]
-                
-                # Remove from data model
-                success = self.data_model.remove_connection(connection_id_to_remove)
-                if success:
-                    logger.info(f"Removed connection {connection_id_to_remove} from data model")
-                else:
-                    logger.warning(f"Failed to remove connection {connection_id_to_remove} from data model")
-            else:
-                logger.warning(f"Could not find connection to remove: {start_component}.{start_pin} -> {end_component}.{end_pin}")
-                
+            logger.info(f"Serialized scene data: {len(scene_data['components'])} components, {len(scene_data['connections'])} connections")
+            return scene_data
+            
         except Exception as e:
-            logger.error(f"Error handling scene wire removed: {e}")
+            logger.error(f"Error serializing scene data: {e}")
             logger.exception("Full traceback:")
+            return {"components": [], "connections": []}

@@ -1,0 +1,66 @@
+{
+  "config": {
+    "device": {
+      "settings": [
+        {
+          "name": "TestComponent",
+          "function_type": "CHIP",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "CHIP001"
+          }
+        }
+      ],
+      "properties": {}
+    },
+    "band": {
+      "settings": [],
+      "properties": {}
+    },
+    "board": {
+      "settings": [],
+      "properties": {}
+    },
+    "rcc": {
+      "settings": [],
+      "properties": {}
+    },
+    "visual_bcf": {
+      "components": [
+        {
+          "id": "4382ad4e-16f3-4432-adc2-5f447bd1659c",
+          "name": "TestComponent",
+          "component_type": "chip",
+          "function_type": "",
+          "properties": {},
+          "visual_properties": {
+            "position": {
+              "x": 100,
+              "y": 100
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": []
+        }
+      ],
+      "connections": [],
+      "layout": {
+        "scene_rect": {
+          "x": -1000,
+          "y": -1000,
+          "width": 2000,
+          "height": 2000
+        },
+        "grid_settings": {
+          "enabled": true,
+          "size": 20
+        }
+      }
+    }
+  }
+}

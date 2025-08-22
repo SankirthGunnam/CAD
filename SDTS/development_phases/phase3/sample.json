@@ -28,6 +28,24 @@
           "config": {
             "usid": "GENERIC003"
           }
+        },
+        {
+          "name": "Chip2",
+          "function_type": "CHIP",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "CHIP004"
+          }
+        },
+        {
+          "name": "Chip_temp",
+          "function_type": "CHIP",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "CHIP005"
+          }
         }
       ],
       "properties": {}
