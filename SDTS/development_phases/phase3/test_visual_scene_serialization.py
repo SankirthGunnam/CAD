@@ -44,7 +44,7 @@ class VisualSerializationTestWindow(QMainWindow):
         # self.temp_db_path = self.temp_db.name
         # self.temp_db.close()
         self.temp_db_path = os.path.join(
-            os.path.dirname(__file__), "sample.json")
+            os.path.dirname(__file__), "database.json")
 
         # Initialize RDB manager
         self.rdb_manager = RDBManager(self.temp_db_path)

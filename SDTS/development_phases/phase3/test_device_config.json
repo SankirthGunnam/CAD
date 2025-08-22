@@ -10,6 +10,15 @@
           "config": {
             "usid": "CHIP001"
           }
+        },
+        {
+          "name": "TestChip",
+          "function_type": "CHIP",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "CHIP002"
+          }
         }
       ],
       "properties": {}
@@ -29,8 +38,8 @@
     "visual_bcf": {
       "components": [
         {
-          "id": "4382ad4e-16f3-4432-adc2-5f447bd1659c",
-          "name": "TestComponent",
+          "id": "57aa97d8-0d66-47a1-a7f3-22ae735a65b3",
+          "name": "TestChip",
           "component_type": "chip",
           "function_type": "",
           "properties": {},
@@ -38,17 +47,41 @@
             "position": {
               "x": 100,
               "y": 100
-            },
-            "size": {
-              "width": 100,
-              "height": 80
-            },
-            "rotation": 0
+            }
+          },
+          "pins": []
+        },
+        {
+          "id": "6798e119-0880-4509-8ef4-b76860af6469",
+          "name": "TestResistor",
+          "component_type": "resistor",
+          "function_type": "",
+          "properties": {},
+          "visual_properties": {
+            "position": {
+              "x": 200,
+              "y": 200
+            }
           },
           "pins": []
         }
       ],
-      "connections": [],
+      "connections": [
+        {
+          "id": "36b90b25-1a09-48b1-a70d-996dc7c0c73b",
+          "from_component_id": "57aa97d8-0d66-47a1-a7f3-22ae735a65b3",
+          "from_pin_id": "R1",
+          "to_component_id": "6798e119-0880-4509-8ef4-b76860af6469",
+          "to_pin_id": "A",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          }
+        }
+      ],
       "layout": {
         "scene_rect": {
           "x": -1000,

@@ -265,12 +265,13 @@ class VisualBCFController(QObject):
         
         # Connect scene signals
         self.scene.component_removed.connect(self.remove_component_from_scene)
+        self.scene.wire_removed.connect(self.remove_wire_from_scene)
         
         # Note: Scene signals are now handled directly in the new methods:
         # - component_added -> add_component_from_scene()
         # - wire_added -> add_wire_from_scene()
         # - component_removed -> remove_component_from_scene()
-        # - wire_removed -> handled by scene directly
+        # - wire_removed -> remove_wire_from_scene()
 
     def _on_model_component_added(self, component_id: str):
         """Handle component added to model"""
@@ -626,6 +627,26 @@ class VisualBCFController(QObject):
                 
         except Exception as e:
             logger.error(f"Error removing component from scene: {e}")
+            return False
+
+    def remove_wire_from_scene(self, wire: Wire) -> bool:
+        """Remove a wire that was deleted from the scene"""
+        try:
+            # Find the connection ID by looking up the graphics item
+            connection_id = None
+            for cid, wrapper in self._connection_graphics_items.items():
+                if wrapper and wrapper.graphics_item == wire:
+                    connection_id = cid
+                    break
+            
+            if connection_id:
+                return self.remove_connection(connection_id)
+            else:
+                logger.warning(f"Could not find connection ID for deleted wire")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error removing wire from scene: {e}")
             return False
 
     def remove_component(

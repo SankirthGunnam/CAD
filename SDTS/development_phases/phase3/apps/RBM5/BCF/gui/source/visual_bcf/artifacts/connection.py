@@ -765,7 +765,7 @@ class EnhancedWire(QGraphicsPathItem):
         action = menu.exec(event.screenPos())
         
         if action == delete_action:
-            scene = self.scene()
+            scene = self.scene
             if scene and hasattr(scene, 'remove_wire'):
                 scene.remove_wire(self)
             elif scene:
