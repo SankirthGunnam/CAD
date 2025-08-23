@@ -23,7 +23,7 @@ def test_wire_performance():
         print("🔄 Testing import performance...")
         start_time = time.time()
         
-        from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire, EnhancedWire, WirePath
+        from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire, Wire, WirePath
         from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.chip import ComponentWithPins
         
         import_time = time.time() - start_time
@@ -73,7 +73,7 @@ def test_wire_performance():
         ]
         
         for method in methods_to_check:
-            if hasattr(EnhancedWire, method):
+            if hasattr(Wire, method):
                 print(f"✅ {method} method available")
             else:
                 print(f"❌ {method} method missing")
@@ -82,7 +82,7 @@ def test_wire_performance():
         print("\n🔄 Testing performance optimization features...")
         
         # Check if position caching is implemented
-        if hasattr(EnhancedWire, 'update_path'):
+        if hasattr(Wire, 'update_path'):
             # Create a mock wire to test position caching
             class MockPin:
                 def get_connection_point(self):
@@ -97,8 +97,8 @@ def test_wire_performance():
             
             # This will test the position caching logic
             try:
-                wire = EnhancedWire(mock_pin, scene=mock_scene)
-                print("✅ EnhancedWire created successfully")
+                wire = Wire(mock_pin, scene=mock_scene)
+                print("✅ Wire created successfully")
                 print("✅ Position caching system available")
             except Exception as e:
                 print(f"⚠️  Wire creation test failed: {e}")

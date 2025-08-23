@@ -142,7 +142,7 @@ class WirePath:
     def get_path(self):
         return f"Path with {len(self.segments)} segments and {len(self.intersection_bumps)} bumps"
 
-class EnhancedWire:
+class Wire:
     def __init__(self, start_pin, end_pin=None, scene=None):
         self.start_pin = start_pin
         self.end_pin = end_pin
@@ -322,7 +322,7 @@ class EnhancedWire:
         if self.start_pin and self.end_pin:
             self.update_path()
 
-class Wire(EnhancedWire):
+class Wire(Wire):
     pass
 
 def test_complete_wire_workflow():

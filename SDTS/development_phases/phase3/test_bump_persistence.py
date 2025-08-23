@@ -13,7 +13,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'RBM5', 'BCF', 'gui', 'source', 'visual_bcf', 'artifacts'))
 
 try:
-    from connection import Wire, EnhancedWire, WirePath
+    from connection import Wire, Wire, WirePath
     print("✅ Successfully imported enhanced wire classes")
 except ImportError as e:
     print(f"❌ Import error: {e}")
@@ -78,8 +78,8 @@ def test_bump_persistence():
         return False
 
 def test_enhanced_wire_update():
-    """Test that EnhancedWire maintains bumps during updates"""
-    print("\n🧪 Testing EnhancedWire Bump Maintenance")
+    """Test that Wire maintains bumps during updates"""
+    print("\n🧪 Testing Wire Bump Maintenance")
     print("=" * 60)
     
     from PySide6.QtCore import QPointF
@@ -109,13 +109,13 @@ def test_enhanced_wire_update():
     # Create first wire
     start_pin1 = MockPin(0, 100)
     end_pin1 = MockPin(300, 100)
-    wire1 = EnhancedWire(start_pin1, end_pin1, scene)
+    wire1 = Wire(start_pin1, end_pin1, scene)
     scene.add_wire(wire1)
     
     # Create second wire that intersects
     start_pin2 = MockPin(150, 0)
     end_pin2 = MockPin(150, 200)
-    wire2 = EnhancedWire(start_pin2, end_pin2, scene)
+    wire2 = Wire(start_pin2, end_pin2, scene)
     scene.add_wire(wire2)
     
     print(f"📏 Wire 1: ({start_pin1.x}, {start_pin1.y}) → ({end_pin1.x}, {end_pin1.y})")
@@ -190,7 +190,7 @@ def test_force_recalculation():
     # Test force recalculation
     print("🔄 Testing force intersection recalculation...")
     
-    # This would normally be called on the EnhancedWire instance
+    # This would normally be called on the Wire instance
     # For testing, we'll simulate it
     if hasattr(wire, 'force_intersection_recalculation'):
         wire.force_intersection_recalculation()
@@ -210,7 +210,7 @@ def main():
         if not test_bump_persistence():
             return False
         
-        # Test 2: EnhancedWire bump maintenance
+        # Test 2: Wire bump maintenance
         if not test_enhanced_wire_update():
             return False
         

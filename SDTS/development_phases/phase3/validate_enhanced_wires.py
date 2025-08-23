@@ -15,7 +15,7 @@ def validate_imports():
     
     try:
         # Test basic imports
-        from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire, EnhancedWire, WirePath
+        from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire, Wire, WirePath
         print("✅ Successfully imported Wire classes")
         
         # Test component imports
@@ -40,25 +40,25 @@ def validate_wire_classes():
     print("\n🔄 Validating wire class structure...")
     
     try:
-        from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire, EnhancedWire, WirePath
+        from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire, Wire, WirePath
         
         # Check WirePath class
         wire_path = WirePath.__name__
         print(f"✅ WirePath class: {wire_path}")
         
-        # Check EnhancedWire class
-        enhanced_wire = EnhancedWire.__name__
-        print(f"✅ EnhancedWire class: {enhanced_wire}")
+        # Check Wire class
+        enhanced_wire = Wire.__name__
+        print(f"✅ Wire class: {enhanced_wire}")
         
         # Check Wire class (backward compatibility)
         wire = Wire.__name__
         print(f"✅ Wire class: {wire}")
         
         # Check inheritance
-        if issubclass(Wire, EnhancedWire):
-            print("✅ Wire inherits from EnhancedWire (backward compatibility)")
+        if issubclass(Wire, Wire):
+            print("✅ Wire inherits from Wire (backward compatibility)")
         else:
-            print("❌ Wire does not inherit from EnhancedWire")
+            print("❌ Wire does not inherit from Wire")
             return False
         
         return True
@@ -72,7 +72,7 @@ def validate_methods():
     print("\n🔄 Validating wire methods...")
     
     try:
-        from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire, EnhancedWire, WirePath
+        from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire, Wire, WirePath
         
         # Check WirePath methods
         wire_path_methods = [
@@ -90,7 +90,7 @@ def validate_methods():
                 print(f"❌ WirePath.{method} method missing")
                 return False
         
-        # Check EnhancedWire methods
+        # Check Wire methods
         enhanced_wire_methods = [
             'update_path',
             '_calculate_optimal_path',
@@ -101,10 +101,10 @@ def validate_methods():
         ]
         
         for method in enhanced_wire_methods:
-            if hasattr(EnhancedWire, method):
-                print(f"✅ EnhancedWire.{method} method exists")
+            if hasattr(Wire, method):
+                print(f"✅ Wire.{method} method exists")
             else:
-                print(f"❌ EnhancedWire.{method} method missing")
+                print(f"❌ Wire.{method} method missing")
                 return False
         
         return True

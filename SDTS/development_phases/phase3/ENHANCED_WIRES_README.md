@@ -20,7 +20,7 @@ The enhanced wire system in Phase 3 provides advanced routing capabilities for e
   - `_route_vertical_first()`: Routes vertically then horizontally
   - `add_intersection_bump()`: Adds visual bumps at intersections
 
-#### `EnhancedWire`
+#### `Wire`
 - **Purpose**: Enhanced wire graphics item with advanced routing logic
 - **Inherits**: `QGraphicsPathItem` (instead of `QGraphicsLineItem`)
 - **Key Methods**:
@@ -31,7 +31,7 @@ The enhanced wire system in Phase 3 provides advanced routing capabilities for e
 
 #### `Wire` (Backward Compatibility)
 - **Purpose**: Backward compatibility wrapper for existing code
-- **Inherits**: `EnhancedWire`
+- **Inherits**: `Wire`
 
 ## Features in Detail
 

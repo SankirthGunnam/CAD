@@ -220,7 +220,7 @@ class WirePath:
             return QPointF(intersection_point.x(), intersection_point.y())
 
 
-class EnhancedWire(QGraphicsPathItem):
+class Wire(QGraphicsPathItem):
     """Enhanced wire connection between component pins with advanced routing"""
 
     def __init__(
@@ -458,7 +458,7 @@ class EnhancedWire(QGraphicsPathItem):
         for item in self.scene.items():
             # Check if this is a wire (not a component, not a pin)
             is_wire = (
-                isinstance(item, EnhancedWire) or  # Enhanced wire
+                isinstance(item, Wire) or  # Enhanced wire
                 hasattr(item, 'is_temporary') or  # Any item with is_temporary flag
                 hasattr(item, 'start_pin') and hasattr(item, 'end_pin')  # Items with pins
             )
@@ -825,6 +825,6 @@ class EnhancedWire(QGraphicsPathItem):
 
 
 # Keep the old Wire class for backward compatibility
-class Wire(EnhancedWire):
+class Wire(Wire):
     """Backward compatibility wrapper for the old Wire class"""
     pass

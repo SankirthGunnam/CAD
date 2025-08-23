@@ -36,8 +36,8 @@
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": -203.0,
-              "y": -106.0
+              "x": -224.0,
+              "y": -95.0
             },
             "size": {
               "width": 100,
@@ -248,8 +248,8 @@
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 168.0,
-              "y": -79.0
+              "x": 129.0,
+              "y": -8.0
             },
             "size": {
               "width": 100,
@@ -284,8 +284,8 @@
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 113.0,
-              "y": -175.0
+              "x": 108.0,
+              "y": -183.0
             },
             "size": {
               "width": 100,
@@ -311,13 +311,225 @@
               "edge": "right"
             }
           ]
+        },
+        {
+          "id": "13a902a5-54c0-4644-8090-ed7adae5e533",
+          "name": "Chip_temp",
+          "component_type": "chip",
+          "function_type": "",
+          "properties": {},
+          "visual_properties": {
+            "position": {
+              "x": -1.0,
+              "y": 99.0
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [
+            {
+              "pin_id": "L1",
+              "position": {
+                "x": -4.0,
+                "y": 4.571428571428571
+              },
+              "edge": "left"
+            },
+            {
+              "pin_id": "L2",
+              "position": {
+                "x": -4.0,
+                "y": 13.142857142857142
+              },
+              "edge": "left"
+            },
+            {
+              "pin_id": "L3",
+              "position": {
+                "x": -4.0,
+                "y": 21.714285714285715
+              },
+              "edge": "left"
+            },
+            {
+              "pin_id": "L4",
+              "position": {
+                "x": -4.0,
+                "y": 30.285714285714285
+              },
+              "edge": "left"
+            },
+            {
+              "pin_id": "L5",
+              "position": {
+                "x": -4.0,
+                "y": 38.857142857142854
+              },
+              "edge": "left"
+            },
+            {
+              "pin_id": "L6",
+              "position": {
+                "x": -4.0,
+                "y": 47.42857142857143
+              },
+              "edge": "left"
+            },
+            {
+              "pin_id": "R1",
+              "position": {
+                "x": 96.0,
+                "y": 4.571428571428571
+              },
+              "edge": "right"
+            },
+            {
+              "pin_id": "R2",
+              "position": {
+                "x": 96.0,
+                "y": 13.142857142857142
+              },
+              "edge": "right"
+            },
+            {
+              "pin_id": "R3",
+              "position": {
+                "x": 96.0,
+                "y": 21.714285714285715
+              },
+              "edge": "right"
+            },
+            {
+              "pin_id": "R4",
+              "position": {
+                "x": 96.0,
+                "y": 30.285714285714285
+              },
+              "edge": "right"
+            },
+            {
+              "pin_id": "R5",
+              "position": {
+                "x": 96.0,
+                "y": 38.857142857142854
+              },
+              "edge": "right"
+            },
+            {
+              "pin_id": "R6",
+              "position": {
+                "x": 96.0,
+                "y": 47.42857142857143
+              },
+              "edge": "right"
+            },
+            {
+              "pin_id": "T1",
+              "position": {
+                "x": 10.285714285714286,
+                "y": -4.0
+              },
+              "edge": "top"
+            },
+            {
+              "pin_id": "T2",
+              "position": {
+                "x": 24.571428571428573,
+                "y": -4.0
+              },
+              "edge": "top"
+            },
+            {
+              "pin_id": "T3",
+              "position": {
+                "x": 38.85714285714286,
+                "y": -4.0
+              },
+              "edge": "top"
+            },
+            {
+              "pin_id": "T4",
+              "position": {
+                "x": 53.142857142857146,
+                "y": -4.0
+              },
+              "edge": "top"
+            },
+            {
+              "pin_id": "T5",
+              "position": {
+                "x": 67.42857142857143,
+                "y": -4.0
+              },
+              "edge": "top"
+            },
+            {
+              "pin_id": "T6",
+              "position": {
+                "x": 81.71428571428572,
+                "y": -4.0
+              },
+              "edge": "top"
+            },
+            {
+              "pin_id": "B1",
+              "position": {
+                "x": 10.285714285714286,
+                "y": 56.0
+              },
+              "edge": "bottom"
+            },
+            {
+              "pin_id": "B2",
+              "position": {
+                "x": 24.571428571428573,
+                "y": 56.0
+              },
+              "edge": "bottom"
+            },
+            {
+              "pin_id": "B3",
+              "position": {
+                "x": 38.85714285714286,
+                "y": 56.0
+              },
+              "edge": "bottom"
+            },
+            {
+              "pin_id": "B4",
+              "position": {
+                "x": 53.142857142857146,
+                "y": 56.0
+              },
+              "edge": "bottom"
+            },
+            {
+              "pin_id": "B5",
+              "position": {
+                "x": 67.42857142857143,
+                "y": 56.0
+              },
+              "edge": "bottom"
+            },
+            {
+              "pin_id": "B6",
+              "position": {
+                "x": 81.71428571428572,
+                "y": 56.0
+              },
+              "edge": "bottom"
+            }
+          ]
         }
       ],
       "connections": [
         {
-          "id": "79b4ef1e-04f3-4026-96c1-bcc67757e921",
+          "id": "ffa59edf-329b-447d-bd54-af51216bfd19",
           "from_component_id": "981a5b9e-301a-4eab-af89-c77962272933",
-          "from_pin_id": "R1",
+          "from_pin_id": "R4",
           "to_component_id": "58291af8-78fc-41b4-a079-d83d4ebc53a5",
           "to_pin_id": "A",
           "connection_type": "wire",
@@ -329,11 +541,11 @@
           }
         },
         {
-          "id": "382ba375-6c19-411f-ac4e-f0e19ed72621",
-          "from_component_id": "981a5b9e-301a-4eab-af89-c77962272933",
-          "from_pin_id": "R6",
-          "to_component_id": "6829ba0d-7e35-4ea8-a1a8-86420604dae7",
-          "to_pin_id": "POS",
+          "id": "7dbd1857-a3c5-4a8a-8b40-67f91aa16da5",
+          "from_component_id": "6829ba0d-7e35-4ea8-a1a8-86420604dae7",
+          "from_pin_id": "POS",
+          "to_component_id": "981a5b9e-301a-4eab-af89-c77962272933",
+          "to_pin_id": "R6",
           "connection_type": "wire",
           "properties": {},
           "visual_properties": {

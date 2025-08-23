@@ -220,7 +220,7 @@ class WirePath:
             return QPointF(intersection_point.x(), intersection_point.y())
 
 
-class EnhancedWire(QGraphicsPathItem):
+class Wire(QGraphicsPathItem):
     """Enhanced wire connection between component pins with advanced routing"""
 
     def __init__(
@@ -256,8 +256,8 @@ class EnhancedWire(QGraphicsPathItem):
         self.wire_path = None
         self.avoided_components = []
         
-        # Set initial path
-        self.update_path()
+        # Don't set initial path until we have both pins
+        # self.update_path()  # This was causing the issue
     
     def update_path(self, temp_end_pos: Optional[QPointF] = None):
         """Update wire path position and routing"""
@@ -447,12 +447,12 @@ class EnhancedWire(QGraphicsPathItem):
         if not self.scene:
             return
         
-        # Get all other wires in the scene - look for multiple wire types
+        # Get all other wires in the scene
         other_wires = []
         for item in self.scene.items():
             # Check if this is a wire (not a component, not a pin)
             is_wire = (
-                isinstance(item, EnhancedWire) or  # Enhanced wire
+                isinstance(item, Wire) or  # Enhanced wire
                 hasattr(item, 'is_temporary') or  # Any item with is_temporary flag
                 hasattr(item, 'start_pin') and hasattr(item, 'end_pin')  # Items with pins
             )
@@ -465,7 +465,6 @@ class EnhancedWire(QGraphicsPathItem):
             return
         
         # Process intersections with other wires
-
         for other_wire in other_wires:
             # Check if the other wire has a path to analyze
             if hasattr(other_wire, 'wire_path') and other_wire.wire_path:
@@ -473,35 +472,6 @@ class EnhancedWire(QGraphicsPathItem):
                 if intersection_data:
                     for point, direction in intersection_data:
                         self.wire_path.add_intersection_bump(point, direction)
-            elif hasattr(other_wire, 'line'):  # Fallback for old wire types
-                # Convert old wire line to segments for intersection detection
-                old_wire_segments = self._convert_old_wire_to_segments(other_wire)
-                if old_wire_segments:
-                    intersection_data = self._find_intersections_with_segments_and_angles(old_wire_segments)
-                    if intersection_data:
-                        print(f"   🔍 Found {len(intersection_data)} intersections with old wire")
-                        for point, direction in intersection_data:
-                            self.wire_path.add_intersection_bump(point, direction)
-        
-
-    
-    def _find_wire_intersections(self, other_wire) -> List[Tuple[QPointF, str]]:
-        """Find intersection points between this wire and another wire (legacy method)"""
-        intersections = []
-        
-        if not self.wire_path or not other_wire.wire_path:
-            return intersections
-        
-        # Check each segment of this wire against each segment of the other wire
-        for i, (seg1_start, seg1_end) in enumerate(self.wire_path.segments):
-            for j, (seg2_start, seg2_end) in enumerate(other_wire.wire_path.segments):
-                intersection = self._segment_intersection(seg1_start, seg1_end, seg2_start, seg2_end)
-                if intersection:
-                    # Determine direction for bump
-                    direction = "horizontal" if abs(seg1_end.y() - seg1_start.y()) < 1 else "vertical"
-                    intersections.append((intersection, direction))
-        
-        return intersections
     
     def _find_wire_intersections_with_angles(self, other_wire) -> List[Tuple[QPointF, str]]:
         """Find intersection points between this wire and another wire with angle-based bump logic"""
@@ -621,80 +591,7 @@ class EnhancedWire(QGraphicsPathItem):
             return QPointF(intersection_x, intersection_y)
         
         return None
-    
-    def _convert_old_wire_to_segments(self, old_wire) -> List[Tuple[QPointF, QPointF]]:
-        """Convert old wire line to segments for intersection detection"""
-        if hasattr(old_wire, 'line'):
-            line = old_wire.line()
-            start_point = QPointF(line.x1(), line.y1())
-            end_point = QPointF(line.x2(), line.y2())
-            return [(start_point, end_point)]
-        return []
-    
-    def _find_intersections_with_segments(self, segments: List[Tuple[QPointF, QPointF]]) -> List[Tuple[QPointF, str]]:
-        """Find intersections between this wire and a list of segments (legacy method)"""
-        intersections = []
-        
-        if not self.wire_path:
-            return intersections
-        
-        for seg1_start, seg1_end in self.wire_path.segments:
-            for seg2_start, seg2_end in segments:
-                intersection = self._segment_intersection(seg1_start, seg1_end, seg2_start, seg2_end)
-                if intersection:
-                    # Determine direction for bump
-                    direction = "horizontal" if abs(seg1_end.y() - seg1_start.y()) < 1 else "vertical"
-                    intersections.append((intersection, direction))
-        
-        return intersections
-    
-    def _find_intersections_with_segments_and_angles(self, segments: List[Tuple[QPointF, QPointF]]) -> List[Tuple[QPointF, str]]:
-        """Find intersections between this wire and a list of segments with angle-based bump logic"""
-        intersections = []
-        
-        if not self.wire_path:
-            return intersections
-        
-        # Calculate the overall angle of this wire relative to horizontal
-        this_wire_angle = self._calculate_wire_angle()
-        
-        # Calculate the overall angle of the old wire segments relative to horizontal
-        if segments:
-            first_point = segments[0][0]
-            last_point = segments[-1][1]
-            dx = last_point.x() - first_point.x()
-            dy = last_point.y() - first_point.y()
-            
-            if abs(dx) < 1e-6:  # Vertical wire
-                other_wire_angle = 90.0 if dy > 0 else -90.0
-            else:
-                angle_rad = math.atan2(dy, dx)
-                other_wire_angle = math.degrees(angle_rad)
-                # Normalize to [-180, 180] degrees
-                if other_wire_angle > 180:
-                    other_wire_angle -= 360
-                elif other_wire_angle < -180:
-                    other_wire_angle += 360
-        else:
-            other_wire_angle = 0.0
-        
-        for seg1_start, seg1_end in self.wire_path.segments:
-            for seg2_start, seg2_end in segments:
-                intersection = self._segment_intersection(seg1_start, seg1_end, seg2_start, seg2_end)
-                if intersection:
-                    # Determine direction for bump
-                    direction = "horizontal" if abs(seg1_end.y() - seg1_start.y()) < 1 else "vertical"
-                    
-                    # Determine which wire should create the bump based on angle
-                    # Wire with smaller angle relative to horizontal creates the bump
-                    should_create_bump = abs(this_wire_angle) <= abs(other_wire_angle)
-                    
-                    if should_create_bump:
-                        # Return simplified format: (intersection_point, direction)
-                        intersections.append((intersection, direction))
-        
-        return intersections
-    
+   
     def complete_wire(self, end_pin: ComponentPin) -> bool:
         """Complete the wire connection"""
         if end_pin == self.start_pin:
@@ -702,6 +599,9 @@ class EnhancedWire(QGraphicsPathItem):
         
         self.end_pin = end_pin
         self.is_temporary = False
+        
+        # Now create the wire path since we have both pins
+        self.update_path()
         
         # Now that the wire is permanent, calculate intersections
         if self.wire_path:
@@ -828,8 +728,3 @@ class EnhancedWire(QGraphicsPathItem):
             if not path.isEmpty():
                 painter.setPen(self.pen())
                 painter.drawPath(path)
-
-# Keep the old Wire class for backward compatibility
-class Wire(EnhancedWire):
-    """Backward compatibility wrapper for the old Wire class"""
-    pass

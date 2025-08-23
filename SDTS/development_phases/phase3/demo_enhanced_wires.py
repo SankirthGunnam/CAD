@@ -120,7 +120,7 @@ def demo_technical_implementation():
     
     print("🔧 Core Architecture:")
     print("   • WirePath: Mathematical path representation")
-    print("   • EnhancedWire: Advanced routing logic")
+    print("   • Wire: Advanced routing logic")
     print("   • Wire: Backward compatibility wrapper")
     print()
     

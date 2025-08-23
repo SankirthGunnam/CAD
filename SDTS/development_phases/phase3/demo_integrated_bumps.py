@@ -14,7 +14,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'RBM5', 'BCF', 'gui', 'source', 'visual_bcf', 'artifacts'))
 
 try:
-    from connection import Wire, EnhancedWire, WirePath
+    from connection import Wire, Wire, WirePath
     print("✅ Successfully imported enhanced wire classes")
 except ImportError as e:
     print(f"❌ Import error: {e}")

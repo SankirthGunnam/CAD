@@ -139,7 +139,7 @@ path = wire_path.get_path()
 ### Automatic Bump Detection
 ```python
 # The system automatically detects intersections and creates bumps
-enhanced_wire = EnhancedWire(start_pin, end_pin, scene)
+enhanced_wire = Wire(start_pin, end_pin, scene)
 enhanced_wire.update_path()  # Automatically handles bumps
 ```
 
@@ -192,7 +192,7 @@ python demo_integrated_bumps.py
 ## 🔄 Migration from Old System
 
 ### Backward Compatibility
-- Old `Wire` class still works (inherits from `EnhancedWire`)
+- Old `Wire` class still works (inherits from `Wire`)
 - Existing code continues to function
 - Gradual migration to new features
 
