@@ -77,7 +77,7 @@ class VisualBCFDataModel(QObject):
                 logger.info("Initialized Visual BCF tables in database")
 
         except Exception as e:
-            logger.error(f"Error initializing Visual BCF tables: {e}")
+            logger.error("Error initializing Visual BCF tables: %s", e)
 
 
 
@@ -126,11 +126,11 @@ class VisualBCFDataModel(QObject):
             # Emit signal
             self.component_added.emit(component_id)
 
-            logger.info(f"Added component: {name} ({component_id})")
+            logger.info("Added component: %s (%s)", name, component_id)
             return component_id
 
         except Exception as e:
-            logger.error(f"Error adding component: {e}")
+            logger.error("Error adding component: %s", e)
             return ""
 
     def remove_component(self, component_id: str) -> bool:
@@ -173,7 +173,7 @@ class VisualBCFDataModel(QObject):
             return True
 
         except Exception as e:
-            logger.error(f"Error removing component: {e}")
+            logger.error("Error removing component: %s", e)
             return False
 
     def update_component_position(
@@ -202,7 +202,7 @@ class VisualBCFDataModel(QObject):
             return False
 
         except Exception as e:
-            logger.error(f"Error updating component position: {e}")
+            logger.error("Error updating component position: %s", e)
             return False
 
     def update_component_properties(
@@ -230,7 +230,7 @@ class VisualBCFDataModel(QObject):
             return False
 
         except Exception as e:
-            logger.error(f"Error updating component properties: {e}")
+            logger.error("Error updating component properties: %s", e)
             return False
 
     def update_component_pins(self, component_id: str, pins: List[Dict[str, Any]]) -> bool:
@@ -249,13 +249,13 @@ class VisualBCFDataModel(QObject):
                     # Emit signal
                     self.component_updated.emit(component_id, {'pins': pins})
 
-                    logger.info(f"Updated component {component_id} with {len(pins)} pins")
+                    logger.info("Updated component %s with %s pins", component_id, len(pins))
                     return True
             
             return False
 
         except Exception as e:
-            logger.error(f"Error updating component pins: {e}")
+            logger.error("Error updating component pins: %s", e)
             return False
 
     def get_component(self, component_id: str) -> Optional[Dict[str, Any]]:
@@ -340,7 +340,7 @@ class VisualBCFDataModel(QObject):
             return connection_id
 
         except Exception as e:
-            logger.error(f"Error adding connection: {e}")
+            logger.error("Error adding connection: %s", e)
             return ""
 
     def remove_connection(self, connection_id: str) -> bool:
@@ -357,13 +357,13 @@ class VisualBCFDataModel(QObject):
                     # Emit signal
                     self.connection_removed.emit(connection_id)
                     
-                    logger.info(f"Removed connection: {connection_id}")
+                    logger.info("Removed connection: %s", connection_id)
                     return True
             
             return False
 
         except Exception as e:
-            logger.error(f"Error removing connection: {e}")
+            logger.error("Error removing connection: %s", e)
             return False
 
     def get_connection(self, connection_id: str) -> Optional[Dict[str, Any]]:
@@ -397,7 +397,7 @@ class VisualBCFDataModel(QObject):
         try:
             return self.rdb_manager.get_table("config.device.settings")
         except Exception as e:
-            logger.error(f"Error getting Legacy BCF devices: {e}")
+            logger.error("Error getting Legacy BCF devices: %s", e)
             return []
 
     def save_scene_data(self, scene_data: Dict[str, Any]) -> bool:
@@ -447,7 +447,7 @@ class VisualBCFDataModel(QObject):
             logger.info("Scene data saved to database")
             return True
         except Exception as e:
-            logger.error(f"Error saving scene data: {e}")
+            logger.error("Error saving scene data: %s", e)
             return False
 
     def load_scene_data(self) -> Optional[Dict[str, Any]]:
@@ -497,7 +497,7 @@ class VisualBCFDataModel(QObject):
             logger.info("Scene data reconstructed from tables")
             return scene
         except Exception as e:
-            logger.error(f"Error loading scene data: {e}")
+            logger.error("Error loading scene data: %s", e)
             return None
 
     def save_visual_bcf_data(self) -> bool:
@@ -510,7 +510,7 @@ class VisualBCFDataModel(QObject):
             logger.info("Visual BCF data saved to database")
             return True
         except Exception as e:
-            logger.error(f"Error saving visual BCF data: {e}")
+            logger.error("Error saving visual BCF data: %s", e)
             return False
 
     def save_visual_bcf_to_file(self, file_path: str) -> bool:
@@ -524,10 +524,10 @@ class VisualBCFDataModel(QObject):
             with open(file_path, 'w') as f:
                 json.dump(complete_data, f, indent=2)
 
-            logger.info(f"Visual BCF data saved to file: {file_path}")
+            logger.info("Visual BCF data saved to file: %s", file_path)
             return True
         except Exception as e:
-            logger.error(f"Error saving visual BCF data to file: {e}")
+            logger.error("Error saving visual BCF data to file: %s", e)
             return False
 
     # Legacy BCF Integration Methods
@@ -572,7 +572,7 @@ class VisualBCFDataModel(QObject):
             self.data_synchronized.emit()
 
         except Exception as e:
-            logger.error(f"Error syncing with Legacy BCF: {e}")
+            logger.error("Error syncing with Legacy BCF: %s", e)
 
     def export_to_legacy_bcf(self):
         """Export Visual BCF components to Legacy BCF format"""
@@ -602,7 +602,7 @@ class VisualBCFDataModel(QObject):
                     f"Exported {len(device_settings)} components to Legacy BCF")
 
         except Exception as e:
-            logger.error(f"Error exporting to Legacy BCF: {e}")
+            logger.error("Error exporting to Legacy BCF: %s", e)
 
     # Private helper methods
 
@@ -684,7 +684,7 @@ class VisualBCFDataModel(QObject):
             self.data_synchronized.emit()
 
         except Exception as e:
-            logger.error(f"Error clearing data: {e}")
+            logger.error("Error clearing data: %s", e)
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get statistics about the current data directly from RDB"""
@@ -703,7 +703,7 @@ class VisualBCFDataModel(QObject):
                 }
             }
         except Exception as e:
-            logger.error(f"Error getting statistics: {e}")
+            logger.error("Error getting statistics: %s", e)
             return {
                 'component_count': 0,
                 'connection_count': 0,

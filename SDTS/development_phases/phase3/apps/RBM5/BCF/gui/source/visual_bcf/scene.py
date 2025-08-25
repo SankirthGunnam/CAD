@@ -76,9 +76,9 @@ class ComponentScene(QGraphicsScene):
             if component_id:
                 # Update component name to match what was assigned by controller
                 component.name = name
-                logger.info(f"Component added via controller: {component_id} ({name})")
+                logger.info("Component added via controller: %s (%s)", component_id, name)
             else:
-                logger.warning(f"Failed to add component via controller: {name}")
+                logger.warning("Failed to add component via controller: %s", name)
         else:
             logger.warning("No controller available for component tracking")
 
@@ -153,7 +153,7 @@ class ComponentScene(QGraphicsScene):
                             self.current_wire.end_pin.pin_id
                         )
                         if connection_id:
-                            logger.info(f"Wire added via controller: {connection_id}")
+                            logger.info("Wire added via controller: %s", connection_id)
                         else:
                             logger.warning("Failed to add wire via controller")
                     else:
@@ -205,7 +205,7 @@ class ComponentScene(QGraphicsScene):
             try:
                 return self.controller.serialize_scene_data()
             except Exception as e:
-                logger.warning(f"Controller serialization failed: {e}")
+                logger.warning("Controller serialization failed: %s", e)
                 # Fallback to basic scene serialization
         
         # Basic fallback serialization using scene items
@@ -259,7 +259,7 @@ class ComponentScene(QGraphicsScene):
                     }
                     scene_data["connections"].append(connection_data)
 
-        logger.info(f"Scene serialization: {len(scene_data['components'])} components, {len(scene_data['connections'])} connections")
+        logger.info("Scene serialization: %s components, %s connections", len(scene_data['components']), len(scene_data['connections']))
         return scene_data
 
     def load_scene(self, scene_data: dict):

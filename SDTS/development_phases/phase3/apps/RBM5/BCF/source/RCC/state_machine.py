@@ -135,7 +135,7 @@ class StateMachine(QObject):
             return True
 
         except Exception as e:
-            logger.error(f"State transition failed: {str(e)}")
+            logger.error("State transition failed: %s", str(e))
             self.transition_failed.emit(str(e))
             return False
 

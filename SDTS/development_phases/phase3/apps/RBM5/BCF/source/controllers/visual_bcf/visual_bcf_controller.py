@@ -204,7 +204,7 @@ class VisualBCFController(QObject):
                 self.operation_completed.emit(
                     "delete", f"Deleted {len(selected_items)} selected items")
         except Exception as e:
-            logger.error(f"Error deleting selected items: {e}")
+            logger.error("Error deleting selected items: %s", e)
             self.error_occurred.emit(
                 f"Failed to delete selected items: {str(e)}")
 
@@ -214,7 +214,7 @@ class VisualBCFController(QObject):
             self.clear_scene(show_confirmation=False)
             self.operation_completed.emit("clear", "Scene cleared")
         except Exception as e:
-            logger.error(f"Error clearing scene: {e}")
+            logger.error("Error clearing scene: %s", e)
             self.error_occurred.emit(f"Failed to clear scene: {str(e)}")
 
     def _on_save_scene(self):
@@ -227,7 +227,7 @@ class VisualBCFController(QObject):
             else:
                 self.error_occurred.emit("Failed to save scene")
         except Exception as e:
-            logger.error(f"Error saving scene: {e}")
+            logger.error("Error saving scene: %s", e)
             self.error_occurred.emit(f"Failed to save scene: {str(e)}")
 
     def _on_load_scene(self):
@@ -240,7 +240,7 @@ class VisualBCFController(QObject):
             else:
                 self.error_occurred.emit("Failed to load scene")
         except Exception as e:
-            logger.error(f"Error loading scene: {e}")
+            logger.error("Error loading scene: %s", e)
             self.error_occurred.emit(f"Failed to load scene: {str(e)}")
 
     def _on_zoom_fit(self):
@@ -249,7 +249,7 @@ class VisualBCFController(QObject):
             if self.view:
                 self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
         except Exception as e:
-            logger.error(f"Error zooming to fit: {e}")
+            logger.error("Error zooming to fit: %s", e)
 
     def _connect_signals(self):
         """Connect to model signals"""
@@ -276,9 +276,9 @@ class VisualBCFController(QObject):
         try:
             # Components are now created by the scene, not by the controller
             # The controller just tracks what's already in the scene
-            logger.info(f"Component {component_id} added to model - graphics already exist in scene")
+            logger.info("Component %s added to model - graphics already exist in scene", component_id)
         except Exception as e:
-            logger.error(f"Error handling model component added: {e}")
+            logger.error("Error handling model component added: %s", e)
 
     def _on_model_component_removed(self, component_id: str):
         """Handle component removed from model"""
@@ -317,16 +317,16 @@ class VisualBCFController(QObject):
 
                 del self._component_graphics_items[component_id]
         except Exception as e:
-            logger.error(f"Error handling model component removed: {e}")
+            logger.error("Error handling model component removed: %s", e)
 
     def _on_model_connection_added(self, connection_id: str):
         """Handle connection added to model"""
         try:
             # Connections are now created by the scene, not by the controller
             # The controller just tracks what's already in the scene
-            logger.info(f"Connection {connection_id} added to model - graphics already exist in scene")
+            logger.info("Connection %s added to model - graphics already exist in scene", connection_id)
         except Exception as e:
-            logger.error(f"Error handling model connection added: {e}")
+            logger.error("Error handling model connection added: %s", e)
 
     def _on_model_connection_removed(self, connection_id: str):
         """Handle connection removed from model"""
@@ -336,7 +336,7 @@ class VisualBCFController(QObject):
                 self.scene.removeItem(graphics_item.graphics_item)
                 del self._connection_graphics_items[connection_id]
         except Exception as e:
-            logger.error(f"Error handling model connection removed: {e}")
+            logger.error("Error handling model connection removed: %s", e)
 
     def cleanup(self):
         """Clean up resources and stop timers"""
@@ -346,7 +346,7 @@ class VisualBCFController(QObject):
                 self.cleanup_timer.deleteLater()
             logger.info("VisualBCFController cleanup completed")
         except Exception as e:
-            logger.error(f"Error during controller cleanup: {e}")
+            logger.error("Error during controller cleanup: %s", e)
 
     def _cleanup_stale_graphics_items(self):
         """Clean up stale graphics items that are no longer valid"""
@@ -389,7 +389,7 @@ class VisualBCFController(QObject):
                     f"Cleaned up {len(stale_component_ids)} stale component items and {len(stale_connection_ids)} stale connection items")
 
         except Exception as e:
-            logger.error(f"Error during graphics items cleanup: {e}")
+            logger.error("Error during graphics items cleanup: %s", e)
 
     def _force_scene_refresh(self):
         """Force a complete scene refresh to ensure no leftover items"""
@@ -429,15 +429,15 @@ class VisualBCFController(QObject):
             for item in unexpected_items:
                 try:
                     self.scene.removeItem(item)
-                    logger.info(f"Removed unexpected item during scene refresh: {type(item).__name__}")
+                    logger.info("Removed unexpected item during scene refresh: %s", type(item).__name__)
                 except Exception as e:
-                    logger.warning(f"Error removing unexpected item during scene refresh: {e}")
+                    logger.warning("Error removing unexpected item during scene refresh: %s", e)
             
             if unexpected_items:
-                logger.info(f"Scene refresh completed: removed {len(unexpected_items)} unexpected items")
+                logger.info("Scene refresh completed: removed %s unexpected items", len(unexpected_items))
             
         except Exception as e:
-            logger.error(f"Error during scene refresh: {e}")
+            logger.error("Error during scene refresh: %s", e)
 
     def _track_wire_for_saving(self, wire):
         """Track a wire created through the scene for proper saving"""
@@ -465,7 +465,7 @@ class VisualBCFController(QObject):
                     break
             
             if not start_comp_id or not end_comp_id:
-                logger.warning(f"Cannot track wire: component IDs not found for {start_comp_name} or {end_comp_name}")
+                logger.warning("Cannot track wire: component IDs not found for %s or %s", start_comp_name, end_comp_name)
                 return
             
             # Add the connection to the data model to get a proper connection ID
@@ -474,7 +474,7 @@ class VisualBCFController(QObject):
             )
             
             if not connection_id:
-                logger.warning(f"Failed to add connection to data model for wire tracking")
+                logger.warning("Failed to add connection to data model for wire tracking")
                 return
             
             # Create a wrapper for the wire using the data model's connection ID
@@ -483,10 +483,10 @@ class VisualBCFController(QObject):
             # Add to tracking dictionary
             self._connection_graphics_items[connection_id] = wire_wrapper
             
-            logger.info(f"Tracked wire for saving: {connection_id} ({start_comp_name}.{start_pin_id} -> {end_comp_name}.{end_pin_id})")
+            logger.info("Tracked wire for saving: %s (%s.%s -> %s.%s)", connection_id, start_comp_name, start_pin_id, end_comp_name, end_pin_id)
             
         except Exception as e:
-            logger.error(f"Error tracking wire for saving: {e}")
+            logger.error("Error tracking wire for saving: %s", e)
 
     def _track_component_for_saving(self, component, name, component_type):
         """Track a component created through the scene for proper saving"""
@@ -501,7 +501,7 @@ class VisualBCFController(QObject):
             component_id = self.data_model.add_component(name, component_type, position, properties)
             
             if not component_id:
-                logger.warning(f"Failed to add component to data model: {name}")
+                logger.warning("Failed to add component to data model: %s", name)
                 return
             
             # Now update the component in the data model to include pin information
@@ -524,9 +524,9 @@ class VisualBCFController(QObject):
                 if pins_data:
                     success = self.data_model.update_component_pins(component_id, pins_data)
                     if success:
-                        logger.info(f"Updated component {name} with {len(pins_data)} pins")
+                        logger.info("Updated component %s with %s pins", name, len(pins_data))
                     else:
-                        logger.warning(f"Failed to update component {name} with pins")
+                        logger.warning("Failed to update component %s with pins", name)
             
             # Create a wrapper for the component using the data model's UUID
             component_wrapper = ComponentGraphicsItem(component_id, component)
@@ -534,10 +534,10 @@ class VisualBCFController(QObject):
             # Add to tracking dictionary
             self._component_graphics_items[component_id] = component_wrapper
             
-            logger.info(f"Tracked component for saving: {component_id} ({name}, {component_type})")
+            logger.info("Tracked component for saving: %s (%s, %s)", component_id, name, component_type)
             
         except Exception as e:
-            logger.error(f"Error tracking component for saving: {e}")
+            logger.error("Error tracking component for saving: %s", e)
 
     def on_graphics_component_moved(self, graphics_component):
         """Handle graphics component movement and sync to model"""
@@ -579,7 +579,7 @@ class VisualBCFController(QObject):
                         f"Error updating model position for component {component_id}: {e}")
 
         except Exception as e:
-            logger.error(f"Error syncing graphics position to model: {e}")
+            logger.error("Error syncing graphics position to model: %s", e)
 
     # Public methods for component operations
 
@@ -601,7 +601,7 @@ class VisualBCFController(QObject):
                     f"Successfully added component: {name} at {position}")
             return component_id
         except Exception as e:
-            logger.error(f"Error adding component: {e}")
+            logger.error("Error adding component: %s", e)
             self.error_occurred.emit(f"Failed to add component: {str(e)}")
             return ""
 
@@ -618,11 +618,11 @@ class VisualBCFController(QObject):
             if component_id:
                 return self.remove_component(component_id)
             else:
-                logger.warning(f"Could not find component ID for deleted component: {component.name}")
+                logger.warning("Could not find component ID for deleted component: %s", component.name)
                 return False
                 
         except Exception as e:
-            logger.error(f"Error removing component from scene: {e}")
+            logger.error("Error removing component from scene: %s", e)
             return False
 
     def remove_wire_from_scene(self, wire: Wire) -> bool:
@@ -638,11 +638,11 @@ class VisualBCFController(QObject):
             if connection_id:
                 return self.remove_connection(connection_id)
             else:
-                logger.warning(f"Could not find connection ID for deleted wire")
+                logger.warning("Could not find connection ID for deleted wire")
                 return False
                 
         except Exception as e:
-            logger.error(f"Error removing wire from scene: {e}")
+            logger.error("Error removing wire from scene: %s", e)
             return False
 
     def remove_component(
@@ -692,7 +692,7 @@ class VisualBCFController(QObject):
                     f"Successfully removed component: {component_name}")
             return success
         except Exception as e:
-            logger.error(f"Error removing component: {e}")
+            logger.error("Error removing component: %s", e)
             self.error_occurred.emit(f"Failed to remove component: {str(e)}")
             return False
 
@@ -703,7 +703,7 @@ class VisualBCFController(QObject):
             return self.data_model.update_component_position(
                 component_id, position)
         except Exception as e:
-            logger.error(f"Error updating component position: {e}")
+            logger.error("Error updating component position: %s", e)
             return False
 
     def add_connection(self, from_component_id: str, from_pin_id: str,
@@ -716,10 +716,10 @@ class VisualBCFController(QObject):
             if connection_id:
                 self.operation_completed.emit(
                     "add_connection", f"Added connection")
-                logger.info(f"Successfully added connection: {connection_id}")
+                logger.info("Successfully added connection: %s", connection_id)
             return connection_id
         except Exception as e:
-            logger.error(f"Error adding connection: {e}")
+            logger.error("Error adding connection: %s", e)
             self.error_occurred.emit(f"Failed to add connection: {str(e)}")
             return ""
 
@@ -734,7 +734,7 @@ class VisualBCFController(QObject):
                     f"Successfully removed connection: {connection_id}")
             return success
         except Exception as e:
-            logger.error(f"Error removing connection: {e}")
+            logger.error("Error removing connection: %s", e)
             self.error_occurred.emit(f"Failed to remove connection: {str(e)}")
             return False
 
@@ -751,7 +751,7 @@ class VisualBCFController(QObject):
             logger.info("Scene cleared successfully")
 
         except Exception as e:
-            logger.error(f"Error clearing scene: {e}")
+            logger.error("Error clearing scene: %s", e)
             self.error_occurred.emit(f"Failed to clear scene: {str(e)}")
 
     def get_statistics(self) -> Dict[str, Any]:
@@ -768,7 +768,7 @@ class VisualBCFController(QObject):
                 'graphics_connections_count': len(
                     self._connection_graphics_items)}
         except Exception as e:
-            logger.error(f"Error getting statistics: {e}")
+            logger.error("Error getting statistics: %s", e)
             return {
                 'component_count': 0,
                 'connection_count': 0,
@@ -791,7 +791,7 @@ class VisualBCFController(QObject):
             scene_data = self.serialize_scene_data()
             if scene_data:
                 self.data_model.save_scene_data(scene_data)
-                logger.info(f"Scene data saved to RDB tables: {len(scene_data.get('components', []))} components, {len(scene_data.get('connections', []))} connections")
+                logger.info("Scene data saved to RDB tables: %s components, %s connections", len(scene_data.get('components', [])), len(scene_data.get('connections', [])))
 
             # Then save to file or persist to disk
             success = self.data_model.save_visual_bcf_to_file(
@@ -821,7 +821,7 @@ class VisualBCFController(QObject):
                 import json
                 with open(file_path, 'r') as f:
                     raw_data = json.load(f)
-                logger.info(f"Scene loaded from file: {file_path}")
+                logger.info("Scene loaded from file: %s", file_path)
 
                 # Extract scene data from RDB JSON structure
                 if "config" in raw_data and "visual_bcf" in raw_data["config"]:
@@ -873,7 +873,7 @@ class VisualBCFController(QObject):
                 print('calling load_scene')
                 scene_data = self.data_model.load_scene_data()
                 if scene_data:
-                    logger.info(f"Scene loaded from default location through model")
+                    logger.info("Scene loaded from default location through model")
                 else:
                     logger.info("No default scene found in model")
                     return False
@@ -884,7 +884,7 @@ class VisualBCFController(QObject):
                 
                 # Load components by creating graphics items in the scene
                 components_data = scene_data.get("components", [])
-                logger.info(f"Found {len(components_data)} components to load")
+                logger.info("Found %s components to load", len(components_data))
 
                 for comp_data in components_data:
                     try:
@@ -894,7 +894,7 @@ class VisualBCFController(QObject):
                         component_type = comp_data.get("type", "chip")
                         
                         if not component_id:
-                            logger.warning(f"Component missing ID: {component_name}")
+                            logger.warning("Component missing ID: %s", component_name)
                             continue
                             
                         # Create the component graphics item directly (like the scene does)
@@ -915,14 +915,14 @@ class VisualBCFController(QObject):
                         component.component_id = component_id
                         component.properties = comp_data.get("properties", {})
                         
-                        logger.info(f"Component {component_id} ({component_name}) added to scene")
+                        logger.info("Component %s (%s) added to scene", component_id, component_name)
                             
                     except Exception as e:
-                        logger.error(f"Error loading component {comp_data.get('name', 'Unknown')}: {e}")
+                        logger.error("Error loading component %s: %s", comp_data.get('name', 'Unknown'), e)
 
                 # Load connections by creating wire graphics items in the scene
                 connections_data = scene_data.get("connections", [])
-                logger.info(f"Found {len(connections_data)} connections to load")
+                logger.info("Found %s connections to load", len(connections_data))
 
                 for conn_data in connections_data:
                     try:
@@ -930,7 +930,7 @@ class VisualBCFController(QObject):
                         connection_id = conn_data.get("id")
                         
                         if not connection_id:
-                            logger.warning(f"Connection missing ID: {conn_data}")
+                            logger.warning("Connection missing ID: %s", conn_data)
                             continue
                             
                         # Get component IDs and pin IDs
@@ -940,7 +940,7 @@ class VisualBCFController(QObject):
                         to_pin_id = conn_data.get("to_pin_id")
                         
                         if not all([from_component_id, to_component_id, from_pin_id, to_pin_id]):
-                            logger.warning(f"Connection missing required data: {conn_data}")
+                            logger.warning("Connection missing required data: %s", conn_data)
                             continue
                         
                         # Find the component graphics items
@@ -948,7 +948,7 @@ class VisualBCFController(QObject):
                         to_comp_wrapper = self._component_graphics_items.get(to_component_id)
                         
                         if not from_comp_wrapper or not to_comp_wrapper:
-                            logger.warning(f"Could not find component graphics for connection {connection_id}")
+                            logger.warning("Could not find component graphics for connection %s", connection_id)
                             continue
                         
                         # Find the pins on the components
@@ -966,7 +966,7 @@ class VisualBCFController(QObject):
                                 break
                         
                         if not from_pin or not to_pin:
-                            logger.warning(f"Could not find pins for connection {connection_id}")
+                            logger.warning("Could not find pins for connection %s", connection_id)
                             continue
                         
                         # Create the wire using the scene's wire creation logic
@@ -1001,12 +1001,12 @@ class VisualBCFController(QObject):
                             wire.setVisible(True)
                             wire.show()
                             
-                            logger.info(f"Connection {connection_id} added to scene")
+                            logger.info("Connection %s added to scene", connection_id)
                         else:
-                            logger.warning(f"Failed to complete wire for connection {connection_id}")
+                            logger.warning("Failed to complete wire for connection %s", connection_id)
                             
                     except Exception as e:
-                        logger.error(f"Error loading connection {connection_id}: {e}")
+                        logger.error("Error loading connection %s: %s", connection_id, e)
 
                 # Get final statistics
                 stats = self.get_statistics()
@@ -1034,7 +1034,7 @@ class VisualBCFController(QObject):
                 self.operation_completed.emit(
                     "load_scene",
                     f"Scene loaded: {component_count} components, {connection_count} connections")
-                logger.info(f"Successfully loaded {component_count} components and {connection_count} connections")
+                logger.info("Successfully loaded %s components and %s connections", component_count, connection_count)
                 return True
             else:
                 logger.warning("No scene data to load")
@@ -1059,7 +1059,7 @@ class VisualBCFController(QObject):
     def _sync_graphics_to_model(self):
         """Sync current graphics state to the data model before saving"""
         try:
-            logger.info(f"Starting graphics-to-model sync. Found {len(self._component_graphics_items)} components and {len(self._connection_graphics_items)} connections")
+            logger.info("Starting graphics-to-model sync. Found %s components and %s connections", len(self._component_graphics_items), len(self._connection_graphics_items))
             
             # Sync component positions
             for component_id, wrapper in self._component_graphics_items.items():
@@ -1068,7 +1068,7 @@ class VisualBCFController(QObject):
                         pos = wrapper.graphics_item.pos()
                         self.data_model.update_component_position(component_id, (pos.x(), pos.y()))
                     except Exception as e:
-                        logger.warning(f"Error syncing position for component {component_id}: {e}")
+                        logger.warning("Error syncing position for component %s: %s", component_id, e)
             
             # Sync connections - ensure all visible connections are in the data model
             connections_synced = 0
@@ -1078,12 +1078,12 @@ class VisualBCFController(QObject):
                 if wrapper and wrapper.graphics_item:
                     try:
                         wire = wrapper.graphics_item
-                        logger.info(f"Processing connection {connection_id}: wire={wire}, start_pin={getattr(wire, 'start_pin', None)}, end_pin={getattr(wire, 'end_pin', None)}")
+                        logger.info("Processing connection %s: wire=%s, start_pin=%s, end_pin=%s", connection_id, wire, getattr(wire, 'start_pin', None), getattr(wire, 'end_pin', None))
                         
                         if hasattr(wire, 'start_pin') and hasattr(wire, 'end_pin') and wire.start_pin and wire.end_pin:
                             # Check if this connection exists in the data model
                             connection_data = self.data_model.get_connection(connection_id)
-                            logger.info(f"Connection {connection_id} in data model: {connection_data is not None}")
+                            logger.info("Connection %s in data model: %s", connection_id, connection_data is not None)
                             
                             if not connection_data:
                                 # Create the connection in the data model if it doesn't exist
@@ -1094,35 +1094,35 @@ class VisualBCFController(QObject):
                                 for cid, comp_wrapper in self._component_graphics_items.items():
                                     if comp_wrapper.graphics_item == wire.start_pin.parent_component:
                                         start_comp_id = cid
-                                        logger.info(f"Found start component ID: {start_comp_id} for pin {wire.start_pin.pin_id}")
+                                        logger.info("Found start component ID: %s for pin %s", start_comp_id, wire.start_pin.pin_id)
                                     if comp_wrapper.graphics_item == wire.end_pin.parent_component:
                                         end_comp_id = cid
-                                        logger.info(f"Found end component ID: {end_comp_id} for pin {wire.end_pin.pin_id}")
+                                        logger.info("Found end component ID: %s for pin %s", end_comp_id, wire.end_pin.pin_id)
                                 
                                 if start_comp_id and end_comp_id:
-                                    logger.info(f"Adding connection to data model: {start_comp_id}:{wire.start_pin.pin_id} -> {end_comp_id}:{wire.end_pin.pin_id}")
+                                    logger.info("Adding connection to data model: %s:%s -> %s:%s", start_comp_id, wire.start_pin.pin_id, end_comp_id, wire.end_pin.pin_id)
                                     result = self.data_model.add_connection(
                                         start_comp_id, wire.start_pin.pin_id,
                                         end_comp_id, wire.end_pin.pin_id
                                     )
                                     if result:
                                         connections_synced += 1
-                                        logger.info(f"Successfully added connection {result} to data model")
+                                        logger.info("Successfully added connection %s to data model", result)
                                     else:
-                                        logger.warning(f"Failed to add connection to data model")
+                                        logger.warning("Failed to add connection to data model")
                                 else:
-                                    logger.warning(f"Could not find component IDs: start={start_comp_id}, end={end_comp_id}")
+                                    logger.warning("Could not find component IDs: start=%s, end=%s", start_comp_id, end_comp_id)
                             else:
-                                logger.info(f"Connection {connection_id} already exists in data model")
+                                logger.info("Connection %s already exists in data model", connection_id)
                         else:
-                            logger.warning(f"Wire {connection_id} missing pins: start_pin={getattr(wire, 'start_pin', None)}, end_pin={getattr(wire, 'end_pin', None)}")
+                            logger.warning("Wire %s missing pins: start_pin=%s, end_pin=%s", connection_id, getattr(wire, 'start_pin', None), getattr(wire, 'end_pin', None))
                     except Exception as e:
-                        logger.warning(f"Error syncing connection {connection_id}: {e}")
+                        logger.warning("Error syncing connection %s: %s", connection_id, e)
                         logger.exception("Full traceback:")
             
-            logger.info(f"Graphics state synced to data model. Synced {connections_synced} new connections")
+            logger.info("Graphics state synced to data model. Synced %s new connections", connections_synced)
         except Exception as e:
-            logger.error(f"Error syncing graphics to model: {e}")
+            logger.error("Error syncing graphics to model: %s", e)
             logger.exception("Full traceback:")
 
     def _clear_graphics_items(self):
@@ -1145,7 +1145,7 @@ class VisualBCFController(QObject):
                 "Cleared all graphics items from scene and tracking dictionaries")
 
         except Exception as e:
-            logger.error(f"Error clearing graphics items: {e}")
+            logger.error("Error clearing graphics items: %s", e)
 
 
 
@@ -1178,7 +1178,7 @@ class VisualBCFController(QObject):
             str: Component ID from data model, or None if failed
         """
         try:
-            logger.info(f"Adding component from scene: {name} ({component_type})")
+            logger.info("Adding component from scene: %s (%s)", name, component_type)
             
             # Get component position
             position = (component.pos().x(), component.pos().y())
@@ -1187,7 +1187,7 @@ class VisualBCFController(QObject):
             component_id = self.data_model.add_component(name, component_type, position, {})
             
             if not component_id:
-                logger.error(f"Failed to add component {name} to data model")
+                logger.error("Failed to add component %s to data model", name)
                 return None
             
             # Add pins to data model if available
@@ -1208,9 +1208,9 @@ class VisualBCFController(QObject):
                 if pins_data:
                     success = self.data_model.update_component_pins(component_id, pins_data)
                     if success:
-                        logger.info(f"Updated component {name} with {len(pins_data)} pins")
+                        logger.info("Updated component %s with %s pins", name, len(pins_data))
                     else:
-                        logger.warning(f"Failed to update component {name} with pins")
+                        logger.warning("Failed to update component %s with pins", name)
             
             # Track the graphics item
             component_wrapper = ComponentGraphicsItem(component_id, component)
@@ -1220,11 +1220,11 @@ class VisualBCFController(QObject):
             component.name = name
             component.component_id = component_id
             
-            logger.info(f"Successfully added component from scene: {component_id} ({name})")
+            logger.info("Successfully added component from scene: %s (%s)", component_id, name)
             return component_id
             
         except Exception as e:
-            logger.error(f"Error adding component from scene: {e}")
+            logger.error("Error adding component from scene: %s", e)
             logger.exception("Full traceback:")
             return None
 
@@ -1244,7 +1244,7 @@ class VisualBCFController(QObject):
             str: Connection ID from data model, or None if failed
         """
         try:
-            logger.info(f"Adding wire from scene: {start_component_name}.{start_pin_id} -> {end_component_name}.{end_pin_id}")
+            logger.info("Adding wire from scene: %s.%s -> %s.%s", start_component_name, start_pin_id, end_component_name, end_pin_id)
             
             # Find component IDs in data model
             start_comp_id = None
@@ -1259,7 +1259,7 @@ class VisualBCFController(QObject):
                     break
             
             if not start_comp_id or not end_comp_id:
-                logger.error(f"Could not find component IDs for wire: {start_component_name} -> {end_component_name}")
+                logger.error("Could not find component IDs for wire: %s -> %s", start_component_name, end_component_name)
                 return None
             
             # Add connection to data model
@@ -1268,7 +1268,7 @@ class VisualBCFController(QObject):
             )
             
             if not connection_id:
-                logger.error(f"Failed to add connection to data model")
+                logger.error("Failed to add connection to data model")
                 return None
             
             # Track the graphics item
@@ -1278,11 +1278,11 @@ class VisualBCFController(QObject):
             # Update wire with connection ID
             wire.connection_id = connection_id
             
-            logger.info(f"Successfully added wire from scene: {connection_id}")
+            logger.info("Successfully added wire from scene: %s", connection_id)
             return connection_id
             
         except Exception as e:
-            logger.error(f"Error adding wire from scene: {e}")
+            logger.error("Error adding wire from scene: %s", e)
             logger.exception("Full traceback:")
             return None
 
@@ -1348,17 +1348,17 @@ class VisualBCFController(QObject):
                             if connection_data:
                                 start_comp_id = connection_data.get('from_component_id')
                                 end_comp_id = connection_data.get('to_component_id')
-                                logger.info(f"Found component IDs from data model: {start_comp_id} -> {end_comp_id}")
+                                logger.info("Found component IDs from data model: %s -> %s", start_comp_id, end_comp_id)
                         
                         # Method 2: Fallback to graphics item lookup if Method 1 failed
                         if not start_comp_id or not end_comp_id:
                             for cid, comp_wrapper in self._component_graphics_items.items():
                                 if comp_wrapper.graphics_item == wire.start_pin.parent_component:
                                     start_comp_id = cid
-                                    logger.info(f"Found start component ID via graphics lookup: {start_comp_id}")
+                                    logger.info("Found start component ID via graphics lookup: %s", start_comp_id)
                                 if comp_wrapper.graphics_item == wire.end_pin.parent_component:
                                     end_comp_id = cid
-                                    logger.info(f"Found end component ID via graphics lookup: {end_comp_id}")
+                                    logger.info("Found end component ID via graphics lookup: %s", end_comp_id)
                         
                         if start_comp_id and end_comp_id:
                             connection_data = {
@@ -1371,12 +1371,12 @@ class VisualBCFController(QObject):
                             }
                             scene_data["connections"].append(connection_data)
                         else:
-                            logger.warning(f"Could not find component IDs for connection {connection_id}")
+                            logger.warning("Could not find component IDs for connection %s", connection_id)
             
-            logger.info(f"Serialized scene data: {len(scene_data['components'])} components, {len(scene_data['connections'])} connections")
+            logger.info("Serialized scene data: %s components, %s connections", len(scene_data['components']), len(scene_data['connections']))
             return scene_data
             
         except Exception as e:
-            logger.error(f"Error serializing scene data: {e}")
+            logger.error("Error serializing scene data: %s", e)
             logger.exception("Full traceback:")
             return {"components": [], "connections": []}

@@ -164,7 +164,7 @@ class CoreController(QObject):
 
     def _on_state_changed(self, old_state: ToolState, new_state: ToolState):
         """Handle state changes from state machine"""
-        logger.info(f"State changed from {old_state.name} to {new_state.name}")
+        logger.info("State changed from %s to %s", old_state.name, new_state.name)
         self.state_changed.emit(new_state)
 
         if new_state == ToolState.ERROR:
@@ -180,7 +180,7 @@ class CoreController(QObject):
 
     def _on_transition_failed(self, error_message: str):
         """Handle failed state transitions"""
-        logger.error(f"State transition failed: {error_message}")
+        logger.error("State transition failed: %s", error_message)
         self.state_machine.transition(
             ToolEvent.ERROR, {
                 "error_message": error_message})
@@ -260,7 +260,7 @@ class CoreController(QObject):
                 )
 
         except Exception as e:
-            logger.error(f"Error processing event {event_type}: {str(e)}")
+            logger.error("Error processing event %s: %s", event_type, str(e))
             self.state_machine.transition(
                 ToolEvent.ERROR, {"error_message": str(e)})
 
@@ -308,7 +308,7 @@ class CoreController(QObject):
                     request.callback()
 
         except Exception as e:
-            logger.error(f"Error creating worker: {str(e)}")
+            logger.error("Error creating worker: %s", str(e))
                             self.state_machine.transition(
                     ToolEvent.ERROR, {
                         "error_message": f"Failed to create worker: {str(e)}"})

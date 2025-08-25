@@ -35,7 +35,7 @@ class RDBManager(QObject):
             self.db.connect()
             self._initialize_database()
         except Exception as e:
-            logger.error(f"Database connection error: {str(e)}")
+            logger.error("Database connection error: %s", str(e))
             self.error_occurred.emit(str(e))
 
     def _initialize_database(self) -> None:
@@ -44,7 +44,7 @@ class RDBManager(QObject):
             # Create tables
             self.db.create_tables()
         except Exception as e:
-            logger.error(f"Database initialization error: {str(e)}")
+            logger.error("Database initialization error: %s", str(e))
             self.error_occurred.emit(str(e))
             self.db.rollback()
 
@@ -98,5 +98,5 @@ class RDBManager(QObject):
                 self.db.close()
             logger.info("Database connection closed successfully")
         except Exception as e:
-            logger.error(f"Error closing database: {str(e)}")
+            logger.error("Error closing database: %s", str(e))
             self.error_occurred.emit(str(e))
