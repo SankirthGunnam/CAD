@@ -352,9 +352,7 @@ class VisualBCFManager(QMainWindow):
 
         count = len(self.scene.components)
         self.status_updated.emit(
-            f"Added {name} at ({
-                position.x():.1f}, {
-                position.y():.1f}) - Total: {count}")
+            f"Added {name} at ({position.x():.1f}, {position.y():.1f}) - Total: {count}")
 
     def _on_component_removed(self, name: str):
         """Handle component removed from scene"""

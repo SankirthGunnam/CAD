@@ -114,11 +114,7 @@ def test_enhanced_pin_system():
     initial_wire_end = current_wire.end_pin.get_connection_point()
 
     print(
-        f"Initial wire: ({
-            initial_wire_start.x():.1f}, {
-            initial_wire_start.y():.1f}) → ({
-                initial_wire_end.x():.1f}, {
-                    initial_wire_end.y():.1f})")
+        f"Initial wire: ({initial_wire_start.x():.1f}, {initial_wire_start.y():.1f}) → ({initial_wire_end.x():.1f}, {initial_wire_end.y():.1f})")
 
     # Move chip
     new_chip_pos = QPointF(100, 50)
@@ -129,11 +125,7 @@ def test_enhanced_pin_system():
     new_wire_end = current_wire.end_pin.get_connection_point()
 
     print(
-        f"After move: ({
-            new_wire_start.x():.1f}, {
-            new_wire_start.y():.1f}) → ({
-                new_wire_end.x():.1f}, {
-                    new_wire_end.y():.1f})")
+        f"After move: ({new_wire_start.x():.1f}, {new_wire_start.y():.1f}) → ({new_wire_end.x():.1f}, {new_wire_end.y():.1f})")
 
     # Validate wire moved
     if abs(initial_wire_start.x() - new_wire_start.x()) > 10:
@@ -201,12 +193,7 @@ def test_enhanced_pin_system():
             print(f"✅ {component.name} name properly centered")
         else:
             print(
-                f"❌ {
-                    component.name} name not centered: pos({
-                    text_pos.x():.1f}, {
-                    text_pos.y():.1f}) vs expected({
-                    expected_x:.1f}, {
-                        expected_y:.1f})")
+                f"❌ {component.name} name not centered: pos({text_pos.x():.1f}, {text_pos.y():.1f}) vs expected({expected_x:.1f}, {expected_y:.1f})")
 
     print("\n=== Test Summary ===")
     print("✅ Enhanced pin system with proper names")

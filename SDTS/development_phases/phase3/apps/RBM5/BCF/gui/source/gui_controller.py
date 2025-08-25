@@ -235,8 +235,7 @@ class GUIController(QMainWindow):
         """Add a new chip to the scene and database"""
         # Check if we can start building
         if self.core_controller.current_state != ToolState.IDLE:
-            error_msg = f"Cannot add chip: Core controller is in {
-                self.core_controller.current_state.name} state"
+            error_msg = f"Cannot add chip: Core controller is in {self.core_controller.current_state.name} state"
             print(error_msg)
             self.show_error(error_msg)
             return
@@ -359,8 +358,7 @@ class GUIController(QMainWindow):
         except Exception as e:
             print(f"❌ Error refreshing Legacy BCF table: {str(e)}")
             self.error_occurred.emit(
-                f"Failed to refresh Legacy BCF table: {
-                    str(e)}")
+                f"Failed to refresh Legacy BCF table: {str(e)}")
 
     def update_data(self, data: dict):
         """Update both managers with new data"""

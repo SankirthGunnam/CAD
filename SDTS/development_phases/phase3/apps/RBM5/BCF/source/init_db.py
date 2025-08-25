@@ -50,8 +50,4 @@ if __name__ == "__main__":
     print("Database initialized with sample chips:")
     for chip in db.get_all_chips():
         print(
-            f"- {
-                chip['name']} ({
-                chip['width']}x{
-                chip['height']}mm, {
-                    chip['parameters']['material']})")
+            f"- {chip['name']} ({chip['width']}x{chip['height']}mm, {chip['parameters']['material']})")

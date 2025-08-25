@@ -113,9 +113,7 @@ class StateMachine(QObject):
 
             if not transition:
                 raise ValueError(
-                    f"Invalid event '{
-                        event.value}' for state {
-                        self.current_state.name}")
+                    f"Invalid event '{event.value}' for state {self.current_state.name}")
 
             # Check transition condition
             if not transition.condition(data):

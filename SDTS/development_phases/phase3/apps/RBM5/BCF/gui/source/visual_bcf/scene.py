@@ -106,9 +106,7 @@ class ComponentScene(QGraphicsScene):
         parent = self.parent()
         if parent and hasattr(parent, 'status_updated'):
             parent.status_updated.emit(
-                f"Drawing wire from {
-                    pin.parent_component.name}.{
-                    pin.pin_id} - Click destination pin")
+                f"Drawing wire from {pin.parent_component.name}.{pin.pin_id} - Click destination pin")
 
     def mouseMoveEvent(self, event):
         """Handle mouse move events"""
@@ -173,12 +171,8 @@ class ComponentScene(QGraphicsScene):
                     # Update status
                     parent = self.parent()
                     if parent and hasattr(parent, 'status_updated'):
-                        start = f"{
-                            self.current_wire.start_pin.parent_component.name}.{
-                            self.current_wire.start_pin.pin_id}"
-                        end = f"{
-                            self.current_wire.end_pin.parent_component.name}.{
-                            self.current_wire.end_pin.pin_id}"
+                        start = f"{self.current_wire.start_pin.parent_component.name}.{self.current_wire.start_pin.pin_id}"
+                        end = f"{self.current_wire.end_pin.parent_component.name}.{self.current_wire.end_pin.pin_id}"
                         parent.status_updated.emit(
                             f"Wire connected: {start} → {end}")
 

@@ -42,29 +42,22 @@ def main():
             # Get window info
             print(f"✅ Window title: {bcf_manager.windowTitle()}")
             print(
-                f"✅ Window size: {
-                    bcf_manager.width()}x{
-                    bcf_manager.height()}")
+                f"✅ Window size: {bcf_manager.width()}x{bcf_manager.height()}")
 
             # Test some functionality
             if hasattr(bcf_manager, 'scene') and bcf_manager.scene:
                 print(
-                    f"✅ Graphics scene initialized: {
-                        type(
-                            bcf_manager.scene).__name__}")
+                    f"✅ Graphics scene initialized: {type(bcf_manager.scene).__name__}")
 
             if hasattr(bcf_manager, 'view') and bcf_manager.view:
                 print(
-                    f"✅ Graphics view initialized: {
-                        type(
-                            bcf_manager.view).__name__}")
+                    f"✅ Graphics view initialized: {type(bcf_manager.view).__name__}")
 
             if hasattr(
                     bcf_manager,
                     'vbcf_info_tab_widget') and bcf_manager.vbcf_info_tab_widget:
                 print(
-                    f"✅ Tab widget initialized with {
-                        bcf_manager.vbcf_info_tab_widget.count()} tabs")
+                    f"✅ Tab widget initialized with {bcf_manager.vbcf_info_tab_widget.count()} tabs")
 
             print("\n🎉 SUCCESS! Your import improvements are working perfectly!")
             print("The Visual BCF Manager launched successfully with:")

@@ -83,9 +83,7 @@ def test_wire_movement():
 
     print(f"Initial positions:")
     print(
-        f"  Start: ({
-            initial_start_pos.x():.1f}, {
-            initial_start_pos.y():.1f})")
+        f"  Start: ({initial_start_pos.x():.1f}, {initial_start_pos.y():.1f})")
     print(f"  End: ({initial_end_pos.x():.1f}, {initial_end_pos.y():.1f})")
 
     # Move first component
@@ -114,12 +112,9 @@ def test_wire_movement():
                         new_end_pos.x()) < 10  # End should be stable
 
     print(f"Validation checks:")
-    print(f"  Start X moved: {abs(initial_start_pos.x() -
-                                  new_start_pos.x()):.1f} pixels (expected >30)")
-    print(f"  Start Y moved: {abs(initial_start_pos.y() -
-                                  new_start_pos.y()):.1f} pixels (expected >30)")
-    print(f"  End X stable: {abs(initial_end_pos.x() -
-                                 new_end_pos.x()):.1f} pixels (expected <10)")
+    print(f"  Start X moved: {abs(initial_start_pos.x() - new_start_pos.x()):.1f} pixels (expected >30)")
+    print(f"  Start Y moved: {abs(initial_start_pos.y() - new_start_pos.y()):.1f} pixels (expected >30)")
+    print(f"  End X stable: {abs(initial_end_pos.x() - new_end_pos.x()):.1f} pixels (expected <10)")
 
     if start_moved and start_y_moved and end_unchanged:
         print("✅ Wire moved correctly with component!")
@@ -152,11 +147,7 @@ def test_wire_movement():
             print(f"✅ Pin {i + 1} correctly positioned on component edge")
         else:
             print(
-                f"❌ Pin {
-                    i +
-                    1} positioning issue: ({
-                    pin_x:.1f}, {
-                    pin_y:.1f})")
+                f"❌ Pin {i + 1} positioning issue: ({pin_x:.1f}, {pin_y:.1f})")
 
     print("\n=== All Tests Completed ===")
     print("Both issues have been fixed:")

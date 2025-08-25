@@ -565,16 +565,10 @@ class ChipSelectionDialog(QDialog):
                 self.chip_image.setScaledContents(False)
             else:
                 self.chip_image.setText(
-                    f"Package: {
-                        chip_data.get(
-                            'package',
-                            'N/A')}\n(Image Preview)")
+                    f"Package: {chip_data.get('package', 'N/A')}\n(Image Preview)")
         else:
             self.chip_image.setText(
-                f"Package: {
-                    chip_data.get(
-                        'package',
-                        'N/A')}\n(Image Preview)")
+                f"Package: {chip_data.get('package', 'N/A')}\n(Image Preview)")
 
         # Update properties
         properties = [

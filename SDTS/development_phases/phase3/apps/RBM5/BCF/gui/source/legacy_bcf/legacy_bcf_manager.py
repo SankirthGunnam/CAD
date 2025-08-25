@@ -225,8 +225,7 @@ class LegacyBCFManager(QWidget):
                 self.open_tab(item.name, item.view_type)
         except Exception as e:
             self.error_occurred.emit(
-                f"Error handling tree item click: {
-                    str(e)}")
+                f"Error handling tree item click: {str(e)}")
 
     def open_tab(self, name: str, view_type: str):
         """Open a new tab with the specified view"""

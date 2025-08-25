@@ -263,17 +263,7 @@ class VisualSerializationTestWindow(QMainWindow):
                     pos = comp.visual_properties.get(
                         'position', {}) if hasattr(
                         comp, 'visual_properties') else {}
-                    msg += f"  {
-                        i +
-                        1}. {
-                        getattr(
-                            comp,
-                            'name',
-                            'Unknown')} ({
-                        getattr(
-                            comp,
-                            'component_type',
-                            'unknown')})\n"
+                    msg += f"  {i + 1}. {getattr(comp, 'name', 'Unknown')} ({getattr(comp, 'component_type', 'unknown')})\n"
                 if components_count > 3:
                     msg += f"  ... and {components_count - 3} more\n"
 
@@ -304,9 +294,7 @@ class VisualSerializationTestWindow(QMainWindow):
             connections_count = stats.get('connection_count', 0)
 
             self.update_status(
-                f"💾 Scene saved to {
-                    Path(
-                        self.temp_db_path).name}! ({components_count} components)")
+                f"💾 Scene saved to {Path(self.temp_db_path).name}! ({components_count} components)")
 
             # Show success message with file path
             msg = f"Scene saved successfully via controller!\n"
@@ -381,9 +369,7 @@ class VisualSerializationTestWindow(QMainWindow):
                 QMessageBox.warning(
                     self,
                     "Load Scene",
-                    f"No saved scene data found!\n\nTried:\n• JSON file: {
-                        Path(
-                            self.temp_db_path).name}\n• Default database location\n\nPlease save the scene first.")
+                    f"No saved scene data found!\n\nTried:\n• JSON file: {Path(self.temp_db_path).name}\n• Default database location\n\nPlease save the scene first.")
                 return
 
             # Get updated statistics after load
@@ -398,10 +384,7 @@ class VisualSerializationTestWindow(QMainWindow):
             msg = f"Scene loaded successfully via controller!\n"
             msg += f"• Components: {components_count}\n"
             msg += f"• Connections: {connections_count}\n\n"
-            msg += f"Source: {
-                Path(
-                    self.temp_db_path).name if os.path.exists(
-                    self.temp_db_path) else 'Default database'}"
+            msg += f"Source: {Path(self.temp_db_path).name if os.path.exists(self.temp_db_path) else 'Default database'}"
 
             QMessageBox.information(self, "Load Scene", msg)
 
@@ -485,9 +468,7 @@ class VisualSerializationTestWindow(QMainWindow):
             if components_count > 0:
                 msg = f"Application closing...\n\n"
                 if saved:
-                    msg += f"✅ Auto-saved {components_count} components to:\n{
-                        Path(
-                            self.temp_db_path).name}\n\n"
+                    msg += f"✅ Auto-saved {components_count} components to:\n{Path(self.temp_db_path).name}\n\n"
                     msg += "Your scene has been preserved!"
                 else:
                     msg += f"⚠️ Failed to auto-save {components_count} components\n\n"

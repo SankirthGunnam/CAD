@@ -110,8 +110,7 @@ def test_scene_serialization():
 
         save_success = controller.save_scene(temp_scene_path)
         print(
-            f"   💾 Save to file: {
-                '✅ Success' if save_success else '❌ Failed'}")
+            f"   💾 Save to file: {'✅ Success' if save_success else '❌ Failed'}")
 
         if save_success:
             # Verify file contents
@@ -135,8 +134,7 @@ def test_scene_serialization():
         if save_success:
             load_success = controller.load_scene(temp_scene_path)
             print(
-                f"   📂 Load from file: {
-                    '✅ Success' if load_success else '❌ Failed'}")
+                f"   📂 Load from file: {'✅ Success' if load_success else '❌ Failed'}")
 
             if load_success:
                 # Verify loaded data
@@ -152,8 +150,7 @@ def test_scene_serialization():
         # Save to database (default location)
         db_save_success = controller.save_scene()
         print(
-            f"   💾 Save to database: {
-                '✅ Success' if db_save_success else '❌ Failed'}")
+            f"   💾 Save to database: {'✅ Success' if db_save_success else '❌ Failed'}")
 
         # Clear again
         controller.clear_scene(show_confirmation=False)
@@ -162,8 +159,7 @@ def test_scene_serialization():
         if db_save_success:
             db_load_success = controller.load_scene()
             print(
-                f"   📂 Load from database: {
-                    '✅ Success' if db_load_success else '❌ Failed'}")
+                f"   📂 Load from database: {'✅ Success' if db_load_success else '❌ Failed'}")
 
             if db_load_success:
                 final_data = scene.serialize_scene()

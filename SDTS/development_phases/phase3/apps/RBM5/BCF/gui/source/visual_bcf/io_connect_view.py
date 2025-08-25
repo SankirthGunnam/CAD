@@ -270,8 +270,7 @@ class IOConnectView(QWidget):
             reply = QMessageBox.question(
                 self,
                 "Confirm Delete",
-                f"Are you sure you want to delete connection '{
-                    self._selected_connection_id}'?",
+                f"Are you sure you want to delete connection '{self._selected_connection_id}'?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No)
 

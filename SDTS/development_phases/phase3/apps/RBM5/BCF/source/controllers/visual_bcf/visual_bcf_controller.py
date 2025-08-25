@@ -202,13 +202,11 @@ class VisualBCFController(QObject):
                                 break
 
                 self.operation_completed.emit(
-                    "delete", f"Deleted {
-                        len(selected_items)} selected items")
+                    "delete", f"Deleted {len(selected_items)} selected items")
         except Exception as e:
             logger.error(f"Error deleting selected items: {e}")
             self.error_occurred.emit(
-                f"Failed to delete selected items: {
-                    str(e)}")
+                f"Failed to delete selected items: {str(e)}")
 
     def _on_clear_scene(self):
         """Handle clear scene request from toolbar"""
@@ -388,9 +386,7 @@ class VisualBCFController(QObject):
 
             if stale_component_ids or stale_connection_ids:
                 logger.info(
-                    f"Cleaned up {
-                        len(stale_component_ids)} stale component items and {
-                        len(stale_connection_ids)} stale connection items")
+                    f"Cleaned up {len(stale_component_ids)} stale component items and {len(stale_connection_ids)} stale connection items")
 
         except Exception as e:
             logger.error(f"Error during graphics items cleanup: {e}")

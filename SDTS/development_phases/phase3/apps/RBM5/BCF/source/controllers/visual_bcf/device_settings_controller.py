@@ -124,8 +124,7 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Failed to set data: {
-                        str(e)}"})
+                    "message": f"Failed to set data: {str(e)}"})
 
     def _handle_add_device(self, device_data: dict):
         """
@@ -146,8 +145,7 @@ class DeviceSettingsController(AbstractController):
             if self._device_name_exists(device_data.get('name', '')):
                 self.gui_event.emit(
                     "validation_error", {
-                        "message": f"Device '{
-                            device_data['name']}' already exists"})
+                        "message": f"Device '{device_data['name']}' already exists"})
                 return
 
             # Add device through model
@@ -169,8 +167,7 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error adding device: {
-                        str(e)}"})
+                    "message": f"Error adding device: {str(e)}"})
 
     def _handle_remove_device(self, device_name: str):
         """
@@ -210,8 +207,7 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error removing device: {
-                        str(e)}"})
+                    "message": f"Error removing device: {str(e)}"})
 
     def _handle_update_device(self, device_name: str, updated_data: dict):
         """
@@ -248,8 +244,7 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error updating device: {
-                        str(e)}"})
+                    "message": f"Error updating device: {str(e)}"})
 
     def _handle_selection_changed(self, device_name: str):
         """
@@ -276,8 +271,7 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error handling selection: {
-                        str(e)}"})
+                    "message": f"Error handling selection: {str(e)}"})
 
     def _handle_refresh(self):
         """Handle refresh request from view."""
@@ -294,8 +288,7 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error refreshing data: {
-                        str(e)}"})
+                    "message": f"Error refreshing data: {str(e)}"})
 
     def _validate_device_data(self, device_data: dict) -> bool:
         """
@@ -427,8 +420,7 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error refreshing view: {
-                        str(e)}"})
+                    "message": f"Error refreshing view: {str(e)}"})
 
     def _update_ui_state(self):
         """Update UI state based on current data."""
@@ -440,8 +432,7 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error updating UI state: {
-                        str(e)}"})
+                    "message": f"Error updating UI state: {str(e)}"})
 
     def get_widget(self):
         """
@@ -478,8 +469,7 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error moving device: {
-                        str(e)}"})
+                    "message": f"Error moving device: {str(e)}"})
 
     def move_device_to_available(self, device_name: str):
         """
@@ -508,5 +498,4 @@ class DeviceSettingsController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error moving device: {
-                        str(e)}"})
+                    "message": f"Error moving device: {str(e)}"})

@@ -104,9 +104,7 @@ class BuildMaster(QObject):
                     self._emit_event(
                         {
                             "type": "build_warning",
-                            "message": f"Warning processing {
-                                template_file.name}: {
-                                str(e)}",
+                            "message": f"Warning processing {template_file.name}: {str(e)}",
                         })
                     continue
 

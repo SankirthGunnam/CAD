@@ -657,23 +657,17 @@ class VisualBCFDataModel(QObject):
                         "config.device.settings", device_settings)
 
                     logger.info(
-                        f"✅ Auto-exported component '{
-                            component_data.get('name')}' (type: {
-                            component_data.get('component_type')}, function: {function_type}) to Legacy BCF")
+                        f"✅ Auto-exported component '{component_data.get('name')}' (type: {component_data.get('component_type')}, function: {function_type}) to Legacy BCF")
                 else:
                     logger.info(
-                        f"⏭️ Component '{
-                            component_data.get('name')}' already exists in Legacy BCF, skipping export")
+                        f"⏭️ Component '{component_data.get('name')}' already exists in Legacy BCF, skipping export")
             else:
-                logger.info(
-                    f"⏭️ Component '{
-                        component_data.get('name')}' type '{
-                        component_data.get('component_type')}' not exported to Legacy BCF")
+                                    logger.info(
+                        f"⏭️ Component '{component_data.get('name')}' type '{component_data.get('component_type')}' not exported to Legacy BCF")
 
         except Exception as e:
             logger.error(
-                f"❌ Error auto-exporting component '{
-                    component_data.get('name') if component_data else 'unknown'}' to Legacy BCF: {e}")
+                f"❌ Error auto-exporting component '{component_data.get('name') if component_data else 'unknown'}' to Legacy BCF: {e}")
 
     # Utility methods
 
