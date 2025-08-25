@@ -114,8 +114,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Failed to set data: {
-                        str(e)}"})
+                    "message": f"Failed to set data: {str(e)}"})
 
     def _handle_add_connection(self, connection_data: dict):
         """
@@ -137,8 +136,7 @@ class IOConnectController(AbstractController):
             if conflicts:
                 self.gui_event.emit(
                     "validation_error", {
-                        "message": f"Connection conflicts detected: {
-                            ', '.join(conflicts)}"})
+                        "message": f"Connection conflicts detected: {', '.join(conflicts)}"})
                 return
 
             # Add connection through model
@@ -162,8 +160,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error adding connection: {
-                        str(e)}"})
+                    "message": f"Error adding connection: {str(e)}"})
 
     def _handle_remove_connection(self, connection_id: str):
         """
@@ -203,8 +200,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error removing connection: {
-                        str(e)}"})
+                    "message": f"Error removing connection: {str(e)}"})
 
     def _handle_update_connection(
             self,
@@ -231,8 +227,7 @@ class IOConnectController(AbstractController):
             if conflicts:
                 self.gui_event.emit(
                     "validation_error", {
-                        "message": f"Update would create conflicts: {
-                            ', '.join(conflicts)}"})
+                        "message": f"Update would create conflicts: {', '.join(conflicts)}"})
                 return
 
             # Update connection through model
@@ -255,8 +250,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error updating connection: {
-                        str(e)}"})
+                    "message": f"Error updating connection: {str(e)}"})
 
     def _handle_selection_changed(self, connection_id: str):
         """
@@ -283,8 +277,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error handling selection: {
-                        str(e)}"})
+                    "message": f"Error handling selection: {str(e)}"})
 
     def _handle_auto_connect(self):
         """Handle auto-connect request from view."""
@@ -328,8 +321,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error refreshing data: {
-                        str(e)}"})
+                    "message": f"Error refreshing data: {str(e)}"})
 
     def _validate_connection_data(self, connection_data: dict) -> bool:
         """
@@ -431,9 +423,7 @@ class IOConnectController(AbstractController):
                     # Check for pin conflicts (same pin used multiple times)
                     if self._pins_conflict(existing_data, connection_data):
                         conflicts.append(
-                            f"Pin conflict with existing connection {
-                                existing_data.get(
-                                    'id', 'unknown')}")
+                            f"Pin conflict with existing connection {existing_data.get('id', 'unknown')}")
 
         except Exception as e:
             # Log error but don't fail validation
@@ -540,8 +530,7 @@ class IOConnectController(AbstractController):
                 # Get data from model row
                 # Implementation would depend on model structure
                 return {
-                    "id": f"CONN_{
-                        row:03d}",
+                    "id": f"CONN_{row:03d}",
                     "source_device": "Device",
                     "source_pin": "Pin"}
             return None
@@ -724,8 +713,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error loading devices: {
-                        str(e)}"})
+                    "message": f"Error loading devices: {str(e)}"})
 
     def _get_available_devices(self) -> typing.List[dict]:
         """Get list of available devices for connections."""
@@ -774,8 +762,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error refreshing view: {
-                        str(e)}"})
+                    "message": f"Error refreshing view: {str(e)}"})
 
     def _update_ui_state(self):
         """Update UI state based on current data."""
@@ -792,8 +779,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error updating UI state: {
-                        str(e)}"})
+                    "message": f"Error updating UI state: {str(e)}"})
 
     def get_widget(self):
         """
@@ -831,8 +817,7 @@ class IOConnectController(AbstractController):
         except Exception as e:
             self.gui_event.emit(
                 "error", {
-                    "message": f"Error getting device connections: {
-                        str(e)}"})
+                    "message": f"Error getting device connections: {str(e)}"})
 
         return connections
 
@@ -853,9 +838,7 @@ class IOConnectController(AbstractController):
                     if connection_data:
                         if not self._validate_connection_data(connection_data):
                             errors.append(
-                                f"Invalid connection: {
-                                    connection_data.get(
-                                        'id', 'unknown')}")
+                                f"Invalid connection: {connection_data.get('id', 'unknown')}")
 
         except Exception as e:
             errors.append(f"Error during validation: {str(e)}")
