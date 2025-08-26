@@ -13,6 +13,13 @@ import logging
 from PySide6.QtCore import QObject, Signal
 
 from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
+from apps.RBM5.BCF.source.RDB.paths import (
+    VISUAL_BCF_COMPONENTS,
+    VISUAL_BCF_CONNECTIONS,
+    DCF_DEVICES_AVAILABLE,
+    BCF_DEV_MIPI,
+    BCF_DB_IO_CONNECT_ENHANCED
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +36,7 @@ class VisualBCFDataModel(QObject):
     - Manage component positions and visual properties
     - Handle connections between components
     - Synchronize with Legacy BCF changes
+    - Manage device settings and IO connections
     """
 
     # Signals
@@ -44,15 +52,17 @@ class VisualBCFDataModel(QObject):
         super().__init__()
         self.rdb_manager = rdb_manager
 
-        # Table paths in the JSON database
-        self.components_table_path = "config.visual_bcf.components"
-        self.connections_table_path = "config.visual_bcf.connections"
+        # Table paths using centralized paths from paths.py
+        self.components_table_path = str(VISUAL_BCF_COMPONENTS)
+        self.connections_table_path = str(VISUAL_BCF_CONNECTIONS)
 
         # Connect to database changes
         self.rdb_manager.data_changed.connect(self._on_data_changed)
 
         # Initialize database structure if needed
         self._initialize_visual_bcf_tables()
+        self._initialize_device_settings_tables()
+        self._initialize_io_connect_tables()
 
     def _initialize_visual_bcf_tables(self):
         """Initialize Visual BCF tables in the database if they don't exist"""
@@ -79,12 +89,48 @@ class VisualBCFDataModel(QObject):
         except Exception as e:
             logger.error("Error initializing Visual BCF tables: %s", e)
 
+    def _initialize_device_settings_tables(self):
+        """Initialize device settings tables in the database if they don't exist"""
+        try:
+            # Check if device settings section exists
+            device_settings = self.rdb_manager.get_value(str(DCF_DEVICES_AVAILABLE))
+            if not device_settings:
+                # Create the device settings section with empty tables
+                initial_data = {
+                    "devices": [],
+                    "mips": []
+                }
+                self.rdb_manager.set_value(str(DCF_DEVICES_AVAILABLE), initial_data)
+                logger.info("Initialized device settings tables in database")
+
+        except Exception as e:
+            logger.error("Error initializing device settings tables: %s", e)
+
+    def _initialize_io_connect_tables(self):
+        """Initialize IO connect tables in the database if they don't exist"""
+        try:
+            # Check if IO connect section exists
+            io_connect = self.rdb_manager.get_value(str(BCF_DB_IO_CONNECT_ENHANCED))
+            if not io_connect:
+                # Create the IO connect section with empty tables
+                initial_data = {
+                    "io_connects": []
+                }
+                self.rdb_manager.set_value(str(BCF_DB_IO_CONNECT_ENHANCED), initial_data)
+                logger.info("Initialized IO connect tables in database")
+
+        except Exception as e:
+            logger.error("Error initializing IO connect tables: %s", e)
 
 
     def _on_data_changed(self, changed_path: str):
         """Handle database changes"""
         if changed_path.startswith("config.visual_bcf"):
             # Data changed in RDB, emit signal for other parts to refresh
+            self.data_synchronized.emit()
+        elif changed_path.startswith(str(DCF_DEVICES_AVAILABLE)):
+            self.data_synchronized.emit()
+        elif changed_path.startswith(str(BCF_DB_IO_CONNECT_ENHANCED)):
             self.data_synchronized.emit()
 
     # Component Management Methods
@@ -395,7 +441,7 @@ class VisualBCFDataModel(QObject):
     def get_legacy_bcf_devices(self) -> List[Dict[str, Any]]:
         """Get Legacy BCF device settings through RDB manager"""
         try:
-            return self.rdb_manager.get_table("config.device.settings")
+            return self.rdb_manager.get_table(DCF_DEVICES_AVAILABLE)
         except Exception as e:
             logger.error("Error getting Legacy BCF devices: %s", e)
             return []
@@ -536,8 +582,7 @@ class VisualBCFDataModel(QObject):
         """Synchronize with Legacy BCF component definitions"""
         try:
             # Read component definitions from Legacy BCF tables
-            device_settings = self.rdb_manager.get_table(
-                "config.device.settings")
+            device_settings = self.rdb_manager.get_table(DCF_DEVICES_AVAILABLE)
 
             # Get components from RDB
             components_table = self.rdb_manager.get_table(self.components_table_path)
@@ -597,7 +642,7 @@ class VisualBCFDataModel(QObject):
             # Update Legacy BCF table
             if device_settings:
                 self.rdb_manager.set_table(
-                    "config.device.settings", device_settings)
+                    DCF_DEVICES_AVAILABLE, device_settings)
                 logger.info(
                     f"Exported {len(device_settings)} components to Legacy BCF")
 
@@ -619,8 +664,7 @@ class VisualBCFDataModel(QObject):
 
             if component_data.get('component_type') in exportable_types:
                 # Get existing Legacy BCF device settings
-                device_settings = self.rdb_manager.get_table(
-                    "config.device.settings")
+                device_settings = self.rdb_manager.get_table(DCF_DEVICES_AVAILABLE)
 
                 # Check if component already exists in Legacy BCF (avoid
                 # duplicates)
@@ -654,7 +698,7 @@ class VisualBCFDataModel(QObject):
                     # Add to Legacy BCF table
                     device_settings.append(device_entry)
                     self.rdb_manager.set_table(
-                        "config.device.settings", device_settings)
+                        DCF_DEVICES_AVAILABLE, device_settings)
 
                     logger.info(
                         f"✅ Auto-exported component '{component_data.get('name')}' (type: {component_data.get('component_type')}, function: {function_type}) to Legacy BCF")
@@ -711,3 +755,153 @@ class VisualBCFDataModel(QObject):
                 'total_connections': 0,
                 'components_by_type': {}
             }
+
+    # Device Settings Management Methods
+
+    def get_available_devices(self) -> List[Dict[str, Any]]:
+        """Get all available devices from DCF devices table"""
+        try:
+            devices = self.rdb_manager.get_table(str(DCF_DEVICES_AVAILABLE()) + ".devices")
+            return devices or []
+        except Exception as e:
+            logger.error("Error getting available devices: %s", e)
+            return []
+
+    def add_available_device(self, device_data: Dict[str, Any]) -> bool:
+        """Add a new available device to DCF devices table"""
+        try:
+            devices = self.rdb_manager.get_table(str(DCF_DEVICES_AVAILABLE()) + ".devices") or []
+            
+            # Ensure required columns are present
+            required_columns = [
+                "Device Name", "Control Type\n(MIPI / GPIO)", "Module", "USID\n(Default)",
+                "MID\n(MSB)", "MID\n(LSB)", "PID", "EXT PID", "REV ID", "DCF Type"
+            ]
+            
+            # Create device entry with all required columns
+            device_entry = {}
+            for col in required_columns:
+                device_entry[col] = device_data.get(col, "")
+            
+            devices.append(device_entry)
+            self.rdb_manager.set_table(str(DCF_DEVICES_AVAILABLE()) + ".devices", devices)
+            
+            logger.info(f"Added available device: {device_data.get('Device Name', 'Unknown')}")
+            return True
+            
+        except Exception as e:
+            logger.error("Error adding available device: %s", e)
+            return False
+
+    def get_selected_devices(self, revision: int = 1) -> List[Dict[str, Any]]:
+        """Get selected devices for a specific revision from BCF dev MIPI table"""
+        try:
+            mipi_path = str(BCF_DEV_MIPI(revision)) + ".mips"
+            devices = self.rdb_manager.get_table(mipi_path)
+            return devices or []
+        except Exception as e:
+            logger.error("Error getting selected devices for revision %d: %s", revision, e)
+            return []
+
+    def add_selected_device(self, device_data: Dict[str, Any], revision: int = 1) -> bool:
+        """Add a selected device for a specific revision to BCF dev MIPI table"""
+        try:
+            mipi_path = str(BCF_DEV_MIPI(revision)) + ".mips"
+            devices = self.rdb_manager.get_table(mipi_path) or []
+            
+            # Ensure required columns are present
+            required_columns = ["DCF", "Name", "USID"]
+            
+            # Create device entry with all required columns
+            device_entry = {}
+            for col in required_columns:
+                device_entry[col] = device_data.get(col, "")
+            
+            devices.append(device_entry)
+            self.rdb_manager.set_table(mipi_path, devices)
+            
+            logger.info(f"Added selected device for revision {revision}: {device_data.get('Name', 'Unknown')}")
+            return True
+            
+        except Exception as e:
+            logger.error("Error adding selected device for revision %d: %s", revision, e)
+            return False
+
+    # IO Connect Management Methods
+
+    def get_io_connections(self) -> List[Dict[str, Any]]:
+        """Get all IO connections from the enhanced IO connect table"""
+        try:
+            connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects")
+            return connections or []
+        except Exception as e:
+            logger.error("Error getting IO connections: %s", e)
+            return []
+
+    def add_io_connection(self, connection_data: Dict[str, Any]) -> bool:
+        """Add a new IO connection to the enhanced IO connect table"""
+        try:
+            connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
+            
+            # Ensure required columns are present (including new Source/Dest Sub Block columns)
+            required_columns = [
+                "Connection ID", "Source Device", "Source Pin", "Dest Device", "Dest Pin",
+                "Connection Type", "Status", "Source Sub Block", "Dest Sub Block"
+            ]
+            
+            # Create connection entry with all required columns
+            connection_entry = {}
+            for col in required_columns:
+                connection_entry[col] = connection_data.get(col, "")
+            
+            connections.append(connection_entry)
+            self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", connections)
+            
+            logger.info(f"Added IO connection: {connection_data.get('Connection ID', 'Unknown')}")
+            return True
+            
+        except Exception as e:
+            logger.error("Error adding IO connection: %s", e)
+            return False
+
+    def update_io_connection(self, connection_id: str, updated_data: Dict[str, Any]) -> bool:
+        """Update an existing IO connection in the enhanced IO connect table"""
+        try:
+            connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
+            
+            # Find and update the connection
+            for i, connection in enumerate(connections):
+                if connection.get("Connection ID") == connection_id:
+                    connections[i].update(updated_data)
+                    self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", connections)
+                    
+                    logger.info(f"Updated IO connection: {connection_id}")
+                    return True
+            
+            logger.warning(f"IO connection not found: {connection_id}")
+            return False
+            
+        except Exception as e:
+            logger.error("Error updating IO connection %s: %s", connection_id, e)
+            return False
+
+    def remove_io_connection(self, connection_id: str) -> bool:
+        """Remove an IO connection from the enhanced IO connect table"""
+        try:
+            connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
+            
+            # Find and remove the connection
+            for i, connection in enumerate(connections):
+                if connection.get("Connection ID") == connection_id:
+                    removed_connection = connections.pop(i)
+                    self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", connections)
+                    
+                    logger.info(f"Removed IO connection: {connection_id}")
+                    return True
+            
+            logger.warning(f"IO connection not found: {connection_id}")
+            return False
+            
+        except Exception as e:
+            logger.error("Error removing IO connection %s: %s", connection_id, e)
+            return False

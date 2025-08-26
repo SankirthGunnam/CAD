@@ -158,6 +158,31 @@ DCF_CONFIG_ROOT = CONFIG / "dcf"
 DCF_CONFIG_MAIN = DCF_CONFIG_ROOT / "dcf_config"
 DCF_DEVICES = DCF_CONFIG_ROOT / "dcf_devices"
 
+# Visual BCF Table Paths
+VISUAL_BCF_CONFIG = CONFIG / "visual_bcf"
+VISUAL_BCF_COMPONENTS = VISUAL_BCF_CONFIG / "components"
+VISUAL_BCF_CONNECTIONS = VISUAL_BCF_CONFIG / "connections"
+
+# Device Configuration Paths (Updated)
+DEVICE_CONFIG = CONFIG / "device"
+DEVICE_SETTINGS = DEVICE_CONFIG / "settings"
+DEVICE_PROPERTIES = DEVICE_CONFIG / "properties"
+DEVICE_INTERFACE = DEVICE_CONFIG / "interface"
+DEVICE_MIPI = DEVICE_INTERFACE / "mipi"
+DEVICE_GPIO = DEVICE_INTERFACE / "gpio"
+
+# DCF Device Paths (New)
+DCF_DEVICES_AVAILABLE = DCF_CONFIG_ROOT / "devices"
+DCF_CONFIG = CONFIG / "dcf"
+
+def BCF_DEV_MIPI(rev):
+    """Get the BCF dev MIPI path for a specific revision"""
+    return BCF_DB / f"dev_mipi_rev_{rev}"
+
+# IO Connect Table Paths (Enhanced)
+BCF_DB_IO_CONNECT = BCF_DB / "bcf_db_io_connect"
+BCF_DB_IO_CONNECT_ENHANCED = BCF_DB / "bcf_db_io_connect_enhanced"
+
 # Band Management (Enhanced from existing BAND_CONFIG)
 BAND_FOR_RAT = BAND_CONFIG / "Band_for_rat"
 BAND_EXCEPTIONAL_TABLE = BAND_CONFIG / "exceptional_table"
