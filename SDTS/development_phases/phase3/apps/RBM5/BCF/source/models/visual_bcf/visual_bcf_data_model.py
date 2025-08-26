@@ -15,10 +15,7 @@ from PySide6.QtCore import QObject, Signal
 from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
 from apps.RBM5.BCF.source.RDB.paths import (
     VISUAL_BCF_COMPONENTS,
-    VISUAL_BCF_CONNECTIONS,
-    DCF_DEVICES_AVAILABLE,
-    BCF_DEV_MIPI,
-    BCF_DB_IO_CONNECT_ENHANCED
+    VISUAL_BCF_CONNECTIONS
 )
 
 logger = logging.getLogger(__name__)
@@ -36,7 +33,7 @@ class VisualBCFDataModel(QObject):
     - Manage component positions and visual properties
     - Handle connections between components
     - Synchronize with Legacy BCF changes
-    - Manage device settings and IO connections
+    - Manage device settings and IO connections using single source of truth
     """
 
     # Signals
@@ -52,7 +49,7 @@ class VisualBCFDataModel(QObject):
         super().__init__()
         self.rdb_manager = rdb_manager
 
-        # Table paths using centralized paths from paths.py
+        # Table paths using centralized paths from paths.py - SINGLE SOURCE OF TRUTH
         self.components_table_path = str(VISUAL_BCF_COMPONENTS)
         self.connections_table_path = str(VISUAL_BCF_CONNECTIONS)
 
@@ -61,11 +58,9 @@ class VisualBCFDataModel(QObject):
 
         # Initialize database structure if needed
         self._initialize_visual_bcf_tables()
-        self._initialize_device_settings_tables()
-        self._initialize_io_connect_tables()
-        
-        # Populate device tables from existing Visual BCF data if available
-        self._auto_populate_device_tables()
+
+        # Load external component configurations
+        self._load_external_component_configs()
 
     def _initialize_visual_bcf_tables(self):
         """Initialize Visual BCF tables in the database if they don't exist"""
@@ -92,78 +87,44 @@ class VisualBCFDataModel(QObject):
         except Exception as e:
             logger.error("Error initializing Visual BCF tables: %s", e)
 
-    def _initialize_device_settings_tables(self):
-        """Initialize device settings tables in the database if they don't exist"""
+    def _load_external_component_configs(self):
+        """Load external component configurations for pin counts, names, sizes, etc."""
         try:
-            # Check if device settings section exists
-            device_settings = self.rdb_manager.get_value(str(DCF_DEVICES_AVAILABLE))
-            if not device_settings:
-                # Create the device settings section with empty tables
-                initial_data = {
-                    "devices": [],
-                    "mips": []
+            # This should load from external configuration files or database
+            # For now, we'll define some common component types
+            self.component_configs = {
+                "modem": {
+                    "pins": ["TX1", "RX1", "TX2", "RX2", "CLK", "RST"],
+                    "size": {"width": 120, "height": 100},
+                    "default_properties": {"function_type": "modem", "interface_type": "MIPI"}
+                },
+                "rfic": {
+                    "pins": ["RF_IN", "RF_OUT", "VCC", "GND", "CTRL"],
+                    "size": {"width": 100, "height": 80},
+                    "default_properties": {"function_type": "rfic", "interface_type": "RF"}
+                },
+                "chip": {
+                    "pins": ["IN1", "IN2", "OUT", "VCC", "GND"],
+                    "size": {"width": 80, "height": 60},
+                    "default_properties": {"function_type": "generic", "interface_type": "GPIO"}
+                },
+                "filter": {
+                    "pins": ["INPUT", "OUTPUT", "GND"],
+                    "size": {"width": 60, "height": 40},
+                    "default_properties": {"function_type": "filter", "interface_type": "RF"}
                 }
-                self.rdb_manager.set_value(str(DCF_DEVICES_AVAILABLE), initial_data)
-                logger.info("Initialized device settings tables in database")
-
-        except Exception as e:
-            logger.error("Error initializing device settings tables: %s", e)
-
-    def _initialize_io_connect_tables(self):
-        """Initialize IO connect tables in the database if they don't exist"""
-        try:
-            # Check if IO connect section exists
-            io_connect = self.rdb_manager.get_value(str(BCF_DB_IO_CONNECT_ENHANCED))
-            if not io_connect:
-                # Create the IO connect section with empty tables
-                initial_data = {
-                    "io_connects": []
-                }
-                self.rdb_manager.set_value(str(BCF_DB_IO_CONNECT_ENHANCED), initial_data)
-                logger.info("Initialized IO connect tables in database")
-
-        except Exception as e:
-            logger.error("Error initializing IO connect tables: %s", e)
-
-    def _auto_populate_device_tables(self):
-        """Automatically populate device tables if Visual BCF data exists but device tables are empty"""
-        try:
-            # Check if Visual BCF tables have data
-            components = self.rdb_manager.get_table(self.components_table_path) or []
-            connections = self.rdb_manager.get_table(self.connections_table_path) or []
+            }
+            logger.info("Loaded external component configurations")
             
-            # Check if device tables are empty
-            available_devices = self.rdb_manager.get_table(str(DCF_DEVICES_AVAILABLE) + ".devices") or []
-            io_connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
-            
-            # If Visual BCF has data but device tables are empty, populate them
-            if (len(components) > 0 or len(connections) > 0) and (len(available_devices) == 0 and len(io_connections) == 0):
-                logger.info("Auto-populating device tables from existing Visual BCF data...")
-                self.populate_device_tables_from_existing_data()
-            elif len(components) > 0 or len(connections) > 0:
-                logger.info("Device tables already have data, skipping auto-population")
-            else:
-                logger.info("No Visual BCF data available for auto-population")
-                
         except Exception as e:
-            logger.warning("Auto-population failed: %s", e)
-
+            logger.error("Error loading external component configs: %s", e)
+            # Fallback to basic configs
+            self.component_configs = {}
 
     def _on_data_changed(self, changed_path: str):
         """Handle database changes"""
         if changed_path.startswith("config.visual_bcf"):
             # Data changed in RDB, emit signal for other parts to refresh
-            self.data_synchronized.emit()
-            
-            # Auto-sync to device tables when Visual BCF data changes
-            try:
-                self.sync_visual_bcf_to_device_tables()
-            except Exception as e:
-                logger.warning("Auto-sync failed: %s", e)
-                
-        elif changed_path.startswith(str(DCF_DEVICES_AVAILABLE)):
-            self.data_synchronized.emit()
-        elif changed_path.startswith(str(BCF_DB_IO_CONNECT_ENHANCED)):
             self.data_synchronized.emit()
 
     # Component Management Methods
@@ -175,32 +136,48 @@ class VisualBCFDataModel(QObject):
                                       float],
                       properties: Dict[str,
                                        Any] = None) -> str:
-        """Add a new component to the scene"""
+        """Add a new component to the scene with external configuration"""
         try:
             component_id = str(uuid.uuid4())
 
+            # Get external configuration for this component type
+            config = self.component_configs.get(component_type, {})
+            
+            # Merge external config with provided properties
+            component_props = config.get('default_properties', {}).copy()
+            if properties:
+                component_props.update(properties)
+
+            # Create component data compatible with both Visual BCF and Legacy BCF
             component_data = {
                 'id': component_id,
                 'name': name,
                 'component_type': component_type,
-                'function_type': properties.get('function_type', '') if properties else '',
-                'properties': properties or {},
+                'function_type': component_props.get('function_type', ''),
+                'properties': component_props,
                 'visual_properties': {
                     'position': {'x': position[0], 'y': position[1]},
-                    'size': {'width': properties.get('width', 100) if properties else 100,
-                             'height': properties.get('height', 80) if properties else 80},
+                    'size': config.get('size', {'width': 100, 'height': 80}),
                     'rotation': 0
                 },
-                'pins': []
+                'pins': config.get('pins', []),
+                # Legacy BCF compatibility fields
+                'interface_type': component_props.get('interface_type', ''),
+                'interface': component_props.get('interface', {}),
+                'config': component_props.get('config', {}),
+                'usid': component_id[:8],  # First 8 chars for Legacy BCF compatibility
+                'mid_msb': '00',
+                'mid_lsb': '01',
+                'pid': '0000',
+                'ext_pid': '0000',
+                'rev_id': '1.0',
+                'dcf_type': 'Standard'
             }
 
             # Add directly to RDB
             components_table = self.rdb_manager.get_table(self.components_table_path)
             components_table.append(component_data)
             self.rdb_manager.set_table(self.components_table_path, components_table)
-
-            # Auto-export to Legacy BCF if component is a device/modem
-            self._auto_export_component_to_legacy_bcf(component_data)
 
             # Emit signal
             self.component_added.emit(component_id)
@@ -226,88 +203,85 @@ class VisualBCFDataModel(QObject):
                     component_found = True
                     break
             
-            if not component_found:
+            if component_found:
+                # Remove the component
+                components_table = [c for c in components_table if c.get('id') != component_id]
+                self.rdb_manager.set_table(self.components_table_path, components_table)
+                
+                # Also remove any connections involving this component
+                connections_table = self.rdb_manager.get_table(self.connections_table_path)
+                connections_table = [conn for conn in connections_table 
+                                  if conn.get('from_component_id') != component_id 
+                                  and conn.get('to_component_id') != component_id]
+                self.rdb_manager.set_table(self.connections_table_path, connections_table)
+                
+                # Emit signal
+                self.component_removed.emit(component_id)
+                
+                logger.info("Removed component: %s (%s)", component_name, component_id)
+                return True
+            else:
+                logger.warning("Component not found: %s", component_id)
                 return False
-
-            # Remove all connections involving this component
-            connections_to_remove = []
-            connections_table = self.rdb_manager.get_table(self.connections_table_path)
-            for connection in connections_table:
-                if (connection.get('from_component_id') == component_id or
-                        connection.get('to_component_id') == component_id):
-                    connections_to_remove.append(connection.get('id'))
-
-            for conn_id in connections_to_remove:
-                self.remove_connection(conn_id)
-
-            # Remove component from components table
-            components_table = [comp for comp in components_table if comp.get('id') != component_id]
-            self.rdb_manager.set_table(self.components_table_path, components_table)
-
-            # Emit signal
-            self.component_removed.emit(component_id)
-
-            logger.info(
-                f"Removed component: {component_name} ({component_id})")
-            return True
-
+                
         except Exception as e:
             logger.error("Error removing component: %s", e)
             return False
 
-    def update_component_position(
-            self, component_id: str, position: Tuple[float, float]) -> bool:
+    def update_component_position(self, component_id: str, position: Tuple[float, float]) -> bool:
         """Update component position directly in RDB"""
         try:
             components_table = self.rdb_manager.get_table(self.components_table_path)
             
-            # Find and update the component
             for component in components_table:
                 if component.get('id') == component_id:
-                    if 'visual_properties' not in component:
-                        component['visual_properties'] = {}
-                    component['visual_properties']['position'] = {
-                        'x': position[0], 'y': position[1]
-                    }
-                    
-                    # Update the table
+                    component['visual_properties']['position'] = {'x': position[0], 'y': position[1]}
                     self.rdb_manager.set_table(self.components_table_path, components_table)
                     
-                    # Emit signal
-                    self.component_updated.emit(component_id, {'position': position})
-                    
+                    # Emit update signal
+                    self.component_updated.emit(component_id, component)
+                    logger.info("Updated component position: %s", component_id)
                     return True
             
+            logger.warning("Component not found for position update: %s", component_id)
             return False
-
+            
         except Exception as e:
             logger.error("Error updating component position: %s", e)
             return False
 
-    def update_component_properties(
-            self, component_id: str, properties: Dict[str, Any]) -> bool:
+    def update_component_properties(self, component_id: str, properties: Dict[str, Any]) -> bool:
         """Update component properties directly in RDB"""
         try:
             components_table = self.rdb_manager.get_table(self.components_table_path)
             
-            # Find and update the component
             for component in components_table:
                 if component.get('id') == component_id:
+                    # Update properties while maintaining compatibility
                     if 'properties' not in component:
                         component['properties'] = {}
                     component['properties'].update(properties)
                     
-                    # Update the table
+                    # Update Legacy BCF compatibility fields
+                    if 'function_type' in properties:
+                        component['function_type'] = properties['function_type']
+                    if 'interface_type' in properties:
+                        component['interface_type'] = properties['interface_type']
+                    if 'interface' in properties:
+                        component['interface'] = properties['interface']
+                    if 'config' in properties:
+                        component['config'] = properties['config']
+                    
                     self.rdb_manager.set_table(self.components_table_path, components_table)
                     
-                    # Emit signal
-                    self.component_updated.emit(
-                        component_id, {'properties': properties})
-                    
+                    # Emit update signal
+                    self.component_updated.emit(component_id, component)
+                    logger.info("Updated component properties: %s", component_id)
                     return True
             
+            logger.warning("Component not found for properties update: %s", component_id)
             return False
-
+            
         except Exception as e:
             logger.error("Error updating component properties: %s", e)
             return False
@@ -317,93 +291,99 @@ class VisualBCFDataModel(QObject):
         try:
             components_table = self.rdb_manager.get_table(self.components_table_path)
             
-            # Find and update the component
             for component in components_table:
                 if component.get('id') == component_id:
                     component['pins'] = pins
-                    
-                    # Update the table
                     self.rdb_manager.set_table(self.components_table_path, components_table)
                     
-                    # Emit signal
-                    self.component_updated.emit(component_id, {'pins': pins})
-
-                    logger.info("Updated component %s with %s pins", component_id, len(pins))
+                    # Emit update signal
+                    self.component_updated.emit(component_id, component)
+                    logger.info("Updated component pins: %s", component_id)
                     return True
             
+            logger.warning("Component not found for pins update: %s", component_id)
             return False
-
+            
         except Exception as e:
             logger.error("Error updating component pins: %s", e)
             return False
 
     def get_component(self, component_id: str) -> Optional[Dict[str, Any]]:
-        """Get component data by ID directly from RDB"""
-        components_table = self.rdb_manager.get_table(self.components_table_path)
-        for component in components_table:
-            if component.get('id') == component_id:
-                return component
-        return None
+        """Get a specific component directly from RDB"""
+        try:
+            components_table = self.rdb_manager.get_table(self.components_table_path) or []
+            for component in components_table:
+                if component.get('id') == component_id:
+                    return component
+            return None
+        except Exception as e:
+            logger.error("Error getting component: %s", e)
+            return None
 
-    def get_all_components(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_components(self) -> List[Dict[str, Any]]:
         """Get all components directly from RDB"""
-        components_table = self.rdb_manager.get_table(self.components_table_path)
-        return {comp.get('id'): comp for comp in components_table if comp.get('id')}
+        try:
+            return self.rdb_manager.get_table(self.components_table_path) or []
+        except Exception as e:
+            logger.error("Error getting all components: %s", e)
+            return []
 
-    def get_components_by_type(
-            self, component_type: str) -> Dict[str, Dict[str, Any]]:
-        """Get components of a specific type directly from RDB"""
-        components_table = self.rdb_manager.get_table(self.components_table_path)
-        return {
-            comp.get('id'): comp
-            for comp in components_table
-            if comp.get('id') and comp.get('component_type') == component_type
-        }
+    def get_components_by_type(self, component_type: str) -> List[Dict[str, Any]]:
+        """Get components by type directly from RDB"""
+        try:
+            components_table = self.rdb_manager.get_table(self.components_table_path) or []
+            return [c for c in components_table if c.get('component_type') == component_type]
+        except Exception as e:
+            logger.error("Error getting components by type: %s", e)
+            return []
 
     def get_component_by_name(self, name: str) -> Optional[Dict[str, Any]]:
         """Get component by name directly from RDB"""
-        components_table = self.rdb_manager.get_table(self.components_table_path)
-        for component in components_table:
-            if component.get('name') == name:
-                return component
-        return None
-
-    def remove_component_by_name(self, name: str) -> bool:
-        """Remove a component by name directly from RDB"""
-        components_table = self.rdb_manager.get_table(self.components_table_path)
-        for component in components_table:
-            if component.get('name') == name:
-                return self.remove_component(component.get('id'))
-        return False
+        try:
+            components_table = self.rdb_manager.get_table(self.components_table_path) or []
+            for component in components_table:
+                if component.get('name') == name:
+                    return component
+            return None
+        except Exception as e:
+            logger.error("Error getting component by name: %s", e)
+            return None
 
     # Connection Management Methods
 
-    def add_connection(self, from_component_id: str, from_pin_id: str,
-                       to_component_id: str, to_pin_id: str) -> str:
-        """Add a connection between two pins"""
+    def add_connection(self,
+                       from_component_id: str,
+                       from_pin_id: str,
+                       to_component_id: str,
+                       to_pin_id: str,
+                       connection_type: str = "wire",
+                       properties: Dict[str, Any] = None) -> str:
+        """Add a new connection directly to RDB"""
         try:
-            # Validate components exist
-            components_table = self.rdb_manager.get_table(self.components_table_path)
-            component_ids = [comp.get('id') for comp in components_table if comp.get('id')]
-            if (from_component_id not in component_ids or
-                    to_component_id not in component_ids):
-                return ""
-
             connection_id = str(uuid.uuid4())
 
+            # Create connection data compatible with both Visual BCF and Legacy BCF
             connection_data = {
                 'id': connection_id,
                 'from_component_id': from_component_id,
                 'from_pin_id': from_pin_id,
                 'to_component_id': to_component_id,
                 'to_pin_id': to_pin_id,
-                'connection_type': 'wire',
-                'properties': {},
+                'connection_type': connection_type,
+                'properties': properties or {},
                 'visual_properties': {
                     'path_points': [],
                     'line_style': 'solid',
                     'color': '#000000'
-                }
+                },
+                # Legacy BCF compatibility fields
+                'source_device': self._get_component_name(from_component_id),
+                'source_pin': from_pin_id,
+                'dest_device': self._get_component_name(to_component_id),
+                'dest_pin': to_pin_id,
+                'source_sub_block': 'Main Block',
+                'dest_sub_block': 'Main Block',
+                'status': 'Active'
             }
 
             # Add directly to RDB
@@ -414,13 +394,20 @@ class VisualBCFDataModel(QObject):
             # Emit signal
             self.connection_added.emit(connection_id)
 
-            logger.info(
-                f"Added connection: {from_component_id}:{from_pin_id} -> {to_component_id}:{to_pin_id}")
+            logger.info("Added connection: %s", connection_id)
             return connection_id
 
         except Exception as e:
             logger.error("Error adding connection: %s", e)
             return ""
+
+    def _get_component_name(self, component_id: str) -> str:
+        """Helper method to get component name from ID"""
+        try:
+            component = self.get_component(component_id)
+            return component.get('name', 'Unknown') if component else 'Unknown'
+        except Exception:
+            return 'Unknown'
 
     def remove_connection(self, connection_id: str) -> bool:
         """Remove a connection directly from RDB"""
@@ -430,7 +417,7 @@ class VisualBCFDataModel(QObject):
             # Find and remove the connection
             for i, connection in enumerate(connections_table):
                 if connection.get('id') == connection_id:
-                    connections_table.pop(i)
+                    removed_connection = connections_table.pop(i)
                     self.rdb_manager.set_table(self.connections_table_path, connections_table)
                     
                     # Emit signal
@@ -439,312 +426,237 @@ class VisualBCFDataModel(QObject):
                     logger.info("Removed connection: %s", connection_id)
                     return True
             
+            logger.warning("Connection not found: %s", connection_id)
             return False
-
+            
         except Exception as e:
             logger.error("Error removing connection: %s", e)
             return False
 
     def get_connection(self, connection_id: str) -> Optional[Dict[str, Any]]:
-        """Get connection data by ID directly from RDB"""
-        connections_table = self.rdb_manager.get_table(self.connections_table_path)
-        for connection in connections_table:
-            if connection.get('id') == connection_id:
-                return connection
-        return None
+        """Get a specific connection directly from RDB"""
+        try:
+            connections_table = self.rdb_manager.get_table(self.connections_table_path) or []
+            for connection in connections_table:
+                if connection.get('id') == connection_id:
+                    return connection
+            return None
+        except Exception as e:
+            logger.error("Error getting connection: %s", e)
+            return None
 
-    def get_all_connections(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_connections(self) -> List[Dict[str, Any]]:
         """Get all connections directly from RDB"""
-        connections_table = self.rdb_manager.get_table(self.connections_table_path)
-        return {conn.get('id'): conn for conn in connections_table if conn.get('id')}
+        try:
+            return self.rdb_manager.get_table(self.connections_table_path) or []
+        except Exception as e:
+            logger.error("Error getting all connections: %s", e)
+            return []
 
-    def get_component_connections(
-            self, component_id: str) -> Dict[str, Dict[str, Any]]:
+    def get_component_connections(self, component_id: str) -> List[Dict[str, Any]]:
         """Get all connections for a specific component directly from RDB"""
-        connections_table = self.rdb_manager.get_table(self.connections_table_path)
-        return {
-            conn.get('id'): conn
-            for conn in connections_table
-            if conn.get('id') and (conn.get('from_component_id') == component_id or
-                                  conn.get('to_component_id') == component_id)
-        }
+        try:
+            connections_table = self.rdb_manager.get_table(self.connections_table_path) or []
+            return [conn for conn in connections_table 
+                   if conn.get('from_component_id') == component_id or 
+                      conn.get('to_component_id') == component_id]
+        except Exception as e:
+            logger.error("Error getting component connections: %s", e)
+            return []
 
-    # New methods for proper MVC architecture
+    # Legacy BCF Integration Methods - Now using single source of truth
 
     def get_legacy_bcf_devices(self) -> List[Dict[str, Any]]:
-        """Get Legacy BCF device settings through RDB manager"""
+        """Get Legacy BCF device settings from Visual BCF components (single source of truth)"""
         try:
-            return self.rdb_manager.get_table(DCF_DEVICES_AVAILABLE)
+            components = self.get_all_components()
+            legacy_devices = []
+            
+            for component in components:
+                # Convert Visual BCF component to Legacy BCF format
+                legacy_device = {
+                    'name': component.get('name', ''),
+                    'function_type': component.get('function_type', ''),
+                    'interface_type': component.get('interface_type', ''),
+                    'interface': component.get('interface', {}),
+                    'config': component.get('config', {}),
+                    'usid': component.get('usid', ''),
+                    'mid_msb': component.get('mid_msb', ''),
+                    'mid_lsb': component.get('mid_lsb', ''),
+                    'pid': component.get('pid', ''),
+                    'ext_pid': component.get('ext_pid', ''),
+                    'rev_id': component.get('rev_id', ''),
+                    'dcf_type': component.get('dcf_type', '')
+                }
+                legacy_devices.append(legacy_device)
+            
+            return legacy_devices
+            
         except Exception as e:
             logger.error("Error getting Legacy BCF devices: %s", e)
             return []
 
-    def save_scene_data(self, scene_data: Dict[str, Any]) -> bool:
-        """Save scene data to default location"""
+    def get_available_devices_for_table(self) -> List[Dict[str, Any]]:
+        """Get available devices in table format from Visual BCF components"""
         try:
-            # Save only via normalized tables (components/connections)
-            # Convert scene components to table form
-            components_list = []
-            for comp in scene_data.get("components", []):
-                comp_dict = {
-                    'id': comp.get('id', comp.get('name', '')),
-                    'name': comp.get('name', ''),
-                    'component_type': comp.get('type', comp.get('component_type', 'chip')),
-                    'function_type': comp.get('properties', {}).get('function_type', ''),
-                    'properties': comp.get('properties', {}),
-                    'visual_properties': comp.get('visual_properties', {
-                        'position': comp.get('position', {'x': 0, 'y': 0}),
-                        'size': {'width': 100, 'height': 80},
-                        'rotation': 0
-                    }),
-                    'pins': comp.get('pins', [])
+            components = self.get_all_components()
+            table_devices = []
+            
+            for component in components:
+                # Convert to table format
+                table_device = {
+                    "Device Name": component.get('name', ''),
+                    "Control Type\n(MIPI / GPIO)": component.get('interface_type', ''),
+                    "Module": component.get('component_type', '').upper(),
+                    "USID\n(Default)": component.get('usid', ''),
+                    "MID\n(MSB)": component.get('mid_msb', ''),
+                    "MID\n(LSB)": component.get('mid_lsb', ''),
+                    "PID": component.get('pid', ''),
+                    "EXT PID": component.get('ext_pid', ''),
+                    "REV ID": component.get('rev_id', ''),
+                    "DCF Type": component.get('dcf_type', '')
                 }
-                components_list.append(comp_dict)
-            connections_list = []
-            for conn in scene_data.get("connections", []):
-                # Map by component names -> we'll resolve to IDs if present in
-                # components_list
-                connections_list.append({
-                    'id': conn.get('id', ''),
-                    'from_component_id': conn.get('from_component_id', ''),
-                    'from_pin_id': conn.get('start_pin', conn.get('from_pin_id', '')),
-                    'to_component_id': conn.get('to_component_id', ''),
-                    'to_pin_id': conn.get('end_pin', conn.get('to_pin_id', '')),
-                    'connection_type': conn.get('connection_type', 'wire'),
-                    'properties': conn.get('properties', {}),
-                    'visual_properties': conn.get('visual_properties', {
-                        'path_points': [], 'line_style': 'solid', 'color': '#000000'
-                    })
-                })
-            self.rdb_manager.set_table(
-                self.components_table_path, components_list)
-            self.rdb_manager.set_table(
-                self.connections_table_path, connections_list)
-            # Explicitly persist to disk
-            if hasattr(self.rdb_manager.db, 'save'):
-                self.rdb_manager.db.save()
-            logger.info("Scene data saved to database")
-            return True
+                table_devices.append(table_device)
+            
+            return table_devices
+            
         except Exception as e:
-            logger.error("Error saving scene data: %s", e)
-            return False
+            logger.error("Error getting available devices for table: %s", e)
+            return []
 
-    def load_scene_data(self) -> Optional[Dict[str, Any]]:
-        """Load scene data from default location"""
+    def get_io_connections_for_table(self) -> List[Dict[str, Any]]:
+        """Get IO connections in table format from Visual BCF connections"""
         try:
-            # Build scene-like dict from normalized tables only
-            components = self.rdb_manager.get_table(
-                self.components_table_path) or []
-            connections = self.rdb_manager.get_table(
-                self.connections_table_path) or []
-            id_to_name = {
-                c.get(
-                    'id',
-                    c.get(
-                        'name',
-                        '')): c.get(
-                    'name',
-                    '') for c in components}
-            scene_components = []
-            for comp in components:
-                pos = comp.get(
-                    'visual_properties', {}).get(
-                    'position', {
-                        'x': 0, 'y': 0})
-                scene_components.append({
-                    'id': comp.get('id', comp.get('name', '')),
-                    'name': comp.get('name', ''),
-                    'type': comp.get('component_type', 'chip'),
-                    'position': {'x': pos.get('x', 0), 'y': pos.get('y', 0)},
-                    'properties': comp.get('properties', {}),
-                    'visual_properties': comp.get('visual_properties', {})
-                })
-            scene_connections = []
-            for conn in connections:
-                scene_connections.append({
-                    'id': conn.get('id', ''),
-                    'from_component_id': conn.get('from_component_id', ''),  # ✅ Keep component ID
-                    'to_component_id': conn.get('to_component_id', ''),     # ✅ Keep component ID
-                    'from_pin_id': conn.get('from_pin_id', ''),            # ✅ Use correct key name
-                    'to_pin_id': conn.get('to_pin_id', ''),                # ✅ Use correct key name
-                    'properties': conn.get('properties', {}),
-                    'visual_properties': conn.get('visual_properties', {})
-                })
-            scene = {
-                'components': scene_components,
-                'connections': scene_connections}
-            logger.info("Scene data reconstructed from tables")
-            return scene
+            connections = self.get_all_connections()
+            table_connections = []
+            
+            for connection in connections:
+                # Convert to table format
+                table_connection = {
+                    "Connection ID": connection.get('id', ''),
+                    "Source Device": connection.get('source_device', ''),
+                    "Source Pin": connection.get('source_pin', ''),
+                    "Source Sub Block": connection.get('source_sub_block', ''),
+                    "Dest Device": connection.get('dest_device', ''),
+                    "Dest Pin": connection.get('dest_pin', ''),
+                    "Dest Sub Block": connection.get('dest_sub_block', ''),
+                    "Connection Type": connection.get('connection_type', ''),
+                    "Status": connection.get('status', '')
+                }
+                table_connections.append(table_connection)
+            
+            return table_connections
+            
         except Exception as e:
-            logger.error("Error loading scene data: %s", e)
-            return None
-
-    def save_visual_bcf_data(self) -> bool:
-        """Save visual BCF data to default database location"""
-        try:
-            # Data is already saved to RDB directly, just persist to disk
-            if hasattr(self.rdb_manager.db, 'save'):
-                self.rdb_manager.db.save()
-
-            logger.info("Visual BCF data saved to database")
-            return True
-        except Exception as e:
-            logger.error("Error saving visual BCF data: %s", e)
-            return False
-
-    def save_visual_bcf_to_file(self, file_path: str) -> bool:
-        """Save visual BCF data to a specific file"""
-        try:
-            # Get the complete data structure from RDB manager (data is already up-to-date)
-            complete_data = self.rdb_manager.db.data
-
-            # Save to the specified file
-            import json
-            with open(file_path, 'w') as f:
-                json.dump(complete_data, f, indent=2)
-
-            logger.info("Visual BCF data saved to file: %s", file_path)
-            return True
-        except Exception as e:
-            logger.error("Error saving visual BCF data to file: %s", e)
-            return False
-
-    # Legacy BCF Integration Methods
+            logger.error("Error getting IO connections for table: %s", e)
+            return []
 
     def sync_with_legacy_bcf(self):
-        """Synchronize with Legacy BCF component definitions"""
+        """Synchronize with Legacy BCF component definitions - now using single source of truth"""
         try:
-            # Read component definitions from Legacy BCF tables
-            device_settings = self.rdb_manager.get_table(DCF_DEVICES_AVAILABLE)
-
-            # Get components from RDB
+            # Since we're using single source of truth, this method now ensures
+            # Visual BCF components have all required Legacy BCF fields
+            
             components_table = self.rdb_manager.get_table(self.components_table_path)
-
-            # Update component properties based on Legacy BCF data
+            updated = False
+            
             for component in components_table:
                 comp_id = component.get('id')
-                comp_name = component.get('name')
+                comp_type = component.get('component_type', '')
                 
-                # Find matching device in Legacy BCF
-                for device in device_settings:
-                    if device.get('name') == comp_name:
-                        # Update component properties from Legacy BCF
-                        if 'properties' not in component:
-                            component['properties'] = {}
-                        
-                        component['properties'].update({
-                            'function_type': device.get('function_type', ''),
-                            'interface_type': device.get('interface_type', ''),
-                            'interface': device.get('interface', {}),
-                            'config': device.get('config', {})
-                        })
-
-                        # Emit update signal
-                        self.component_updated.emit(comp_id, component)
-                        break
-
-            # Update the components table in RDB
-            self.rdb_manager.set_table(self.components_table_path, components_table)
-
-            logger.info("Synchronized with Legacy BCF data")
-            self.data_synchronized.emit()
+                # Get external configuration for this component type
+                config = self.component_configs.get(comp_type, {})
+                
+                # Ensure all Legacy BCF compatibility fields are present
+                if 'usid' not in component:
+                    component['usid'] = comp_id[:8]
+                    updated = True
+                if 'mid_msb' not in component:
+                    component['mid_msb'] = '00'
+                    updated = True
+                if 'mid_lsb' not in component:
+                    component['mid_lsb'] = '01'
+                    updated = True
+                if 'pid' not in component:
+                    component['pid'] = '0000'
+                    updated = True
+                if 'ext_pid' not in component:
+                    component['ext_pid'] = '0000'
+                    updated = True
+                if 'rev_id' not in component:
+                    component['rev_id'] = '1.0'
+                    updated = True
+                if 'dcf_type' not in component:
+                    component['dcf_type'] = 'Standard'
+                    updated = True
+                
+                # Update properties from external config if missing
+                if 'properties' not in component:
+                    component['properties'] = {}
+                
+                default_props = config.get('default_properties', {})
+                for key, value in default_props.items():
+                    if key not in component['properties']:
+                        component['properties'][key] = value
+                        updated = True
+                
+                # Update Legacy BCF fields from properties
+                if 'function_type' not in component and 'function_type' in component['properties']:
+                    component['function_type'] = component['properties']['function_type']
+                    updated = True
+                if 'interface_type' not in component and 'interface_type' in component['properties']:
+                    component['interface_type'] = component['properties']['interface_type']
+                    updated = True
+                if 'interface' not in component and 'interface' in component['properties']:
+                    component['interface'] = component['properties']['interface']
+                    updated = True
+                if 'config' not in component and 'config' in component['properties']:
+                    component['config'] = component['properties']['config']
+                    updated = True
+            
+            if updated:
+                # Update the components table in RDB
+                self.rdb_manager.set_table(self.components_table_path, components_table)
+                logger.info("Synchronized Visual BCF components with Legacy BCF compatibility fields")
+                self.data_synchronized.emit()
+            else:
+                logger.info("Visual BCF components already synchronized with Legacy BCF")
 
         except Exception as e:
             logger.error("Error syncing with Legacy BCF: %s", e)
 
     def export_to_legacy_bcf(self):
-        """Export Visual BCF components to Legacy BCF format"""
+        """Export Visual BCF components to Legacy BCF format - now using single source of truth"""
         try:
-            # Convert Visual BCF components to Legacy BCF device settings
-            device_settings = []
-
-            # Get components from RDB
-            components_table = self.rdb_manager.get_table(self.components_table_path)
-
-            for component in components_table:
-                if component.get('component_type') in ['modem', 'device']:
-                    device_entry = {
-                        'name': component.get('name', ''), 
-                        'function_type': component.get('properties', {}).get('function_type', ''), 
-                        'interface_type': component.get('properties', {}).get('interface_type', ''), 
-                        'interface': component.get('properties', {}).get('interface', {}), 
-                        'config': component.get('properties', {}).get('config', {})
-                    }
-                    device_settings.append(device_entry)
-
-            # Update Legacy BCF table
-            if device_settings:
-                self.rdb_manager.set_table(
-                    DCF_DEVICES_AVAILABLE, device_settings)
-                logger.info(
-                    f"Exported {len(device_settings)} components to Legacy BCF")
+            # Since we're using single source of truth, this method now ensures
+            # all Visual BCF components have the required Legacy BCF fields
+            
+            # First sync to ensure all fields are present
+            self.sync_with_legacy_bcf()
+            
+            # Get all components (they now have all required Legacy BCF fields)
+            components = self.get_all_components()
+            
+            logger.info("Visual BCF components exported to Legacy BCF format (single source of truth)")
+            return True
 
         except Exception as e:
             logger.error("Error exporting to Legacy BCF: %s", e)
+            return False
 
-    # Private helper methods
-
-
-
-    def _auto_export_component_to_legacy_bcf(
-            self, component_data: Dict[str, Any]):
-        """Auto-export a component to Legacy BCF if it should appear in the device settings table"""
+    def _auto_export_component_to_legacy_bcf(self, component_data: Dict[str, Any]):
+        """Auto-export a component to Legacy BCF - now using single source of truth"""
         try:
-            # Export most component types to Legacy BCF (except pure visual
-            # elements)
-            exportable_types = ['modem', 'device', 'rfic',
-                                'chip']  # Added 'chip' for generic chips
-
-            if component_data.get('component_type') in exportable_types:
-                # Get existing Legacy BCF device settings
-                device_settings = self.rdb_manager.get_table(DCF_DEVICES_AVAILABLE)
-
-                # Check if component already exists in Legacy BCF (avoid
-                # duplicates)
-                existing_names = {device.get('name', '')
-                                  for device in device_settings}
-                if component_data.get('name') not in existing_names:
-                    # Determine function_type
-                    function_type = component_data.get('properties', {}).get(
-                        'function_type', component_data.get('function_type', ''))
-                    if not function_type:
-                        function_type = component_data.get('component_type', '').upper()
-
-                    # Create new device entry for Legacy BCF
-                    device_entry = {
-                        'name': component_data.get('name', ''), 
-                        'function_type': function_type, 
-                        'interface_type': component_data.get('properties', {}).get(
-                            'interface_type', 'MIPI' if component_data.get('component_type') in [
-                                'modem', 'device'] else 'Generic'), 
-                        'interface': component_data.get('properties', {}).get(
-                            'interface', {
-                                'mipi': {
-                                    'channel': len(device_settings) + 1}} if component_data.get('component_type') in [
-                                'modem', 'device'] else {}), 
-                        'config': component_data.get('properties', {}).get(
-                            'config', {
-                                'usid': f'{
-                                    function_type.upper()}{
-                                    len(device_settings) + 1:03d}'})}
-
-                    # Add to Legacy BCF table
-                    device_settings.append(device_entry)
-                    self.rdb_manager.set_table(
-                        DCF_DEVICES_AVAILABLE, device_settings)
-
-                    logger.info(
-                        f"✅ Auto-exported component '{component_data.get('name')}' (type: {component_data.get('component_type')}, function: {function_type}) to Legacy BCF")
-                else:
-                    logger.info(
-                        f"⏭️ Component '{component_data.get('name')}' already exists in Legacy BCF, skipping export")
-            else:
-                                    logger.info(
-                        f"⏭️ Component '{component_data.get('name')}' type '{component_data.get('component_type')}' not exported to Legacy BCF")
+            # Since we're using single source of truth, all components automatically
+            # have Legacy BCF compatibility fields
+            component_name = component_data.get('name', 'Unknown')
+            component_type = component_data.get('component_type', 'Unknown')
+            
+            logger.info("Component '%s' (type: %s) automatically compatible with Legacy BCF (single source of truth)", 
+                       component_name, component_type)
 
         except Exception as e:
-            logger.error(
-                f"❌ Error auto-exporting component '{component_data.get('name') if component_data else 'unknown'}' to Legacy BCF: {e}")
+            logger.error("Error in auto-export (single source of truth): %s", e)
 
     # Utility methods
 
@@ -789,320 +701,32 @@ class VisualBCFDataModel(QObject):
                 'components_by_type': {}
             }
 
-    # Device Settings Management Methods
-
-    def get_available_devices(self) -> List[Dict[str, Any]]:
-        """Get all available devices from DCF devices table"""
-        try:
-            devices = self.rdb_manager.get_table(str(DCF_DEVICES_AVAILABLE()) + ".devices")
-            return devices or []
-        except Exception as e:
-            logger.error("Error getting available devices: %s", e)
-            return []
-
-    def add_available_device(self, device_data: Dict[str, Any]) -> bool:
-        """Add a new available device to DCF devices table"""
-        try:
-            devices = self.rdb_manager.get_table(str(DCF_DEVICES_AVAILABLE()) + ".devices") or []
-            
-            # Ensure required columns are present
-            required_columns = [
-                "Device Name", "Control Type\n(MIPI / GPIO)", "Module", "USID\n(Default)",
-                "MID\n(MSB)", "MID\n(LSB)", "PID", "EXT PID", "REV ID", "DCF Type"
-            ]
-            
-            # Create device entry with all required columns
-            device_entry = {}
-            for col in required_columns:
-                device_entry[col] = device_data.get(col, "")
-            
-            devices.append(device_entry)
-            self.rdb_manager.set_table(str(DCF_DEVICES_AVAILABLE()) + ".devices", devices)
-            
-            logger.info("Added available device: %s", device_data.get('Device Name', 'Unknown'))
-            return True
-            
-        except Exception as e:
-            logger.error("Error adding available device: %s", e)
-            return False
-
-    def get_selected_devices(self, revision: int = 1) -> List[Dict[str, Any]]:
-        """Get selected devices for a specific revision from BCF dev MIPI table"""
-        try:
-            mipi_path = str(BCF_DEV_MIPI(revision)) + ".mips"
-            devices = self.rdb_manager.get_table(mipi_path)
-            return devices or []
-        except Exception as e:
-            logger.error("Error getting selected devices for revision %d: %s", revision, e)
-            return []
-
-    def add_selected_device(self, device_data: Dict[str, Any], revision: int = 1) -> bool:
-        """Add a selected device for a specific revision to BCF dev MIPI table"""
-        try:
-            mipi_path = str(BCF_DEV_MIPI(revision)) + ".mips"
-            devices = self.rdb_manager.get_table(mipi_path) or []
-            
-            # Ensure required columns are present
-            required_columns = ["DCF", "Name", "USID"]
-            
-            # Create device entry with all required columns
-            device_entry = {}
-            for col in required_columns:
-                device_entry[col] = device_data.get(col, "")
-            
-            devices.append(device_entry)
-            self.rdb_manager.set_table(mipi_path, devices)
-            
-            logger.info("Added selected device for revision %s: %s", revision, device_data.get('Name', 'Unknown'))
-            return True
-            
-        except Exception as e:
-            logger.error("Error adding selected device for revision %d: %s", revision, e)
-            return False
-
-    # IO Connect Management Methods
-
-    def get_io_connections(self) -> List[Dict[str, Any]]:
-        """Get all IO connections from the enhanced IO connect table"""
-        try:
-            connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects")
-            return connections or []
-        except Exception as e:
-            logger.error("Error getting IO connections: %s", e)
-            return []
-
-    def add_io_connection(self, connection_data: Dict[str, Any]) -> bool:
-        """Add a new IO connection to the enhanced IO connect table"""
-        try:
-            connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
-            
-            # Ensure required columns are present (including new Source/Dest Sub Block columns)
-            required_columns = [
-                "Connection ID", "Source Device", "Source Pin", "Dest Device", "Dest Pin",
-                "Connection Type", "Status", "Source Sub Block", "Dest Sub Block"
-            ]
-            
-            # Create connection entry with all required columns
-            connection_entry = {}
-            for col in required_columns:
-                connection_entry[col] = connection_data.get(col, "")
-            
-            connections.append(connection_entry)
-            self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", connections)
-            
-            logger.info("Added IO connection: %s", connection_data.get('Connection ID', 'Unknown'))
-            return True
-            
-        except Exception as e:
-            logger.error("Error adding IO connection: %s", e)
-            return False
-
-    def update_io_connection(self, connection_id: str, updated_data: Dict[str, Any]) -> bool:
-        """Update an existing IO connection in the enhanced IO connect table"""
-        try:
-            connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
-            
-            # Find and update the connection
-            for i, connection in enumerate(connections):
-                if connection.get("Connection ID") == connection_id:
-                    connections[i].update(updated_data)
-                    self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", connections)
-                    
-                    logger.info("Updated IO connection: %s", connection_id)
-                    return True
-            
-            logger.warning("IO connection not found: %s", connection_id)
-            return False
-            
-        except Exception as e:
-            logger.error("Error updating IO connection %s: %s", connection_id, e)
-            return False
-
-    def remove_io_connection(self, connection_id: str) -> bool:
-        """Remove an IO connection from the enhanced IO connect table"""
-        try:
-            connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
-            
-            # Find and remove the connection
-            for i, connection in enumerate(connections):
-                if connection.get("Connection ID") == connection_id:
-                    removed_connection = connections.pop(i)
-                    self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", connections)
-                    
-                    logger.info("Removed IO connection: %s", connection_id)
-                    return True
-            
-            logger.warning("IO connection not found: %s", connection_id)
-            return False
-            
-        except Exception as e:
-            logger.error("Error removing IO connection %s: %s", connection_id, e)
-            return False
-
-    # Data Synchronization Methods
-
-    def sync_visual_bcf_to_device_tables(self):
-        """Synchronize Visual BCF components and connections to device settings and IO connect tables"""
-        try:
-            logger.info("Starting synchronization of Visual BCF data to device tables...")
-            
-            # Get all Visual BCF components
-            components = self.rdb_manager.get_table(self.components_table_path) or []
-            connections = self.rdb_manager.get_table(self.connections_table_path) or []
-            
-            # Sync components to Available Devices table
-            self._sync_components_to_available_devices(components)
-            
-            # Sync connections to IO Connect table
-            self._sync_connections_to_io_connect(connections, components)
-            
-            logger.info("Synchronization completed successfully")
-            return True
-            
-        except Exception as e:
-            logger.error("Error during synchronization: %s", e)
-            return False
-
-    def _sync_components_to_available_devices(self, components: List[Dict[str, Any]]):
-        """Sync Visual BCF components to Available Devices table"""
-        try:
-            available_devices = self.rdb_manager.get_table(str(DCF_DEVICES_AVAILABLE) + ".devices") or []
-            existing_device_names = {device.get("Device Name", "") for device in available_devices}
-            
-            for component in components:
-                component_name = component.get('name', '')
-                component_type = component.get('component_type', '')
-                
-                # Skip if device already exists
-                if component_name in existing_device_names:
-                    continue
-                
-                # Create device entry for Available Devices table
-                device_entry = {
-                    "Device Name": component_name,
-                    "Control Type\n(MIPI / GPIO)": "MIPI" if component_type in ['modem', 'device'] else "GPIO",
-                    "Module": component_type.upper(),
-                    "USID\n(Default)": component.get('id', '')[:8],  # Use first 8 chars of component ID
-                    "MID\n(MSB)": "00",
-                    "MID\n(LSB)": "01",
-                    "PID": "0000",
-                    "EXT PID": "0000",
-                    "REV ID": "1.0",
-                    "DCF Type": "Standard"
-                }
-                
-                available_devices.append(device_entry)
-                existing_device_names.add(component_name)
-                logger.info("Synced component '%s' to Available Devices table", component_name)
-            
-            # Update the Available Devices table
-            self.rdb_manager.set_table(str(DCF_DEVICES_AVAILABLE) + ".devices", available_devices)
-            logger.info("Updated Available Devices table with %d devices", len(available_devices))
-            
-        except Exception as e:
-            logger.error("Error syncing components to available devices: %s", e)
-
-    def _sync_connections_to_io_connect(self, connections: List[Dict[str, Any]], components: List[Dict[str, Any]]):
-        """Sync Visual BCF connections to IO Connect table"""
-        try:
-            io_connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
-            existing_connection_ids = {conn.get("Connection ID", "") for conn in io_connections}
-            
-            # Create a mapping of component IDs to names for easier lookup
-            component_id_to_name = {comp.get('id', ''): comp.get('name', '') for comp in components}
-            
-            for connection in connections:
-                connection_id = connection.get('id', '')
-                
-                # Skip if connection already exists
-                if connection_id in existing_connection_ids:
-                    continue
-                
-                from_component_id = connection.get('from_component_id', '')
-                to_component_id = connection.get('to_component_id', '')
-                
-                # Get component names
-                from_component_name = component_id_to_name.get(from_component_id, 'Unknown')
-                to_component_name = component_id_to_name.get(to_component_id, 'Unknown')
-                
-                # Create IO connection entry
-                io_connection_entry = {
-                    "Connection ID": connection_id,
-                    "Source Device": from_component_name,
-                    "Source Pin": connection.get('from_pin_id', ''),
-                    "Source Sub Block": "Main Block",  # Default value
-                    "Dest Device": to_component_name,
-                    "Dest Pin": connection.get('to_pin_id', ''),
-                    "Dest Sub Block": "Main Block",  # Default value
-                    "Connection Type": "Wire",
-                    "Status": "Active"
-                }
-                
-                io_connections.append(io_connection_entry)
-                existing_connection_ids.add(connection_id)
-                logger.info("Synced connection '%s' to IO Connect table", connection_id)
-            
-            # Update the IO Connect table
-            self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", io_connections)
-            logger.info("Updated IO Connect table with %d connections", len(io_connections))
-            
-        except Exception as e:
-            logger.error("Error syncing connections to IO connect: %s", e)
-
-    def populate_device_tables_from_existing_data(self):
-        """Populate device settings and IO connect tables with existing Visual BCF data"""
-        try:
-            logger.info("Populating device tables from existing Visual BCF data...")
-            
-            # First, ensure the tables are initialized
-            self._initialize_device_settings_tables()
-            self._initialize_io_connect_tables()
-            
-            # Then sync the data
-            success = self.sync_visual_bcf_to_device_tables()
-            
-            if success:
-                logger.info("Device tables populated successfully from existing data")
-            else:
-                logger.error("Failed to populate device tables from existing data")
-            
-            return success
-            
-        except Exception as e:
-            logger.error("Error populating device tables: %s", e)
-            return False
-
     def get_table_statistics(self) -> Dict[str, Any]:
-        """Get statistics about all tables including the new device tables"""
+        """Get comprehensive statistics for all tables including compatibility views"""
         try:
             # Get Visual BCF table statistics
             visual_bcf_stats = self.get_statistics()
             
-            # Get Available Devices table statistics
-            available_devices = self.get_available_devices()
-            available_devices_count = len(available_devices)
-            
-            # Get Selected Devices table statistics (for revision 1)
-            selected_devices = self.get_selected_devices(revision=1)
-            selected_devices_count = len(selected_devices)
-            
-            # Get IO Connect table statistics
-            io_connections = self.get_io_connections()
-            io_connections_count = len(io_connections)
+            # Get table format data counts
+            available_devices_count = len(self.get_available_devices_for_table())
+            io_connections_count = len(self.get_io_connections_for_table())
             
             # Combine all statistics
             all_stats = {
                 **visual_bcf_stats,
                 'available_devices_count': available_devices_count,
-                'selected_devices_count': selected_devices_count,
                 'io_connections_count': io_connections_count,
-                'total_tables': 5,  # components, connections, available_devices, selected_devices, io_connections
+                'total_tables': 2,  # components, connections (single source of truth)
                 'table_status': {
                     'visual_bcf_components': 'Active' if visual_bcf_stats['component_count'] > 0 else 'Empty',
                     'visual_bcf_connections': 'Active' if visual_bcf_stats['connection_count'] > 0 else 'Empty',
-                    'available_devices': 'Active' if available_devices_count > 0 else 'Empty',
-                    'selected_devices': 'Active' if selected_devices_count > 0 else 'Empty',
-                    'io_connections': 'Active' if io_connections_count > 0 else 'Empty'
+                    'available_devices_table_view': 'Active' if available_devices_count > 0 else 'Empty',
+                    'io_connections_table_view': 'Active' if io_connections_count > 0 else 'Empty'
+                },
+                'compatibility': {
+                    'legacy_bcf_compatible': True,
+                    'single_source_of_truth': True,
+                    'external_config_loaded': len(self.component_configs) > 0
                 }
             }
             
@@ -1114,14 +738,17 @@ class VisualBCFDataModel(QObject):
                 'component_count': 0,
                 'connection_count': 0,
                 'available_devices_count': 0,
-                'selected_devices_count': 0,
                 'io_connections_count': 0,
-                'total_tables': 5,
+                'total_tables': 2,
                 'table_status': {
                     'visual_bcf_components': 'Error',
                     'visual_bcf_connections': 'Error',
-                    'available_devices': 'Error',
-                    'selected_devices': 'Error',
-                    'io_connections': 'Error'
+                    'available_devices_table_view': 'Error',
+                    'io_connections_table_view': 'Error'
+                },
+                'compatibility': {
+                    'legacy_bcf_compatible': False,
+                    'single_source_of_truth': False,
+                    'external_config_loaded': False
                 }
             }

@@ -275,42 +275,6 @@
               "edge": "right"
             }
           ]
-        },
-        {
-          "id": "6829ba0d-7e35-4ea8-a1a8-86420604dae7",
-          "name": "Capacitor_temp",
-          "component_type": "capacitor",
-          "function_type": "",
-          "properties": {},
-          "visual_properties": {
-            "position": {
-              "x": 218.0,
-              "y": -6.0
-            },
-            "size": {
-              "width": 100,
-              "height": 80
-            },
-            "rotation": 0
-          },
-          "pins": [
-            {
-              "pin_id": "POS",
-              "position": {
-                "x": -4.0,
-                "y": 26.0
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "NEG",
-              "position": {
-                "x": 96.0,
-                "y": 26.0
-              },
-              "edge": "right"
-            }
-          ]
         }
       ],
       "connections": [
@@ -320,20 +284,6 @@
           "from_pin_id": "R4",
           "to_component_id": "58291af8-78fc-41b4-a079-d83d4ebc53a5",
           "to_pin_id": "A",
-          "connection_type": "wire",
-          "properties": {},
-          "visual_properties": {
-            "path_points": [],
-            "line_style": "solid",
-            "color": "#000000"
-          }
-        },
-        {
-          "id": "7dbd1857-a3c5-4a8a-8b40-67f91aa16da5",
-          "from_component_id": "6829ba0d-7e35-4ea8-a1a8-86420604dae7",
-          "from_pin_id": "POS",
-          "to_component_id": "981a5b9e-301a-4eab-af89-c77962272933",
-          "to_pin_id": "R6",
           "connection_type": "wire",
           "properties": {},
           "visual_properties": {
@@ -358,14 +308,151 @@
     },
     "dcf": {
       "devices": {
-        "devices": [],
+        "devices": [
+          {
+            "Device Name": "Chip_temp",
+            "Control Type\n(MIPI / GPIO)": "GPIO",
+            "Module": "CHIP",
+            "USID\n(Default)": "981a5b9e",
+            "MID\n(MSB)": "00",
+            "MID\n(LSB)": "01",
+            "PID": "0000",
+            "EXT PID": "0000",
+            "REV ID": "1.0",
+            "DCF Type": "Standard"
+          },
+          {
+            "Device Name": "Resistor_temp",
+            "Control Type\n(MIPI / GPIO)": "GPIO",
+            "Module": "RESISTOR",
+            "USID\n(Default)": "58291af8",
+            "MID\n(MSB)": "00",
+            "MID\n(LSB)": "01",
+            "PID": "0000",
+            "EXT PID": "0000",
+            "REV ID": "1.0",
+            "DCF Type": "Standard"
+          },
+          {
+            "Device Name": "Capacitor_temp",
+            "Control Type\n(MIPI / GPIO)": "GPIO",
+            "Module": "CAPACITOR",
+            "USID\n(Default)": "6829ba0d",
+            "MID\n(MSB)": "00",
+            "MID\n(LSB)": "01",
+            "PID": "0000",
+            "EXT PID": "0000",
+            "REV ID": "1.0",
+            "DCF Type": "Standard"
+          }
+        ],
         "mips": []
       }
     },
     "bcf": {
       "bcf_db": {
         "bcf_db_io_connect_enhanced": {
-          "io_connects": []
+          "io_connects": [
+            {
+              "Connection ID": "ffa59edf-329b-447d-bd54-af51216bfd19",
+              "Source Device": "Chip_temp",
+              "Source Pin": "R4",
+              "Source Sub Block": "Main Block",
+              "Dest Device": "Resistor_temp",
+              "Dest Pin": "A",
+              "Dest Sub Block": "Main Block",
+              "Connection Type": "Wire",
+              "Status": "Active"
+            },
+            {
+              "Connection ID": "7dbd1857-a3c5-4a8a-8b40-67f91aa16da5",
+              "Source Device": "Capacitor_temp",
+              "Source Pin": "POS",
+              "Source Sub Block": "Main Block",
+              "Dest Device": "Chip_temp",
+              "Dest Pin": "R6",
+              "Dest Sub Block": "Main Block",
+              "Connection Type": "Wire",
+              "Status": "Active"
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            }
+          ]
         }
       }
     }
