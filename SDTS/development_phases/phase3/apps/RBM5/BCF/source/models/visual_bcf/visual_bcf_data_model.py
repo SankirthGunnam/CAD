@@ -63,6 +63,9 @@ class VisualBCFDataModel(QObject):
         self._initialize_visual_bcf_tables()
         self._initialize_device_settings_tables()
         self._initialize_io_connect_tables()
+        
+        # Populate device tables from existing Visual BCF data if available
+        self._auto_populate_device_tables()
 
     def _initialize_visual_bcf_tables(self):
         """Initialize Visual BCF tables in the database if they don't exist"""
@@ -122,12 +125,42 @@ class VisualBCFDataModel(QObject):
         except Exception as e:
             logger.error("Error initializing IO connect tables: %s", e)
 
+    def _auto_populate_device_tables(self):
+        """Automatically populate device tables if Visual BCF data exists but device tables are empty"""
+        try:
+            # Check if Visual BCF tables have data
+            components = self.rdb_manager.get_table(self.components_table_path) or []
+            connections = self.rdb_manager.get_table(self.connections_table_path) or []
+            
+            # Check if device tables are empty
+            available_devices = self.rdb_manager.get_table(str(DCF_DEVICES_AVAILABLE) + ".devices") or []
+            io_connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
+            
+            # If Visual BCF has data but device tables are empty, populate them
+            if (len(components) > 0 or len(connections) > 0) and (len(available_devices) == 0 and len(io_connections) == 0):
+                logger.info("Auto-populating device tables from existing Visual BCF data...")
+                self.populate_device_tables_from_existing_data()
+            elif len(components) > 0 or len(connections) > 0:
+                logger.info("Device tables already have data, skipping auto-population")
+            else:
+                logger.info("No Visual BCF data available for auto-population")
+                
+        except Exception as e:
+            logger.warning("Auto-population failed: %s", e)
+
 
     def _on_data_changed(self, changed_path: str):
         """Handle database changes"""
         if changed_path.startswith("config.visual_bcf"):
             # Data changed in RDB, emit signal for other parts to refresh
             self.data_synchronized.emit()
+            
+            # Auto-sync to device tables when Visual BCF data changes
+            try:
+                self.sync_visual_bcf_to_device_tables()
+            except Exception as e:
+                logger.warning("Auto-sync failed: %s", e)
+                
         elif changed_path.startswith(str(DCF_DEVICES_AVAILABLE)):
             self.data_synchronized.emit()
         elif changed_path.startswith(str(BCF_DB_IO_CONNECT_ENHANCED)):
@@ -786,7 +819,7 @@ class VisualBCFDataModel(QObject):
             devices.append(device_entry)
             self.rdb_manager.set_table(str(DCF_DEVICES_AVAILABLE()) + ".devices", devices)
             
-            logger.info(f"Added available device: {device_data.get('Device Name', 'Unknown')}")
+            logger.info("Added available device: %s", device_data.get('Device Name', 'Unknown'))
             return True
             
         except Exception as e:
@@ -820,7 +853,7 @@ class VisualBCFDataModel(QObject):
             devices.append(device_entry)
             self.rdb_manager.set_table(mipi_path, devices)
             
-            logger.info(f"Added selected device for revision {revision}: {device_data.get('Name', 'Unknown')}")
+            logger.info("Added selected device for revision %s: %s", revision, device_data.get('Name', 'Unknown'))
             return True
             
         except Exception as e:
@@ -857,7 +890,7 @@ class VisualBCFDataModel(QObject):
             connections.append(connection_entry)
             self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", connections)
             
-            logger.info(f"Added IO connection: {connection_data.get('Connection ID', 'Unknown')}")
+            logger.info("Added IO connection: %s", connection_data.get('Connection ID', 'Unknown'))
             return True
             
         except Exception as e:
@@ -875,10 +908,10 @@ class VisualBCFDataModel(QObject):
                     connections[i].update(updated_data)
                     self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", connections)
                     
-                    logger.info(f"Updated IO connection: {connection_id}")
+                    logger.info("Updated IO connection: %s", connection_id)
                     return True
             
-            logger.warning(f"IO connection not found: {connection_id}")
+            logger.warning("IO connection not found: %s", connection_id)
             return False
             
         except Exception as e:
@@ -896,12 +929,199 @@ class VisualBCFDataModel(QObject):
                     removed_connection = connections.pop(i)
                     self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", connections)
                     
-                    logger.info(f"Removed IO connection: {connection_id}")
+                    logger.info("Removed IO connection: %s", connection_id)
                     return True
             
-            logger.warning(f"IO connection not found: {connection_id}")
+            logger.warning("IO connection not found: %s", connection_id)
             return False
             
         except Exception as e:
             logger.error("Error removing IO connection %s: %s", connection_id, e)
             return False
+
+    # Data Synchronization Methods
+
+    def sync_visual_bcf_to_device_tables(self):
+        """Synchronize Visual BCF components and connections to device settings and IO connect tables"""
+        try:
+            logger.info("Starting synchronization of Visual BCF data to device tables...")
+            
+            # Get all Visual BCF components
+            components = self.rdb_manager.get_table(self.components_table_path) or []
+            connections = self.rdb_manager.get_table(self.connections_table_path) or []
+            
+            # Sync components to Available Devices table
+            self._sync_components_to_available_devices(components)
+            
+            # Sync connections to IO Connect table
+            self._sync_connections_to_io_connect(connections, components)
+            
+            logger.info("Synchronization completed successfully")
+            return True
+            
+        except Exception as e:
+            logger.error("Error during synchronization: %s", e)
+            return False
+
+    def _sync_components_to_available_devices(self, components: List[Dict[str, Any]]):
+        """Sync Visual BCF components to Available Devices table"""
+        try:
+            available_devices = self.rdb_manager.get_table(str(DCF_DEVICES_AVAILABLE) + ".devices") or []
+            existing_device_names = {device.get("Device Name", "") for device in available_devices}
+            
+            for component in components:
+                component_name = component.get('name', '')
+                component_type = component.get('component_type', '')
+                
+                # Skip if device already exists
+                if component_name in existing_device_names:
+                    continue
+                
+                # Create device entry for Available Devices table
+                device_entry = {
+                    "Device Name": component_name,
+                    "Control Type\n(MIPI / GPIO)": "MIPI" if component_type in ['modem', 'device'] else "GPIO",
+                    "Module": component_type.upper(),
+                    "USID\n(Default)": component.get('id', '')[:8],  # Use first 8 chars of component ID
+                    "MID\n(MSB)": "00",
+                    "MID\n(LSB)": "01",
+                    "PID": "0000",
+                    "EXT PID": "0000",
+                    "REV ID": "1.0",
+                    "DCF Type": "Standard"
+                }
+                
+                available_devices.append(device_entry)
+                existing_device_names.add(component_name)
+                logger.info("Synced component '%s' to Available Devices table", component_name)
+            
+            # Update the Available Devices table
+            self.rdb_manager.set_table(str(DCF_DEVICES_AVAILABLE) + ".devices", available_devices)
+            logger.info("Updated Available Devices table with %d devices", len(available_devices))
+            
+        except Exception as e:
+            logger.error("Error syncing components to available devices: %s", e)
+
+    def _sync_connections_to_io_connect(self, connections: List[Dict[str, Any]], components: List[Dict[str, Any]]):
+        """Sync Visual BCF connections to IO Connect table"""
+        try:
+            io_connections = self.rdb_manager.get_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects") or []
+            existing_connection_ids = {conn.get("Connection ID", "") for conn in io_connections}
+            
+            # Create a mapping of component IDs to names for easier lookup
+            component_id_to_name = {comp.get('id', ''): comp.get('name', '') for comp in components}
+            
+            for connection in connections:
+                connection_id = connection.get('id', '')
+                
+                # Skip if connection already exists
+                if connection_id in existing_connection_ids:
+                    continue
+                
+                from_component_id = connection.get('from_component_id', '')
+                to_component_id = connection.get('to_component_id', '')
+                
+                # Get component names
+                from_component_name = component_id_to_name.get(from_component_id, 'Unknown')
+                to_component_name = component_id_to_name.get(to_component_id, 'Unknown')
+                
+                # Create IO connection entry
+                io_connection_entry = {
+                    "Connection ID": connection_id,
+                    "Source Device": from_component_name,
+                    "Source Pin": connection.get('from_pin_id', ''),
+                    "Source Sub Block": "Main Block",  # Default value
+                    "Dest Device": to_component_name,
+                    "Dest Pin": connection.get('to_pin_id', ''),
+                    "Dest Sub Block": "Main Block",  # Default value
+                    "Connection Type": "Wire",
+                    "Status": "Active"
+                }
+                
+                io_connections.append(io_connection_entry)
+                existing_connection_ids.add(connection_id)
+                logger.info("Synced connection '%s' to IO Connect table", connection_id)
+            
+            # Update the IO Connect table
+            self.rdb_manager.set_table(str(BCF_DB_IO_CONNECT_ENHANCED) + ".io_connects", io_connections)
+            logger.info("Updated IO Connect table with %d connections", len(io_connections))
+            
+        except Exception as e:
+            logger.error("Error syncing connections to IO connect: %s", e)
+
+    def populate_device_tables_from_existing_data(self):
+        """Populate device settings and IO connect tables with existing Visual BCF data"""
+        try:
+            logger.info("Populating device tables from existing Visual BCF data...")
+            
+            # First, ensure the tables are initialized
+            self._initialize_device_settings_tables()
+            self._initialize_io_connect_tables()
+            
+            # Then sync the data
+            success = self.sync_visual_bcf_to_device_tables()
+            
+            if success:
+                logger.info("Device tables populated successfully from existing data")
+            else:
+                logger.error("Failed to populate device tables from existing data")
+            
+            return success
+            
+        except Exception as e:
+            logger.error("Error populating device tables: %s", e)
+            return False
+
+    def get_table_statistics(self) -> Dict[str, Any]:
+        """Get statistics about all tables including the new device tables"""
+        try:
+            # Get Visual BCF table statistics
+            visual_bcf_stats = self.get_statistics()
+            
+            # Get Available Devices table statistics
+            available_devices = self.get_available_devices()
+            available_devices_count = len(available_devices)
+            
+            # Get Selected Devices table statistics (for revision 1)
+            selected_devices = self.get_selected_devices(revision=1)
+            selected_devices_count = len(selected_devices)
+            
+            # Get IO Connect table statistics
+            io_connections = self.get_io_connections()
+            io_connections_count = len(io_connections)
+            
+            # Combine all statistics
+            all_stats = {
+                **visual_bcf_stats,
+                'available_devices_count': available_devices_count,
+                'selected_devices_count': selected_devices_count,
+                'io_connections_count': io_connections_count,
+                'total_tables': 5,  # components, connections, available_devices, selected_devices, io_connections
+                'table_status': {
+                    'visual_bcf_components': 'Active' if visual_bcf_stats['component_count'] > 0 else 'Empty',
+                    'visual_bcf_connections': 'Active' if visual_bcf_stats['connection_count'] > 0 else 'Empty',
+                    'available_devices': 'Active' if available_devices_count > 0 else 'Empty',
+                    'selected_devices': 'Active' if selected_devices_count > 0 else 'Empty',
+                    'io_connections': 'Active' if io_connections_count > 0 else 'Empty'
+                }
+            }
+            
+            return all_stats
+            
+        except Exception as e:
+            logger.error("Error getting table statistics: %s", e)
+            return {
+                'component_count': 0,
+                'connection_count': 0,
+                'available_devices_count': 0,
+                'selected_devices_count': 0,
+                'io_connections_count': 0,
+                'total_tables': 5,
+                'table_status': {
+                    'visual_bcf_components': 'Error',
+                    'visual_bcf_connections': 'Error',
+                    'available_devices': 'Error',
+                    'selected_devices': 'Error',
+                    'io_connections': 'Error'
+                }
+            }

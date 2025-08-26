@@ -36,8 +36,8 @@
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": -167.0,
-              "y": -27.0
+              "x": -112.0,
+              "y": -142.0
             },
             "size": {
               "width": 100,
@@ -248,8 +248,8 @@
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 332.0,
-              "y": -26.0
+              "x": 285.0,
+              "y": -124.0
             },
             "size": {
               "width": 100,
@@ -284,8 +284,8 @@
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 307.0,
-              "y": 81.0
+              "x": 218.0,
+              "y": -6.0
             },
             "size": {
               "width": 100,
@@ -353,6 +353,19 @@
         "grid_settings": {
           "enabled": true,
           "size": 20
+        }
+      }
+    },
+    "dcf": {
+      "devices": {
+        "devices": [],
+        "mips": []
+      }
+    },
+    "bcf": {
+      "bcf_db": {
+        "bcf_db_io_connect_enhanced": {
+          "io_connects": []
         }
       }
     }

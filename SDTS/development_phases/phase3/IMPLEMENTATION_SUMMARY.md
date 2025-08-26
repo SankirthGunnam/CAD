@@ -40,6 +40,12 @@ This document summarizes the implementation of the requested changes to move com
 - **`update_io_connection(connection_id, updated_data)`**: Updates existing IO connection
 - **`remove_io_connection(connection_id)`**: Removes IO connection
 
+#### Data Synchronization Methods
+- **`sync_visual_bcf_to_device_tables()`**: Synchronizes Visual BCF data to device tables
+- **`populate_device_tables_from_existing_data()`**: Populates device tables from existing Visual BCF data
+- **`get_table_statistics()`**: Gets comprehensive statistics for all tables
+- **`_auto_populate_device_tables()`**: Automatically populates tables on initialization
+
 ### 3. Updated `io_connect_model.py`
 
 #### Enhanced Table Structure
@@ -90,6 +96,12 @@ This document summarizes the implementation of the requested changes to move com
 2. **Selected Devices**: Stored in `config/bcf/bcf_db/dev_mipi_rev_{revision}` table
 3. **Model Integration**: Visual BCF data model can add/remove devices from both tables
 
+### Data Synchronization Flow
+1. **Automatic Sync**: When Visual BCF data changes, device tables are automatically synchronized
+2. **Manual Sync**: `sync_visual_bcf_to_device_tables()` method for manual synchronization
+3. **Auto-Population**: Tables are automatically populated on initialization if Visual BCF data exists
+4. **Real-time Updates**: Changes in components/connections automatically update device tables
+
 ### IO Connection Flow
 1. **Enhanced IO Connect Table**: Includes new Source/Dest Sub Block columns
 2. **CRUD Operations**: Full create, read, update, delete support
@@ -105,6 +117,11 @@ This document summarizes the implementation of the requested changes to move com
 ### Integration Testing
 - Created `test_new_paths_and_tables.py` for comprehensive testing
 - Tests data model initialization, table operations, and data persistence
+
+### Synchronization Testing
+- Created `test_table_synchronization.py` for testing data synchronization
+- Tests automatic and manual synchronization between Visual BCF and device tables
+- Created `populate_device_tables.py` utility for manual table population
 
 ## 🚀 Benefits
 
@@ -162,6 +179,21 @@ data_model.add_io_connection(connection_data)
 3. **Data Migration**: Migrate existing data to new table structures
 4. **Documentation**: Update user documentation for new features
 5. **Performance Testing**: Verify performance with large datasets
+
+## 🔧 Solution to Empty Tables Issue
+
+The issue where "All Devices table, Selected Devices table, IO Connect table are not showing any content" has been resolved by implementing:
+
+1. **Automatic Synchronization**: Tables are automatically populated when Visual BCF data changes
+2. **Initialization Population**: Tables are populated on startup if Visual BCF data exists
+3. **Real-time Updates**: Changes in components/connections automatically update device tables
+4. **Manual Population**: `populate_device_tables_from_existing_data()` method for manual population
+5. **Comprehensive Statistics**: `get_table_statistics()` method to monitor all table states
+
+### How to Use:
+- **Automatic**: Tables will be populated automatically when you start the application
+- **Manual**: Run `python3 populate_device_tables.py` to manually populate tables
+- **API**: Call `data_model.populate_device_tables_from_existing_data()` from your code
 
 ## 🎯 Status
 
