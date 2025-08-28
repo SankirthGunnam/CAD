@@ -1,62 +1,83 @@
 #!/usr/bin/env python3
 """
-Simple test to verify path setup works without PySide6 dependencies
+Simple test to check which imports are causing the hang
 """
 
 import sys
-import os
+from pathlib import Path
 
-print("=== Testing Centralized Path Setup (No PySide6) ===")
+print("Starting import test...")
 
-# Test the centralized path setup
+# Add the project root to the Python path
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+
+print("✓ Path setup complete")
+
 try:
-    print("1. Testing apps.RBM5.BCF import...")
-    import apps.RBM5.BCF
-    print("✓ Successfully imported apps.RBM5.BCF")
-
-    apps_in_path = any('apps' in path for path in sys.path)
-    print(f"✓ Apps directory in sys.path: {apps_in_path}")
-
+    print("Testing RDBManager import...")
+    from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
+    print("✓ RDBManager imported successfully")
 except ImportError as e:
-    print(f"✗ Failed: {e}")
+    print(f"✗ RDBManager import failed: {e}")
+    sys.exit(1)
 
-# Test importing database interface (no PySide6 needed)
 try:
-    print("\n2. Testing database interface import...")
-    from apps.RBM5.BCF.source.RDB.database_interface import DatabaseInterface
-    print("✓ Successfully imported DatabaseInterface")
+    print("Testing VisualBCFDataModel import...")
+    from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualBCFDataModel
+    print("✓ VisualBCFDataModel imported successfully")
 except ImportError as e:
-    print(f"✗ Failed: {e}")
+    print(f"✗ VisualBCFDataModel import failed: {e}")
+    sys.exit(1)
 
-# Test importing modules that have been cleaned up
-modules_to_test = [
-    ("JSON Database", "apps.RBM5.BCF.source.RDB.json_db", "JSONDatabase"),
-    ("RDB Manager", "apps.RBM5.BCF.source.RDB.rdb_manager", "RDBManager"),
-]
+try:
+    print("Testing DeviceSettingsModel import...")
+    from apps.RBM5.BCF.source.models.visual_bcf.device_settings_model import DeviceSettingsModel
+    print("✓ DeviceSettingsModel imported successfully")
+except ImportError as e:
+    print(f"✗ DeviceSettingsModel import failed: {e}")
+    sys.exit(1)
 
-print("\n3. Testing cleaned-up modules...")
-for name, module_path, class_name in modules_to_test:
-    try:
-        module = __import__(module_path, fromlist=[class_name])
-        cls = getattr(module, class_name)
-        print(f"✓ {name}: Successfully imported {class_name}")
-    except ImportError as e:
-        if "PySide6" in str(e):
-            print(f"⚠ {name}: Skipped due to PySide6 dependency")
-        else:
-            print(f"✗ {name}: Failed - {e}")
-    except Exception as e:
-        print(f"✗ {name}: Error - {e}")
+try:
+    print("Testing IOConnectModel import...")
+    from apps.RBM5.BCF.source.models.visual_bcf.io_connect_model import IOConnectModel
+    print("✓ IOConnectModel imported successfully")
+except ImportError as e:
+    print(f"✗ IOConnectModel import failed: {e}")
+    sys.exit(1)
 
-print(f"\n4. Final sys.path check:")
-project_paths = [
-    p for p in sys.path if 'development_phases' in p or 'apps' in os.path.basename(p)]
-print(f"✓ Project paths added: {len(project_paths)}")
-for path in project_paths:
-    print(f"   - {path}")
+print("✓ All imports successful!")
+print("Testing basic functionality...")
 
-print("\n=== Summary ===")
-print("✓ Centralized path setup is working correctly")
-print("✓ No more redundant os.path.dirname code in individual files")
-print("✓ All imports now use a single line: 'import apps.RBM5.BCF'")
-print("✓ Path management is centralized in apps/RBM5/BCF/__init__.py")
+try:
+    # Create RDB manager
+    rdb_manager = RDBManager("test_device_config.json")
+    print("✓ RDB manager created")
+    
+    # Initialize data model
+    data_model = VisualBCFDataModel(rdb_manager)
+    print("✓ Data model initialized")
+    
+    # Test adding a component
+    component_id = data_model.add_component(
+        name="Test Component",
+        component_type="test",
+        position=(100, 100)
+    )
+    print(f"✓ Component added: {component_id}")
+    
+    # Test getting table data
+    available_devices = data_model.get_available_devices_for_table()
+    print(f"✓ Available devices: {len(available_devices)}")
+    
+    io_connections = data_model.get_io_connections_for_table()
+    print(f"✓ IO connections: {len(io_connections)}")
+    
+    print("🎉 All tests passed!")
+    
+except Exception as e:
+    print(f"✗ Error during testing: {e}")
+    import traceback
+    traceback.print_exc()
+
+print("🏁 Test complete")

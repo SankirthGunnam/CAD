@@ -23,20 +23,22 @@ class DeviceSettingsController(AbstractController):
     operations including CRUD operations, validation, and data synchronization.
     """
 
-    def __init__(self, rdb_manager, parent=None):
+    def __init__(self, rdb_manager, parent=None, data_model=None):
         """
         Initialize the device settings controller.
 
         Args:
             rdb_manager: Database manager instance for data operations
             parent: Parent QObject
+            data_model: Reference to Visual BCF data model for single source of truth
         """
         super().__init__(parent)
 
         self.rdb_manager = rdb_manager
+        self.data_model = data_model  # Store reference to main data model
 
         # Create Model and View instances
-        self._model = DeviceSettingsModel(parent=self, rdb=rdb_manager)
+        self._model = DeviceSettingsModel(parent=self, rdb=rdb_manager, data_model=data_model)
         self._view = DeviceSettingsView(parent=parent)
 
         # Initialize MVC connections

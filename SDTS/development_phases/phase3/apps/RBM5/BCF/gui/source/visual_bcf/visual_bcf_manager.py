@@ -134,21 +134,38 @@ class VisualBCFManager(QMainWindow):
             print(f"❌ Error creating VisualBCFController: {e}")
             self.visual_bcf_controller = None
 
+    def refresh_tables_from_data_model(self):
+        """Refresh all tables from the single source of truth data model"""
+        print("🔄 refresh_tables_from_data_model called!")
+        try:
+            if self.device_settings_controller and hasattr(self.device_settings_controller._model, 'refresh_from_data_model'):
+                print("🔄 Refreshing device settings tables...")
+                success = self.device_settings_controller._model.refresh_from_data_model()
+                print(f"✓ Device Settings tables refresh: {success}")
+            else:
+                print("⚠️ Device settings controller or model not available")
+            
+            if self.io_connect_controller and hasattr(self.io_connect_controller._model, 'refresh_from_data_model'):
+                print("🔄 Refreshing IO connect table...")
+                success = self.io_connect_controller._model.refresh_from_data_model()
+                print(f"✓ IO Connect table refresh: {success}")
+            else:
+                print("⚠️ IO connect controller or model not available")
+                
+        except Exception as e:
+            print(f"✗ Error refreshing tables: {e}")
+            import traceback
+            traceback.print_exc()
+
     def _connect_controller_signals(self):
         """Connect controller signals to manager"""
-        if self.visual_bcf_controller:
-            try:
-                # Connect controller operation signals to status updates
-                self.visual_bcf_controller.operation_completed.connect(
-                    lambda op_type, message: self.status_updated.emit(f"Controller: {message}")
-                )
-                self.visual_bcf_controller.error_occurred.connect(
-                    lambda error: self.error_occurred.emit(f"Controller Error: {error}")
-                )
+        try:
+            if self.visual_bcf_controller:
+                # Connect data change signals to refresh tables
+                self.visual_bcf_controller.data_synchronized.connect(self.refresh_tables_from_data_model)
                 print("✓ Controller signals connected to manager")
-
-            except Exception as e:
-                print(f"⚠️ Error connecting controller signals: {e}")
+        except Exception as e:
+            print(f"✗ Error connecting controller signals: {e}")
 
     def _setup_ui_layout(self):
         """Setup minimal UI layout using controller's view"""
@@ -201,10 +218,11 @@ class VisualBCFManager(QMainWindow):
         # Create Device Settings tab using new MVC controller
         if DeviceSettingsController:
             try:
-                # Create controller with proper RDB manager
+                # Create controller with proper RDB manager and data model reference
                 self.device_settings_controller = DeviceSettingsController(
                     rdb_manager=self.rdb_manager,
-                    parent=self
+                    parent=self,
+                    data_model=self.data_model  # Pass reference to main data model
                 )
                 print(
                     "created device settings controller",
@@ -233,10 +251,11 @@ class VisualBCFManager(QMainWindow):
         # Create IO Connect tab using new MVC controller
         if IOConnectController:
             try:
-                # Create controller with proper RDB manager
+                # Create controller with proper RDB manager and data model reference
                 self.io_connect_controller = IOConnectController(
                     rdb_manager=self.rdb_manager,
-                    parent=self
+                    parent=self,
+                    data_model=self.data_model  # Pass reference to main data model
                 )
 
                 # Get the view widget from controller

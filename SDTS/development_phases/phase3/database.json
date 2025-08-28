@@ -29,227 +29,53 @@
     "visual_bcf": {
       "components": [
         {
-          "id": "981a5b9e-301a-4eab-af89-c77962272933",
+          "id": "39e23c86-0bfa-4f73-be09-6fc5f80b417d",
           "name": "Chip_temp",
           "component_type": "chip",
-          "function_type": "",
-          "properties": {},
+          "function_type": "generic",
+          "properties": {
+            "function_type": "generic",
+            "interface_type": "GPIO"
+          },
           "visual_properties": {
             "position": {
-              "x": -112.0,
-              "y": -142.0
+              "x": -195.0,
+              "y": -150.0
             },
             "size": {
-              "width": 100,
-              "height": 80
+              "width": 80,
+              "height": 60
             },
             "rotation": 0
           },
           "pins": [
-            {
-              "pin_id": "L1",
-              "position": {
-                "x": -4.0,
-                "y": 4.571428571428571
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "L2",
-              "position": {
-                "x": -4.0,
-                "y": 13.142857142857142
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "L3",
-              "position": {
-                "x": -4.0,
-                "y": 21.714285714285715
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "L4",
-              "position": {
-                "x": -4.0,
-                "y": 30.285714285714285
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "L5",
-              "position": {
-                "x": -4.0,
-                "y": 38.857142857142854
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "L6",
-              "position": {
-                "x": -4.0,
-                "y": 47.42857142857143
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "R1",
-              "position": {
-                "x": 96.0,
-                "y": 4.571428571428571
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "R2",
-              "position": {
-                "x": 96.0,
-                "y": 13.142857142857142
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "R3",
-              "position": {
-                "x": 96.0,
-                "y": 21.714285714285715
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "R4",
-              "position": {
-                "x": 96.0,
-                "y": 30.285714285714285
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "R5",
-              "position": {
-                "x": 96.0,
-                "y": 38.857142857142854
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "R6",
-              "position": {
-                "x": 96.0,
-                "y": 47.42857142857143
-              },
-              "edge": "right"
-            },
-            {
-              "pin_id": "T1",
-              "position": {
-                "x": 10.285714285714286,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T2",
-              "position": {
-                "x": 24.571428571428573,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T3",
-              "position": {
-                "x": 38.85714285714286,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T4",
-              "position": {
-                "x": 53.142857142857146,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T5",
-              "position": {
-                "x": 67.42857142857143,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "T6",
-              "position": {
-                "x": 81.71428571428572,
-                "y": -4.0
-              },
-              "edge": "top"
-            },
-            {
-              "pin_id": "B1",
-              "position": {
-                "x": 10.285714285714286,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B2",
-              "position": {
-                "x": 24.571428571428573,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B3",
-              "position": {
-                "x": 38.85714285714286,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B4",
-              "position": {
-                "x": 53.142857142857146,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B5",
-              "position": {
-                "x": 67.42857142857143,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            },
-            {
-              "pin_id": "B6",
-              "position": {
-                "x": 81.71428571428572,
-                "y": 56.0
-              },
-              "edge": "bottom"
-            }
-          ]
+            "IN1",
+            "IN2",
+            "OUT",
+            "VCC",
+            "GND"
+          ],
+          "interface_type": "GPIO",
+          "interface": {},
+          "config": {},
+          "usid": "39e23c86",
+          "mid_msb": "00",
+          "mid_lsb": "01",
+          "pid": "0000",
+          "ext_pid": "0000",
+          "rev_id": "1.0",
+          "dcf_type": "Standard"
         },
         {
-          "id": "58291af8-78fc-41b4-a079-d83d4ebc53a5",
+          "id": "da7d331c-471b-490e-90f4-9e3a5a18e573",
           "name": "Resistor_temp",
           "component_type": "resistor",
           "function_type": "",
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 285.0,
-              "y": -124.0
+              "x": 130.0,
+              "y": -138.0
             },
             "size": {
               "width": 100,
@@ -257,42 +83,49 @@
             },
             "rotation": 0
           },
-          "pins": [
-            {
-              "pin_id": "A",
-              "position": {
-                "x": -4.0,
-                "y": 26.0
-              },
-              "edge": "left"
-            },
-            {
-              "pin_id": "B",
-              "position": {
-                "x": 96.0,
-                "y": 26.0
-              },
-              "edge": "right"
-            }
-          ]
-        }
-      ],
-      "connections": [
+          "pins": [],
+          "interface_type": "",
+          "interface": {},
+          "config": {},
+          "usid": "da7d331c",
+          "mid_msb": "00",
+          "mid_lsb": "01",
+          "pid": "0000",
+          "ext_pid": "0000",
+          "rev_id": "1.0",
+          "dcf_type": "Standard"
+        },
         {
-          "id": "ffa59edf-329b-447d-bd54-af51216bfd19",
-          "from_component_id": "981a5b9e-301a-4eab-af89-c77962272933",
-          "from_pin_id": "R4",
-          "to_component_id": "58291af8-78fc-41b4-a079-d83d4ebc53a5",
-          "to_pin_id": "A",
-          "connection_type": "wire",
+          "id": "c9cd1964-d76b-42d0-b4a7-1f963245fa98",
+          "name": "Capacitor_temp",
+          "component_type": "capacitor",
+          "function_type": "",
           "properties": {},
           "visual_properties": {
-            "path_points": [],
-            "line_style": "solid",
-            "color": "#000000"
-          }
+            "position": {
+              "x": 73.0,
+              "y": -17.0
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "interface_type": "",
+          "interface": {},
+          "config": {},
+          "usid": "c9cd1964",
+          "mid_msb": "00",
+          "mid_lsb": "01",
+          "pid": "0000",
+          "ext_pid": "0000",
+          "rev_id": "1.0",
+          "dcf_type": "Standard"
         }
       ],
+      "connections": [],
       "layout": {
         "scene_rect": {
           "x": -1000,

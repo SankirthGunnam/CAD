@@ -50,6 +50,7 @@ class VisualBCFController(QObject):
     # Signals
     operation_completed = Signal(str, str)  # operation_type, message
     error_occurred = Signal(str)  # error_message
+    data_synchronized = Signal() # Signal to notify that data model is synchronized
 
     def __init__(self, parent_widget: QWidget, data_model: VisualBCFDataModel):
         super().__init__()
@@ -798,6 +799,11 @@ class VisualBCFController(QObject):
                 file_path) if file_path else self.data_model.save_visual_bcf_data()
 
             if success:
+                # Emit signal to refresh tables from the single source of truth
+                print("🔄 Emitting data_synchronized signal from save_scene...")
+                self.data_synchronized.emit()
+                print("✓ data_synchronized signal emitted")
+                
                 message = f"Scene saved with {component_count} components and {connection_count} connections"
                 self.operation_completed.emit("save_scene", message)
                 return True
@@ -911,6 +917,17 @@ class VisualBCFController(QObject):
                         wrapper = ComponentGraphicsItem(component_id, component)
                         self._component_graphics_items[component_id] = wrapper
                         
+                        # Add component to data model with the same ID to maintain consistency
+                        position = (pos.get("x", 0), pos.get("y", 0))
+                        properties = comp_data.get("properties", {})
+                        self.data_model.add_component(
+                            component_name, 
+                            component_type, 
+                            position, 
+                            properties, 
+                            component_id  # Pass the component ID to maintain consistency
+                        )
+                        
                         # Set component properties
                         component.component_id = component_id
                         component.properties = comp_data.get("properties", {})
@@ -955,18 +972,20 @@ class VisualBCFController(QObject):
                         from_pin = None
                         to_pin = None
                         
+                        # Match pins by ID since we're now saving pin IDs consistently
                         for pin in from_comp_wrapper.graphics_item.pins:
-                            if pin.pin_id == from_pin_id:
+                            if hasattr(pin, 'pin_id') and pin.pin_id == from_pin_id:
                                 from_pin = pin
                                 break
-                                
+                        
                         for pin in to_comp_wrapper.graphics_item.pins:
-                            if pin.pin_id == to_pin_id:
+                            if hasattr(pin, 'pin_id') and pin.pin_id == to_pin_id:
                                 to_pin = pin
                                 break
                         
                         if not from_pin or not to_pin:
-                            logger.warning("Could not find pins for connection %s", connection_id)
+                            logger.warning("Could not find pins for connection %s (from_pin: %s, to_pin: %s)", 
+                                         connection_id, from_pin_id, to_pin_id)
                             continue
                         
                         # Create the wire using the scene's wire creation logic
@@ -1030,6 +1049,11 @@ class VisualBCFController(QObject):
                 
                 # Force a complete scene refresh to ensure no leftover items
                 self._force_scene_refresh()
+
+                # Emit signal to refresh tables from the single source of truth
+                print("🔄 Emitting data_synchronized signal from load_scene...")
+                self.data_synchronized.emit()
+                print("✓ data_synchronized signal emitted")
 
                 self.operation_completed.emit(
                     "load_scene",
@@ -1364,9 +1388,9 @@ class VisualBCFController(QObject):
                             connection_data = {
                                 "id": connection_id,
                                 "from_component_id": start_comp_id,  # Use component ID, not name
-                                "from_pin_id": wire.start_pin.pin_id,
+                                "from_pin_id": wire.start_pin.pin_id,  # Use pin ID for consistency
                                 "to_component_id": end_comp_id,      # Use component ID, not name
-                                "to_pin_id": wire.end_pin.pin_id,
+                                "to_pin_id": wire.end_pin.pin_id,    # Use pin ID for consistency
                                 "properties": getattr(wire, 'properties', {})
                             }
                             scene_data["connections"].append(connection_data)

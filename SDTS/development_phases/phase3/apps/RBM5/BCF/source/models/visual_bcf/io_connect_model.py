@@ -57,17 +57,18 @@ class IOConnectModel:
             # This would update the Visual BCF connection, which automatically
             # updates all table views since they use the same data source
             try:
-                # Get the current connection
-                connection = self.data_model.get_connection(connection_id)
-                if connection:
-                    # Update the connection properties
-                    success = self.data_model.update_component_properties(connection_id, updated_data)
-                    if success:
-                        # Refresh the table view
-                        self.refresh_from_data_model()
-                        return True
+                # Update the connection using the data model's method
+                success = self.data_model.update_connection(connection_id, updated_data)
+                if success:
+                    # Refresh the table view
+                    self.refresh_from_data_model()
+                    return True
+                else:
+                    print(f"Failed to update connection {connection_id}")
+                    return False
             except Exception as e:
                 print(f"Error updating connection: {e}")
+                return False
         return False
 
     def delete_connection(self, connection_id: str):
