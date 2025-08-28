@@ -238,14 +238,14 @@ class Wire(QGraphicsPathItem):
         self.wire_width = 2
         self.wire_color = QColor(0, 0, 0)  # Black
         self.temp_color = QColor(255, 0, 0)  # Red for temporary
-        
+
         # Visual appearance
         self.setPen(QPen(self.wire_color, self.wire_width))
         self.setZValue(5)  # Wires above components but below pins
-        
+
         # Make wires selectable and deletable
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable, True)
-        
+
         # Disable bounding rect display and geometry changes for cleaner appearance
         self.setFlag(self.GraphicsItemFlag.ItemSendsGeometryChanges, False)
         
@@ -262,7 +262,7 @@ class Wire(QGraphicsPathItem):
     def update_path(self, temp_end_pos: Optional[QPointF] = None):
         """Update wire path position and routing"""
         start_pos = self.start_pin.get_connection_point()
-        
+
         if self.end_pin:
             # Permanent wire with end pin
             end_pos = self.end_pin.get_connection_point()
@@ -273,7 +273,7 @@ class Wire(QGraphicsPathItem):
             self.setPen(QPen(self.temp_color, self.wire_width))
         else:
             return
-        
+
         # Check if position actually changed to avoid unnecessary recalculations
         if (hasattr(self, '_last_start_pos') and hasattr(self, '_last_end_pos') and
             self._last_start_pos == start_pos and self._last_end_pos == end_pos):
@@ -591,12 +591,12 @@ class Wire(QGraphicsPathItem):
             return QPointF(intersection_x, intersection_y)
         
         return None
-   
+
     def complete_wire(self, end_pin: ComponentPin) -> bool:
         """Complete the wire connection"""
         if end_pin == self.start_pin:
             return False  # Can't connect to self
-        
+
         self.end_pin = end_pin
         self.is_temporary = False
         
@@ -610,7 +610,7 @@ class Wire(QGraphicsPathItem):
             self.setPath(self.wire_path.get_path())
         
         return True
-    
+
     def update_wire_position(self):
         """Update wire position when pins move"""
         if self.start_pin and self.end_pin:
@@ -661,16 +661,11 @@ class Wire(QGraphicsPathItem):
         """Handle right-click on wire"""
         menu = QMenu()
         delete_action = menu.addAction("Delete Wire")
-        
+
         action = menu.exec(event.screenPos())
-        
+
         if action == delete_action:
-            scene = self.scene
-            if scene and hasattr(scene, 'remove_wire'):
-                scene.remove_wire(self)
-            elif scene:
-                # Fallback to direct removal if scene doesn't have remove_wire method
-                scene.removeItem(self)
+            self.scene.remove_wire(self)
 
     def itemChange(self, change, value):
         """Handle item state changes, particularly selection"""

@@ -29,53 +29,15 @@
     "visual_bcf": {
       "components": [
         {
-          "id": "39e23c86-0bfa-4f73-be09-6fc5f80b417d",
-          "name": "Chip_temp",
-          "component_type": "chip",
-          "function_type": "generic",
-          "properties": {
-            "function_type": "generic",
-            "interface_type": "GPIO"
-          },
-          "visual_properties": {
-            "position": {
-              "x": -195.0,
-              "y": -150.0
-            },
-            "size": {
-              "width": 80,
-              "height": 60
-            },
-            "rotation": 0
-          },
-          "pins": [
-            "IN1",
-            "IN2",
-            "OUT",
-            "VCC",
-            "GND"
-          ],
-          "interface_type": "GPIO",
-          "interface": {},
-          "config": {},
-          "usid": "39e23c86",
-          "mid_msb": "00",
-          "mid_lsb": "01",
-          "pid": "0000",
-          "ext_pid": "0000",
-          "rev_id": "1.0",
-          "dcf_type": "Standard"
-        },
-        {
-          "id": "da7d331c-471b-490e-90f4-9e3a5a18e573",
+          "id": "37221412-6f6f-46bb-9208-c57744059c6d",
           "name": "Resistor_temp",
           "component_type": "resistor",
           "function_type": "",
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 130.0,
-              "y": -138.0
+              "x": 121.0,
+              "y": -176.0
             },
             "size": {
               "width": 100,
@@ -87,7 +49,7 @@
           "interface_type": "",
           "interface": {},
           "config": {},
-          "usid": "da7d331c",
+          "usid": "37221412",
           "mid_msb": "00",
           "mid_lsb": "01",
           "pid": "0000",
@@ -96,15 +58,15 @@
           "dcf_type": "Standard"
         },
         {
-          "id": "c9cd1964-d76b-42d0-b4a7-1f963245fa98",
+          "id": "1f86e72f-7581-43b3-a44f-57ba545b0bfc",
           "name": "Capacitor_temp",
           "component_type": "capacitor",
           "function_type": "",
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 73.0,
-              "y": -17.0
+              "x": 136.0,
+              "y": -53.0
             },
             "size": {
               "width": 100,
@@ -116,7 +78,7 @@
           "interface_type": "",
           "interface": {},
           "config": {},
-          "usid": "c9cd1964",
+          "usid": "1f86e72f",
           "mid_msb": "00",
           "mid_lsb": "01",
           "pid": "0000",

@@ -7,6 +7,11 @@ Enhanced connection pin for components with proper names and smart positioning.
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QPen, QBrush, QColor, QFont
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.chip import ComponentWithPins
+    from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire
 
 class ComponentPin(QGraphicsEllipseItem):
     """Enhanced connection pin for components with proper names and smart positioning"""
@@ -24,7 +29,7 @@ class ComponentPin(QGraphicsEllipseItem):
         self.pin_name = pin_name
         # 'input', 'output', 'power', 'gnd', 'terminal', 'positive', 'negative', 'io'
         self.pin_type = pin_type
-        self.parent_component = parent_component
+        self.parent_component: 'ComponentWithPins' = parent_component
         self.edge = edge  # Which edge: 'left', 'right', 'top', 'bottom'
         self.is_hovered = False
 

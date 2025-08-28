@@ -115,7 +115,7 @@ class VisualBCFDataModel(QObject):
                 }
             }
             logger.info("Loaded external component configurations")
-            
+
         except Exception as e:
             logger.error("Error loading external component configs: %s", e)
             # Fallback to basic configs
@@ -144,6 +144,7 @@ class VisualBCFDataModel(QObject):
                 component_id = str(uuid.uuid4())
 
             # Get external configuration for this component type
+
             config = self.component_configs.get(component_type, {})
             
             # Merge external config with provided properties
@@ -180,7 +181,7 @@ class VisualBCFDataModel(QObject):
             # Add directly to RDB
             components_table = self.rdb_manager.get_table(self.components_table_path)
             components_table.append(component_data)
-            self.rdb_manager.set_table(self.components_table_path, components_table)
+            # self.rdb_manager.set_table(self.components_table_path, components_table)
 
             # Emit signal
             self.component_added.emit(component_id)
@@ -217,16 +218,16 @@ class VisualBCFDataModel(QObject):
                                   if conn.get('from_component_id') != component_id 
                                   and conn.get('to_component_id') != component_id]
                 self.rdb_manager.set_table(self.connections_table_path, connections_table)
-                
+
                 # Emit signal
                 self.component_removed.emit(component_id)
-                
+
                 logger.info("Removed component: %s (%s)", component_name, component_id)
                 return True
-            else:
-                logger.warning("Component not found: %s", component_id)
-                return False
-                
+            
+            logger.warning("Component not found: %s", component_id)
+            return False
+
         except Exception as e:
             logger.error("Error removing component: %s", e)
             return False
@@ -248,7 +249,7 @@ class VisualBCFDataModel(QObject):
             
             logger.warning("Component not found for position update: %s", component_id)
             return False
-            
+
         except Exception as e:
             logger.error("Error updating component position: %s", e)
             return False
@@ -280,8 +281,8 @@ class VisualBCFDataModel(QObject):
                     # Emit update signal
                     self.component_updated.emit(component_id, component)
                     logger.info("Updated component properties: %s", component_id)
-                    return True
-            
+            return True
+
             logger.warning("Component not found for properties update: %s", component_id)
             return False
             
@@ -306,7 +307,7 @@ class VisualBCFDataModel(QObject):
             
             logger.warning("Component not found for pins update: %s", component_id)
             return False
-            
+
         except Exception as e:
             logger.error("Error updating component pins: %s", e)
             return False
@@ -323,6 +324,17 @@ class VisualBCFDataModel(QObject):
             logger.error("Error getting component: %s", e)
             return None
 
+    def get_component_id(self, component_name: str) -> Optional[str]:
+        """Get component ID by name"""
+        try:
+            components_table = self.rdb_manager.get_table(self.components_table_path) or []
+            for component in components_table:
+                if component.get('name') == component_name:
+                    return component.get('id', '')
+        except Exception as e:
+            logger.error("Error getting component ID: %s", e)
+            return None
+
     def get_all_components(self) -> Dict[str, Dict[str, Any]]:
         """Get all components as a dictionary with component IDs as keys"""
         try:
@@ -337,7 +349,7 @@ class VisualBCFDataModel(QObject):
                     components_dict[component['id']] = component
             
             return components_dict
-            
+
         except Exception as e:
             logger.error("Error getting all components: %s", e)
             return {}
@@ -373,7 +385,7 @@ class VisualBCFDataModel(QObject):
             return None
         except Exception as e:
             logger.error("Error getting component by name: %s", e)
-            return None
+        return None
 
     # Connection Management Methods
 
@@ -433,7 +445,7 @@ class VisualBCFDataModel(QObject):
             connections_table = self.rdb_manager.get_table(self.connections_table_path)
             if not connections_table:
                 return False
-            
+
             # Find and update the connection
             for connection in connections_table:
                 if isinstance(connection, dict) and connection.get('id') == connection_id:
@@ -442,13 +454,13 @@ class VisualBCFDataModel(QObject):
                     
                     # Save back to RDB
                     self.rdb_manager.set_table(self.connections_table_path, connections_table)
-                    
-                    # Emit signal
+
+            # Emit signal
                     self.connection_updated.emit(connection_id)
-                    
+
                     logger.info("Updated connection: %s", connection_id)
-                    return True
-            
+            return True
+
             logger.warning("Connection not found for update: %s", connection_id)
             return False
             
@@ -786,7 +798,7 @@ class VisualBCFDataModel(QObject):
             }
             
             return all_stats
-            
+
         except Exception as e:
             logger.error("Error getting table statistics: %s", e)
             return {
@@ -808,158 +820,12 @@ class VisualBCFDataModel(QObject):
                 }
             }
 
-    def save_scene_data(self, scene_data: Dict[str, Any]) -> bool:
-        """Save scene data to the data model"""
-        try:
-            if 'components' in scene_data:
-                # Clear existing components
-                self.rdb_manager.set_table(self.components_table_path, [])
-                
-                # Add new components
-                for component_data in scene_data['components']:
-                    if 'id' in component_data and 'name' in component_data:
-                        # Extract component information
-                        name = component_data['name']
-                        component_type = component_data.get('type', 'unknown')
-                        position = component_data.get('position', {'x': 0, 'y': 0})
-                        properties = component_data.get('properties', {})
-                        
-                        # Add component to data model
-                        component_id = self.add_component(
-                            name=name,
-                            component_type=component_type,
-                            position=(position['x'], position['y']),
-                            properties=properties
-                        )
-                        
-                        if component_id:
-                            logger.info("Saved component: %s (%s)", name, component_id)
-            
-            if 'connections' in scene_data:
-                # Clear existing connections
-                self.rdb_manager.set_table(self.connections_table_path, [])
-                
-                # Add new connections
-                for connection_data in scene_data['connections']:
-                    if 'from_component_id' in connection_data and 'to_component_id' in connection_data:
-                        # Extract connection information
-                        from_component_id = connection_data['from_component_id']
-                        from_pin_id = connection_data.get('from_pin_id', '')
-                        to_component_id = connection_data['to_component_id']
-                        to_pin_id = connection_data.get('to_pin_id', '')
-                        
-                        # Add connection to data model
-                        connection_id = self.add_connection(
-                            from_component_id=from_component_id,
-                            from_pin_id=from_pin_id,
-                            to_component_id=to_component_id,
-                            to_pin_id=to_pin_id
-                        )
-                        
-                        if connection_id:
-                            logger.info("Saved connection: %s", connection_id)
-            
-            logger.info("Scene data saved successfully")
-            return True
-            
-        except Exception as e:
-            logger.error("Error saving scene data: %s", e)
-            return False
+    @property
+    def components(self) -> List[Dict[str, Any]]:
+        """Get all components from the data model"""
+        return self.rdb_manager.get_table(self.components_table_path)
 
-    def load_scene_data(self) -> Dict[str, Any]:
-        """Load scene data from the data model"""
-        try:
-            scene_data = {
-                "components": [],
-                "connections": []
-            }
-            
-            # Load components
-            components = self.get_all_components_as_list()
-            for component in components:
-                if isinstance(component, dict) and 'id' in component:
-                    component_data = {
-                        "id": component['id'],
-                        "name": component.get('name', 'Unknown'),
-                        "type": component.get('component_type', 'unknown'),
-                        "position": component.get('visual_properties', {}).get('position', {'x': 0, 'y': 0}),
-                        "properties": component.get('properties', {}),
-                        "pins": component.get('pins', [])
-                    }
-                    scene_data["components"].append(component_data)
-            
-            # Load connections - ensure they reference existing components
-            connections = self.get_all_connections()
-            for connection in connections:
-                if isinstance(connection, dict) and 'id' in connection:
-                    # Verify that both components exist before including the connection
-                    from_component_id = connection.get('from_component_id', '')
-                    to_component_id = connection.get('to_component_id', '')
-                    
-                    # Check if both components exist
-                    from_component = self.get_component(from_component_id)
-                    to_component = self.get_component(to_component_id)
-                    
-                    if from_component and to_component:
-                        connection_data = {
-                            "id": connection['id'],
-                            "from_component_id": from_component_id,
-                            "from_pin_id": connection.get('from_pin_id', ''),
-                            "to_component_id": to_component_id,
-                            "to_pin_id": connection.get('to_pin_id', ''),
-                            "connection_type": connection.get('connection_type', 'wire'),
-                            "properties": connection.get('properties', {})
-                        }
-                        scene_data["connections"].append(connection_data)
-                    else:
-                        logger.warning("Connection %s references non-existent components: %s -> %s", 
-                                     connection['id'], from_component_id, to_component_id)
-            
-            logger.info("Loaded scene data: %d components, %d connections", 
-                       len(scene_data["components"]), len(scene_data["connections"]))
-            return scene_data
-            
-        except Exception as e:
-            logger.error("Error loading scene data: %s", e)
-            return {"components": [], "connections": []}
-
-    def save_visual_bcf_data(self) -> bool:
-        """Save Visual BCF data to RDB (persist to disk)"""
-        try:
-            # The data is already in RDB, just ensure it's persisted
-            # This method is called by the controller after save_scene_data
-            logger.info("Visual BCF data persisted to RDB")
-            return True
-            
-        except Exception as e:
-            logger.error("Error persisting Visual BCF data: %s", e)
-            return False
-
-    def save_visual_bcf_to_file(self, file_path: str) -> bool:
-        """Save Visual BCF data to a specific file"""
-        try:
-            # Get current data from RDB
-            components_table = self.rdb_manager.get_table(self.components_table_path) or []
-            connections_table = self.rdb_manager.get_table(self.connections_table_path) or []
-            
-            # Create the file structure
-            file_data = {
-                "config": {
-                    "visual_bcf": {
-                        "components": components_table,
-                        "connections": connections_table
-                    }
-                }
-            }
-            
-            # Save to file
-            import json
-            with open(file_path, 'w') as f:
-                json.dump(file_data, f, indent=2)
-            
-            logger.info("Visual BCF data saved to file: %s", file_path)
-            return True
-            
-        except Exception as e:
-            logger.error("Error saving Visual BCF data to file: %s", e)
-            return False
+    @property
+    def connections(self) -> List[Dict[str, Any]]:
+        """Get all connections from the data model"""
+        return self.rdb_manager.get_table(self.connections_table_path)
