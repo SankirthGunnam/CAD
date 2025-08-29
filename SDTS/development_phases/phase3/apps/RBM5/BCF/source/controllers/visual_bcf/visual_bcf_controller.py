@@ -7,6 +7,7 @@ part of the MVC pattern.
 """
 
 import logging
+import traceback
 from typing import Dict, List, Any, Tuple, Optional
 
 from PySide6.QtCore import QObject, Signal, QTimer, Qt, QPoint
@@ -478,6 +479,7 @@ class VisualBCFController(QObject):
             return success
         except Exception as e:
             logger.error("Error removing connection: %s", e)
+            print(traceback.format_exc())
             self.error_occurred.emit(f"Failed to remove connection: {str(e)}")
             return False
 

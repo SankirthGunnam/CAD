@@ -39,8 +39,8 @@
           },
           "visual_properties": {
             "position": {
-              "x": -200.0,
-              "y": -100.0
+              "x": -156.3598693076721,
+              "y": 22.6977222760395
             },
             "size": {
               "width": 80,
@@ -74,8 +74,8 @@
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 95.0,
-              "y": -159.0
+              "x": 81.3759742139286,
+              "y": -108.84285719390653
             },
             "size": {
               "width": 100,
@@ -103,8 +103,8 @@
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 138.0,
-              "y": -48.0
+              "x": 345.15176728793995,
+              "y": 122.89608330367955
             },
             "size": {
               "width": 100,
@@ -125,27 +125,36 @@
           "dcf_type": "Standard"
         },
         {
-          "id": "b8bc8a30-19e7-44fc-955f-96a8e96fb2c2",
-          "name": "Capacitor_temp",
-          "component_type": "capacitor",
-          "function_type": "",
-          "properties": {},
+          "id": "906ed2e7-a48a-4e80-af2a-4d6ff6f6e792",
+          "name": "Chip_temp",
+          "component_type": "chip",
+          "function_type": "generic",
+          "properties": {
+            "function_type": "generic",
+            "interface_type": "GPIO"
+          },
           "visual_properties": {
             "position": {
-              "x": 104.0,
-              "y": 174.0
+              "x": -210.0,
+              "y": -161.0
             },
             "size": {
-              "width": 100,
-              "height": 80
+              "width": 80,
+              "height": 60
             },
             "rotation": 0
           },
-          "pins": [],
-          "interface_type": "",
+          "pins": [
+            "IN1",
+            "IN2",
+            "OUT",
+            "VCC",
+            "GND"
+          ],
+          "interface_type": "GPIO",
           "interface": {},
           "config": {},
-          "usid": "b8bc8a30",
+          "usid": "906ed2e7",
           "mid_msb": "00",
           "mid_lsb": "01",
           "pid": "0000",
@@ -156,8 +165,50 @@
       ],
       "connections": [
         {
-          "id": "47f3a83e-2b76-431d-b680-951bd09387ee",
+          "id": "b34e8673-80ac-4933-bbfd-bb8cbdcfa55a",
+          "from_component_id": "906ed2e7-a48a-4e80-af2a-4d6ff6f6e792",
+          "from_pin_id": "B1",
+          "to_component_id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
+          "to_pin_id": "T1",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "source_device": "Chip_temp",
+          "source_pin": "B1",
+          "dest_device": "Chip_temp",
+          "dest_pin": "T1",
+          "source_sub_block": "Main Block",
+          "dest_sub_block": "Main Block",
+          "status": "Active"
+        },
+        {
+          "id": "162e49d5-c095-4fb4-82eb-0d3ebbf33092",
           "from_component_id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
+          "from_pin_id": "T6",
+          "to_component_id": "906ed2e7-a48a-4e80-af2a-4d6ff6f6e792",
+          "to_pin_id": "T6",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "source_device": "Chip_temp",
+          "source_pin": "T6",
+          "dest_device": "Chip_temp",
+          "dest_pin": "T6",
+          "source_sub_block": "Main Block",
+          "dest_sub_block": "Main Block",
+          "status": "Active"
+        },
+        {
+          "id": "05b0aa5f-fbe9-44b4-af66-252a1f153e9b",
+          "from_component_id": "906ed2e7-a48a-4e80-af2a-4d6ff6f6e792",
           "from_pin_id": "R2",
           "to_component_id": "d554e28d-0b9e-4125-bdc4-c5658e860d11",
           "to_pin_id": "A",
@@ -172,48 +223,6 @@
           "source_pin": "R2",
           "dest_device": "Resistor_temp",
           "dest_pin": "A",
-          "source_sub_block": "Main Block",
-          "dest_sub_block": "Main Block",
-          "status": "Active"
-        },
-        {
-          "id": "fa54b561-d318-43af-975e-aca5c64f87ed",
-          "from_component_id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
-          "from_pin_id": "B6",
-          "to_component_id": "b8bc8a30-19e7-44fc-955f-96a8e96fb2c2",
-          "to_pin_id": "POS",
-          "connection_type": "wire",
-          "properties": {},
-          "visual_properties": {
-            "path_points": [],
-            "line_style": "solid",
-            "color": "#000000"
-          },
-          "source_device": "Chip_temp",
-          "source_pin": "B6",
-          "dest_device": "Capacitor_temp",
-          "dest_pin": "POS",
-          "source_sub_block": "Main Block",
-          "dest_sub_block": "Main Block",
-          "status": "Active"
-        },
-        {
-          "id": "cf762615-89d3-4523-b3aa-c464b620cd61",
-          "from_component_id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
-          "from_pin_id": "R6",
-          "to_component_id": "21773c7e-9afb-4c15-8e88-b26933cbe2a7",
-          "to_pin_id": "POS",
-          "connection_type": "wire",
-          "properties": {},
-          "visual_properties": {
-            "path_points": [],
-            "line_style": "solid",
-            "color": "#000000"
-          },
-          "source_device": "Chip_temp",
-          "source_pin": "R6",
-          "dest_device": "Capacitor_temp",
-          "dest_pin": "POS",
           "source_sub_block": "Main Block",
           "dest_sub_block": "Main Block",
           "status": "Active"

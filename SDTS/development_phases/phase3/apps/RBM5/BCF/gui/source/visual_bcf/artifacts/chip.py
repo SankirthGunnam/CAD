@@ -75,7 +75,7 @@ class ComponentWithPins(QGraphicsRectItem):
                                    "input", self, "left")
                 pin.setParentItem(self)
                 # Position pin so half extends outside left edge (x=0)
-                pin.setPos(-pin_radius,
+                pin.setPos(0,
                            pin_spacing_vertical * (i + 1) - pin_radius)
                 self.pins.append(pin)
 
@@ -88,7 +88,7 @@ class ComponentWithPins(QGraphicsRectItem):
                                    "output", self, "right")
                 pin.setParentItem(self)
                 # Position pin so half extends outside right edge (x=width)
-                pin.setPos(width - pin_radius,
+                pin.setPos(width,
                            pin_spacing_vertical * (i + 1) - pin_radius)
                 self.pins.append(pin)
 
@@ -103,7 +103,7 @@ class ComponentWithPins(QGraphicsRectItem):
                 pin.setParentItem(self)
                 # Position pin so half extends outside top edge (y=0)
                 pin.setPos(pin_spacing_horizontal *
-                           (i + 1) - pin_radius, -pin_radius)
+                           (i + 1) - pin_radius, 0)
                 self.pins.append(pin)
 
             # Bottom pins (ground/control) - perfectly centered on bottom edge
@@ -117,31 +117,31 @@ class ComponentWithPins(QGraphicsRectItem):
                 pin.setParentItem(self)
                 # Position pin so half extends outside bottom edge (y=height)
                 pin.setPos(pin_spacing_horizontal * (i + 1) -
-                           pin_radius, height - pin_radius)
+                           pin_radius, height)
                 self.pins.append(pin)
 
         elif self.component_type == "resistor":
             # Resistor: 2 pins (left and right) - centered on edges
             pin1 = ComponentPin("A", "A", "terminal", self, "left")
             pin1.setParentItem(self)
-            pin1.setPos(-pin_radius, height / 2 - pin_radius)
+            pin1.setPos(0, height / 2 - pin_radius)
             self.pins.append(pin1)
 
             pin2 = ComponentPin("B", "B", "terminal", self, "right")
             pin2.setParentItem(self)
-            pin2.setPos(width - pin_radius, height / 2 - pin_radius)
+            pin2.setPos(width, height / 2 - pin_radius)
             self.pins.append(pin2)
 
         elif self.component_type == "capacitor":
             # Capacitor: 2 pins (left and right) - centered on edges
             pin1 = ComponentPin("POS", "+", "positive", self, "left")
             pin1.setParentItem(self)
-            pin1.setPos(-pin_radius, height / 2 - pin_radius)
+            pin1.setPos(0, height / 2 - pin_radius)
             self.pins.append(pin1)
 
             pin2 = ComponentPin("NEG", "-", "negative", self, "right")
             pin2.setParentItem(self)
-            pin2.setPos(width - pin_radius, height / 2 - pin_radius)
+            pin2.setPos(width, height / 2 - pin_radius)
             self.pins.append(pin2)
 
     def _setup_appearance(self):

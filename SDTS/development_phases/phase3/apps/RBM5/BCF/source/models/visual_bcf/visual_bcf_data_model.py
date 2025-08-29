@@ -197,7 +197,7 @@ class VisualBCFDataModel(QObject):
             print(traceback.format_exc())
             return ""
 
-    def remove_component(self, component_id: str) -> bool:
+    def remove_component(self, component_id: str, emit_signal=False) -> bool:
         """Remove a component from the scene directly from RDB"""
         try:
             components_table = self.rdb_manager.get_table(self.components_table_path)
@@ -224,7 +224,8 @@ class VisualBCFDataModel(QObject):
                 self.rdb_manager.set_table(self.connections_table_path, connections_table)
 
                 # Emit signal
-                self.component_removed.emit(component_id)
+                if emit_signal:
+                    self.component_removed.emit(component_id)
 
                 logger.info("Removed component: %s (%s)", component_name, component_id)
                 return True
@@ -481,7 +482,7 @@ class VisualBCFDataModel(QObject):
         except Exception:
             return 'Unknown'
 
-    def remove_connection(self, connection_id: str) -> bool:
+    def remove_connection(self, connection_id: str, emit_signal=False) -> bool:
         """Remove a connection directly from RDB"""
         try:
             connections_table = self.rdb_manager.get_table(self.connections_table_path)
@@ -493,7 +494,8 @@ class VisualBCFDataModel(QObject):
                     self.rdb_manager.set_table(self.connections_table_path, connections_table)
                     
                     # Emit signal
-                    self.connection_removed.emit(connection_id)
+                    if emit_signal:
+                        self.connection_removed.emit(connection_id)
                     
                     logger.info("Removed connection: %s", connection_id)
                     return True
