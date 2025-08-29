@@ -29,27 +29,36 @@
     "visual_bcf": {
       "components": [
         {
-          "id": "37221412-6f6f-46bb-9208-c57744059c6d",
-          "name": "Resistor_temp",
-          "component_type": "resistor",
-          "function_type": "",
-          "properties": {},
+          "id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
+          "name": "Chip_temp",
+          "component_type": "chip",
+          "function_type": "generic",
+          "properties": {
+            "function_type": "generic",
+            "interface_type": "GPIO"
+          },
           "visual_properties": {
             "position": {
-              "x": 121.0,
-              "y": -176.0
+              "x": -200.0,
+              "y": -100.0
             },
             "size": {
-              "width": 100,
-              "height": 80
+              "width": 80,
+              "height": 60
             },
             "rotation": 0
           },
-          "pins": [],
-          "interface_type": "",
+          "pins": [
+            "IN1",
+            "IN2",
+            "OUT",
+            "VCC",
+            "GND"
+          ],
+          "interface_type": "GPIO",
           "interface": {},
           "config": {},
-          "usid": "37221412",
+          "usid": "858c4962",
           "mid_msb": "00",
           "mid_lsb": "01",
           "pid": "0000",
@@ -58,15 +67,15 @@
           "dcf_type": "Standard"
         },
         {
-          "id": "1f86e72f-7581-43b3-a44f-57ba545b0bfc",
-          "name": "Capacitor_temp",
-          "component_type": "capacitor",
+          "id": "d554e28d-0b9e-4125-bdc4-c5658e860d11",
+          "name": "Resistor_temp",
+          "component_type": "resistor",
           "function_type": "",
           "properties": {},
           "visual_properties": {
             "position": {
-              "x": 136.0,
-              "y": -53.0
+              "x": 95.0,
+              "y": -159.0
             },
             "size": {
               "width": 100,
@@ -78,7 +87,65 @@
           "interface_type": "",
           "interface": {},
           "config": {},
-          "usid": "1f86e72f",
+          "usid": "d554e28d",
+          "mid_msb": "00",
+          "mid_lsb": "01",
+          "pid": "0000",
+          "ext_pid": "0000",
+          "rev_id": "1.0",
+          "dcf_type": "Standard"
+        },
+        {
+          "id": "21773c7e-9afb-4c15-8e88-b26933cbe2a7",
+          "name": "Capacitor_temp",
+          "component_type": "capacitor",
+          "function_type": "",
+          "properties": {},
+          "visual_properties": {
+            "position": {
+              "x": 138.0,
+              "y": -48.0
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "interface_type": "",
+          "interface": {},
+          "config": {},
+          "usid": "21773c7e",
+          "mid_msb": "00",
+          "mid_lsb": "01",
+          "pid": "0000",
+          "ext_pid": "0000",
+          "rev_id": "1.0",
+          "dcf_type": "Standard"
+        },
+        {
+          "id": "b8bc8a30-19e7-44fc-955f-96a8e96fb2c2",
+          "name": "Capacitor_temp",
+          "component_type": "capacitor",
+          "function_type": "",
+          "properties": {},
+          "visual_properties": {
+            "position": {
+              "x": 104.0,
+              "y": 174.0
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "interface_type": "",
+          "interface": {},
+          "config": {},
+          "usid": "b8bc8a30",
           "mid_msb": "00",
           "mid_lsb": "01",
           "pid": "0000",
@@ -87,7 +154,71 @@
           "dcf_type": "Standard"
         }
       ],
-      "connections": [],
+      "connections": [
+        {
+          "id": "47f3a83e-2b76-431d-b680-951bd09387ee",
+          "from_component_id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
+          "from_pin_id": "R2",
+          "to_component_id": "d554e28d-0b9e-4125-bdc4-c5658e860d11",
+          "to_pin_id": "A",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "source_device": "Chip_temp",
+          "source_pin": "R2",
+          "dest_device": "Resistor_temp",
+          "dest_pin": "A",
+          "source_sub_block": "Main Block",
+          "dest_sub_block": "Main Block",
+          "status": "Active"
+        },
+        {
+          "id": "fa54b561-d318-43af-975e-aca5c64f87ed",
+          "from_component_id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
+          "from_pin_id": "B6",
+          "to_component_id": "b8bc8a30-19e7-44fc-955f-96a8e96fb2c2",
+          "to_pin_id": "POS",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "source_device": "Chip_temp",
+          "source_pin": "B6",
+          "dest_device": "Capacitor_temp",
+          "dest_pin": "POS",
+          "source_sub_block": "Main Block",
+          "dest_sub_block": "Main Block",
+          "status": "Active"
+        },
+        {
+          "id": "cf762615-89d3-4523-b3aa-c464b620cd61",
+          "from_component_id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
+          "from_pin_id": "R6",
+          "to_component_id": "21773c7e-9afb-4c15-8e88-b26933cbe2a7",
+          "to_pin_id": "POS",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "source_device": "Chip_temp",
+          "source_pin": "R6",
+          "dest_device": "Capacitor_temp",
+          "dest_pin": "POS",
+          "source_sub_block": "Main Block",
+          "dest_sub_block": "Main Block",
+          "status": "Active"
+        }
+      ],
       "layout": {
         "scene_rect": {
           "x": -1000,

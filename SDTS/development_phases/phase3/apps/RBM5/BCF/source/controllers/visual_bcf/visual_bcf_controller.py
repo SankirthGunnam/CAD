@@ -355,6 +355,7 @@ class VisualBCFController(QObject):
                       position: Tuple[float,float]) -> str:
         """Add a new component"""
         try:
+            logger.info(f"BCF Controller: Adding component: {component.name} ({component_type}) at {position}")
             name = component.name
             properties = getattr(component, 'properties', {})
             component_id = self.data_model.add_component(
@@ -367,9 +368,19 @@ class VisualBCFController(QObject):
                     f"Successfully added component: {name} at {position}")
             return component_id
         except Exception as e:
-            logger.error("Error adding component: %s", e)
+            logger.error("BCF Controller: Error adding component: %s", e)
             self.error_occurred.emit(f"Failed to add component: {str(e)}")
             return ""
+
+    def track_loaded_component(self, component: ComponentWithPins, component_id: str):
+        """Track a component that was loaded from existing data (don't add to data model)"""
+        try:
+            # Just track the component in our graphics items mapping
+            # Don't call data_model.add_component to avoid infinite loops
+            self._component_graphics_items[component_id] = component
+            logger.info(f"Tracking loaded component: {component.name} with ID: {component_id}")
+        except Exception as e:
+            logger.error("Error tracking loaded component: %s", e)
 
     def remove_component(self, component: ComponentWithPins, emit_user_signal: bool = False) -> bool:
         """Remove a component that was deleted from the scene"""
@@ -426,13 +437,20 @@ class VisualBCFController(QObject):
     def add_connection(self, wire: Wire) -> str:
         """Add a new connection"""
         try:
-            from_component_id = wire.start_pin.parent_component.name
+            # Get component IDs, not names
+            from_component_id = self._get_component_id(wire.start_pin.parent_component)
             from_pin_id = wire.start_pin.pin_id
-            to_component_id = wire.end_pin.parent_component.name
+            to_component_id = self._get_component_id(wire.end_pin.parent_component)
             to_pin_id = wire.end_pin.pin_id
+            
+            if not from_component_id or not to_component_id:
+                logger.error("Could not find component IDs for connection")
+                return ""
+                
             connection_id = self.data_model.add_connection(
                 from_component_id, from_pin_id, to_component_id, to_pin_id
             )
+            print(f"BCF Controller: Connection ID: {connection_id}")
             if connection_id:
                 self.operation_completed.emit(
                     "add_connection", f"Added connection")
@@ -536,7 +554,7 @@ class VisualBCFController(QObject):
                 # Get component ID from the loaded data
                 component_id = comp_data.get("id")
                 component_name = comp_data.get("name", "Unknown")
-                component_type = comp_data.get("type", "chip")
+                component_type = comp_data.get("component_type", "chip")
                 
                 if not component_id:
                     logger.warning("Component missing ID: %s", component_name)
@@ -546,7 +564,7 @@ class VisualBCFController(QObject):
                 component = ComponentWithPins(component_name, component_type)
                 
                 # Set position
-                pos = comp_data.get("position", {"x": 0, "y": 0})
+                pos = comp_data.get("visual_properties", {}).get("position", {"x": 0, "y": 0})
                 component.setPos(pos.get("x", 0), pos.get("y", 0))
                 
                 # Add to scene
@@ -555,20 +573,12 @@ class VisualBCFController(QObject):
                 # Track the graphics item in the controller
                 self._component_graphics_items[component_id] = component
                 
-                # Add component to data model with the same ID to maintain consistency
-                position = (pos.get("x", 0), pos.get("y", 0))
-                properties = comp_data.get("properties", {})
-                self.data_model.add_component(
-                    component_name, 
-                    component_type, 
-                    position, 
-                    properties, 
-                    component_id  # Pass the component ID to maintain consistency
-                )
-                
-                # Set component properties
+                # Set component properties - DON'T re-add to data model to avoid infinite loop
                 component.component_id = component_id
                 component.properties = comp_data.get("properties", {})
+                
+                # Use track_loaded_component instead of add_component to avoid infinite loops
+                self.track_loaded_component(component, component_id)
                 
                 logger.info("Component %s (%s) added to scene", component_id, component_name)
                     

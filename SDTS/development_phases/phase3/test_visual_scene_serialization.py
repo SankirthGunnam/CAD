@@ -12,15 +12,34 @@ import tempfile
 import os
 from pathlib import Path
 
+import os
+os.environ['DISPLAY'] = ':1'  # Set before importing PySide6
+
+# For WSL2 with X11 forwarding, set DISPLAY to Windows X11 server
+# os.environ["DISPLAY"] = ":0"  # Uncomment when X11 server is running
+
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QLabel, QMessageBox
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QWidget,
+    QLabel,
+    QMessageBox,
+)
 
 from apps.RBM5.BCF.gui.source.visual_bcf.visual_bcf_manager import VisualBCFManager
-from apps.RBM5.BCF.source.controllers.visual_bcf.visual_bcf_controller import VisualBCFController
+from apps.RBM5.BCF.source.controllers.visual_bcf.visual_bcf_controller import (
+    VisualBCFController,
+)
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.chip import ComponentWithPins
 from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
 from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
-from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualBCFDataModel
+from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import (
+    VisualBCFDataModel,
+)
 from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
 
 # Add the current project to Python path
@@ -43,17 +62,13 @@ class VisualSerializationTestWindow(QMainWindow):
         # self.temp_db = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
         # self.temp_db_path = self.temp_db.name
         # self.temp_db.close()
-        self.temp_db_path = os.path.join(
-            os.path.dirname(__file__), "database.json")
+        self.temp_db_path = os.path.join(os.path.dirname(__file__), "database.json")
 
         # Initialize RDB manager
         self.rdb_manager = RDBManager(self.temp_db_path)
 
         # Create manager with proper MVC architecture
-        self.bcf_manager = VisualBCFManager(
-            parent=self,
-            rdb_manager=self.rdb_manager
-        )
+        self.bcf_manager = VisualBCFManager(parent=self, rdb_manager=self.rdb_manager)
 
         # Access MVC components through manager
         self.data_model = self.bcf_manager.data_model
@@ -77,8 +92,7 @@ class VisualSerializationTestWindow(QMainWindow):
 
         # Connect to controller signals for better status updates
         if self.controller:
-            self.controller.operation_completed.connect(
-                self.on_controller_operation)
+            self.controller.operation_completed.connect(self.on_controller_operation)
             self.controller.error_occurred.connect(self.on_controller_error)
 
         # Don't auto-add test components - let user add them manually
@@ -94,13 +108,13 @@ class VisualSerializationTestWindow(QMainWindow):
         # Title
         title_label = QLabel("🧪 Visual Scene Serialization Test - Phase 3")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet(
-            "font-size: 18px; font-weight: bold; margin: 10px;")
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold; margin: 10px;")
         main_layout.addWidget(title_label)
 
         # Info label
         self.info_label = QLabel(
-            "Components and connections shown below. Test save/load functionality with buttons.")
+            "Components and connections shown below. Test save/load functionality with buttons."
+        )
         self.info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.info_label.setStyleSheet("margin: 10px; color: #666;")
         main_layout.addWidget(self.info_label)
@@ -146,10 +160,10 @@ class VisualSerializationTestWindow(QMainWindow):
         main_layout.addLayout(button_layout)
 
         # Status label
-        self.status_label = QLabel(
-            "Ready - Scene initialized with test components")
+        self.status_label = QLabel("Ready - Scene initialized with test components")
         self.status_label.setStyleSheet(
-            "background: #f0f0f0; padding: 8px; border: 1px solid #ccc;")
+            "background: #f0f0f0; padding: 8px; border: 1px solid #ccc;"
+        )
         main_layout.addWidget(self.status_label)
 
         # Initialize scene storage
@@ -159,20 +173,15 @@ class VisualSerializationTestWindow(QMainWindow):
         """Add some test components via the controller"""
         try:
             if not self.controller:
-                self.update_status(
-                    "❌ No controller available for adding components")
+                self.update_status("❌ No controller available for adding components")
                 return
 
-            # Add components through controller
-            self.controller.add_component(
-                "TestChip1", "chip", (100, 100), {
-                    "function_type": "generic"})
-            self.controller.add_component(
-                "TestResistor1", "resistor", (300, 100), {
-                    "function_type": "passive"})
-            self.controller.add_component(
-                "TestCapacitor1", "capacitor", (200, 250), {
-                    "function_type": "passive"})
+            # Add components through scene
+            from PySide6.QtCore import QPointF
+
+            self.scene.add_component_at_position(QPointF(100, 100))
+            self.scene.add_component_at_position(QPointF(300, 100))
+            self.scene.add_component_at_position(QPointF(200, 250))
 
             self.update_status("✅ Added 3 test components via controller")
 
@@ -183,14 +192,11 @@ class VisualSerializationTestWindow(QMainWindow):
         """Add a new chip component via controller"""
         try:
             if self.controller:
-                # Use controller to add component
+                # Use scene to add component
                 stats = self.controller.get_statistics()
-                comp_count = stats.get('component_count', 0)
-                name = f"Chip{comp_count + 1}"
-                position = (50 + (comp_count * 40), 150 + (comp_count * 30))
-                self.controller.add_component(
-                    name, "chip", position, {
-                        "function_type": "generic"})
+                comp_count = stats.get("component_count", 0)
+                position = QPointF(50 + (comp_count * 40), 150 + (comp_count * 30))
+                self.scene.add_component_at_position(position)
                 self.update_status(f"✅ Added {name} via controller")
             else:
                 self.update_status("❌ No controller available")
@@ -201,14 +207,11 @@ class VisualSerializationTestWindow(QMainWindow):
         """Add a new resistor component via controller"""
         try:
             if self.controller:
-                # Use controller to add component
+                # Use scene to add component
                 stats = self.controller.get_statistics()
-                comp_count = stats.get('component_count', 0)
-                name = f"Resistor{comp_count + 1}"
-                position = (150 + (comp_count * 40), 200 + (comp_count * 30))
-                self.controller.add_component(
-                    name, "resistor", position, {
-                        "function_type": "passive"})
+                comp_count = stats.get("component_count", 0)
+                position = QPointF(150 + (comp_count * 40), 200 + (comp_count * 30))
+                self.scene.add_component_at_position(position)
                 self.update_status(f"✅ Added {name} via controller")
             else:
                 self.update_status("❌ No controller available")
@@ -221,12 +224,12 @@ class VisualSerializationTestWindow(QMainWindow):
             if self.controller:
                 # Use controller to add component
                 stats = self.controller.get_statistics()
-                comp_count = stats.get('component_count', 0)
+                comp_count = stats.get("component_count", 0)
                 name = f"Capacitor{comp_count + 1}"
                 position = (250 + (comp_count * 40), 100 + (comp_count * 30))
                 self.controller.add_component(
-                    name, "capacitor", position, {
-                        "function_type": "passive"})
+                    name, "capacitor", position, {"function_type": "passive"}
+                )
                 self.update_status(f"✅ Added {name} via controller")
             else:
                 self.update_status("❌ No controller available")
@@ -237,39 +240,39 @@ class VisualSerializationTestWindow(QMainWindow):
         """Test scene serialization via controller"""
         try:
             if not self.controller:
-                self.update_status(
-                    "❌ No controller available for serialization")
+                self.update_status("❌ No controller available for serialization")
                 return
 
             # Get statistics from controller (which includes
             # component/connection counts)
             stats = self.controller.get_statistics()
-            components_count = stats.get('component_count', 0)
-            connections_count = stats.get('connection_count', 0)
+            components_count = stats.get("component_count", 0)
+            connections_count = stats.get("connection_count", 0)
 
             # Show serialization result
             msg = f"📊 Controller Statistics:\n"
             msg += f"• Components: {components_count}\n"
             msg += f"• Connections: {connections_count}\n\n"
 
-            if 'components' in stats:
+            if "components" in stats:
                 msg += "Component Details:\n"
-                components = list(
-                    stats.get(
-                        'components',
-                        {}).values())[
-                    :3]  # Show first 3
+                components = list(stats.get("components", {}).values())[
+                    :3
+                ]  # Show first 3
                 for i, comp in enumerate(components):
-                    pos = comp.visual_properties.get(
-                        'position', {}) if hasattr(
-                        comp, 'visual_properties') else {}
+                    pos = (
+                        comp.visual_properties.get("position", {})
+                        if hasattr(comp, "visual_properties")
+                        else {}
+                    )
                     msg += f"  {i + 1}. {getattr(comp, 'name', 'Unknown')} ({getattr(comp, 'component_type', 'unknown')})\n"
                 if components_count > 3:
                     msg += f"  ... and {components_count - 3} more\n"
 
             QMessageBox.information(self, "Controller Statistics", msg)
             self.update_status(
-                f"✅ Controller has {components_count} components, {connections_count} connections")
+                f"✅ Controller has {components_count} components, {connections_count} connections"
+            )
 
         except Exception as e:
             self.update_status(f"❌ Statistics error: {e}")
@@ -290,11 +293,12 @@ class VisualSerializationTestWindow(QMainWindow):
 
             # Get scene statistics
             stats = self.controller.get_statistics()
-            components_count = stats.get('component_count', 0)
-            connections_count = stats.get('connection_count', 0)
+            components_count = stats.get("component_count", 0)
+            connections_count = stats.get("connection_count", 0)
 
             self.update_status(
-                f"💾 Scene saved to {Path(self.temp_db_path).name}! ({components_count} components)")
+                f"💾 Scene saved to {Path(self.temp_db_path).name}! ({components_count} components)"
+            )
 
             # Show success message with file path
             msg = f"Scene saved successfully via controller!\n"
@@ -309,25 +313,28 @@ class VisualSerializationTestWindow(QMainWindow):
             self.update_status(f"❌ Save error: {e}")
             QMessageBox.warning(self, "Error", f"Save failed: {e}")
             import traceback
+
             traceback.print_exc()
 
     def _convert_scene_to_model_format(self, scene_data):
         """Convert scene data to the format expected by the data model"""
         model_components = []
 
-        for comp in scene_data.get('components', []):
+        for comp in scene_data.get("components", []):
             model_comp = {
-                'id': f"comp_{len(model_components) + 1}",
-                'name': comp.get('name', ''),
-                'component_type': comp.get('type', 'chip'),
-                'function_type': comp.get('properties', {}).get('function_type', comp.get('type', 'chip')),
-                'properties': comp.get('properties', {}),
-                'visual_properties': {
-                    'position': comp.get('position', {'x': 0, 'y': 0}),
-                    'size': {'width': 100, 'height': 80},
-                    'rotation': 0
+                "id": f"comp_{len(model_components) + 1}",
+                "name": comp.get("name", ""),
+                "component_type": comp.get("type", "chip"),
+                "function_type": comp.get("properties", {}).get(
+                    "function_type", comp.get("type", "chip")
+                ),
+                "properties": comp.get("properties", {}),
+                "visual_properties": {
+                    "position": comp.get("position", {"x": 0, "y": 0}),
+                    "size": {"width": 100, "height": 80},
+                    "rotation": 0,
                 },
-                'pins': comp.get('pins', [])
+                "pins": comp.get("pins", []),
             }
             model_components.append(model_comp)
 
@@ -345,9 +352,8 @@ class VisualSerializationTestWindow(QMainWindow):
             self.controller.clear_scene(show_confirmation=False)
             self.update_status("🧹 Scene cleared via controller")
             QMessageBox.information(
-                self,
-                "Clear Scene",
-                "Scene cleared successfully via controller!")
+                self, "Clear Scene", "Scene cleared successfully via controller!"
+            )
         except Exception as e:
             self.update_status(f"❌ Clear error: {e}")
             QMessageBox.warning(self, "Error", f"Clear failed: {e}")
@@ -369,16 +375,18 @@ class VisualSerializationTestWindow(QMainWindow):
                 QMessageBox.warning(
                     self,
                     "Load Scene",
-                    f"No saved scene data found!\n\nTried:\n• JSON file: {Path(self.temp_db_path).name}\n• Default database location\n\nPlease save the scene first.")
+                    f"No saved scene data found!\n\nTried:\n• JSON file: {Path(self.temp_db_path).name}\n• Default database location\n\nPlease save the scene first.",
+                )
                 return
 
             # Get updated statistics after load
             stats = self.controller.get_statistics()
-            components_count = stats.get('component_count', 0)
-            connections_count = stats.get('connection_count', 0)
+            components_count = stats.get("component_count", 0)
+            connections_count = stats.get("connection_count", 0)
 
             self.update_status(
-                f"📂 Scene loaded via controller! ({components_count} components, {connections_count} connections)")
+                f"📂 Scene loaded via controller! ({components_count} components, {connections_count} connections)"
+            )
 
             # Show success message
             msg = f"Scene loaded successfully via controller!\n"
@@ -392,6 +400,7 @@ class VisualSerializationTestWindow(QMainWindow):
             self.update_status(f"❌ Load error: {e}")
             QMessageBox.warning(self, "Error", f"Load failed: {e}")
             import traceback
+
             traceback.print_exc()
 
     def update_status(self, message):
@@ -404,21 +413,19 @@ class VisualSerializationTestWindow(QMainWindow):
         try:
             # Get current statistics for comprehensive status update
             stats = self.controller.get_statistics() if self.controller else {}
-            components_count = stats.get('component_count', 0)
-            connections_count = stats.get('connection_count', 0)
+            components_count = stats.get("component_count", 0)
+            connections_count = stats.get("connection_count", 0)
 
             # Format status message with statistics
             detailed_message = f"{message} | Components: {components_count}, Connections: {connections_count}"
             self.update_status(detailed_message)
 
             # Log the operation for debugging
-            print(
-                f"Controller Operation: {operation_type} -> {detailed_message}")
+            print(f"Controller Operation: {operation_type} -> {detailed_message}")
 
         except Exception as e:
             print(f"Error handling controller operation signal: {e}")
-            self.update_status(
-                f"Operation completed but status update failed: {e}")
+            self.update_status(f"Operation completed but status update failed: {e}")
 
     def on_controller_error(self, error_message: str):
         """Handle controller error signals"""
@@ -435,14 +442,15 @@ class VisualSerializationTestWindow(QMainWindow):
 
             # Get current statistics
             stats = self.controller.get_statistics()
-            components_count = stats.get('component_count', 0)
+            components_count = stats.get("component_count", 0)
 
             if components_count > 0:
                 # Auto-save through controller
-                success = self.controller.save_scene(self.temp_db_path)
+                success = self.rdb_manager.db.save()
                 if success:
                     print(
-                        f"🔄 Auto-saved {components_count} components to {Path(self.temp_db_path).name}")
+                        f"🔄 Auto-saved {components_count} components to {Path(self.temp_db_path).name}"
+                    )
                     return True
                 else:
                     print("❌ Controller auto-save failed")
@@ -463,7 +471,7 @@ class VisualSerializationTestWindow(QMainWindow):
 
             # Show confirmation if there were components to save
             stats = self.controller.get_statistics() if self.controller else {}
-            components_count = stats.get('component_count', 0)
+            components_count = stats.get("component_count", 0)
 
             if components_count > 0:
                 msg = f"Application closing...\n\n"
@@ -475,10 +483,10 @@ class VisualSerializationTestWindow(QMainWindow):
                     msg += "You may want to manually save before closing."
 
                 # Show non-blocking notification
-                print(msg.replace('\n', ' '))
+                print(msg.replace("\n", " "))
 
             # Cleanup database connection
-            if hasattr(self, 'rdb_manager'):
+            if hasattr(self, "rdb_manager"):
                 self.rdb_manager.db.disconnect()
 
         except Exception as e:
@@ -513,6 +521,7 @@ def main():
     except Exception as e:
         print(f"❌ Error starting visual test: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

@@ -46,13 +46,14 @@ class ComponentScene(QGraphicsScene):
 
     def add_component_at_position(self, position: QPointF):
         """Add component at the specified position"""
+        logger.info("Component Scene: In Add Component At Position")
         component_type = self.controller.selected_component_type
         name = f"{component_type.title()}_temp"
         component = ComponentWithPins(name, component_type)
         component.setPos(position.x() - component.rect().width() / 2,
                          position.y() - component.rect().height() / 2)
         self.addItem(component)
-        self.controller.add_component(component, component_type, position)
+        self.controller.add_component(component, component_type, (position.x(), position.y()))
         logger.info("Component added to scene: %s (%s)", name, component_type)
 
     def remove_component(self, component: ComponentWithPins):

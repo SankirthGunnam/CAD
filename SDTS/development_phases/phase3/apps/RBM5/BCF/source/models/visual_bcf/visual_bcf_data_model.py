@@ -6,6 +6,7 @@ It provides a unified interface for Visual BCF to access component data, connect
 and properties data from the underlying JSON database tables used by Legacy BCF.
 """
 
+import traceback
 from typing import Dict, List, Any, Optional, Tuple
 import uuid
 import logging
@@ -138,6 +139,8 @@ class VisualBCFDataModel(QObject):
                                        Any] = None,
                       component_id: str = None) -> str:
         """Add a new component to the scene with external configuration"""
+        print('BCF Data Model: In Add Component BCF Data Model')
+        logger.info(f"BCF Data Model: Adding component: {name} ({component_type}) at {position}")
         try:
             # Use provided component_id if available, otherwise generate new one
             if component_id is None:
@@ -181,7 +184,7 @@ class VisualBCFDataModel(QObject):
             # Add directly to RDB
             components_table = self.rdb_manager.get_table(self.components_table_path)
             components_table.append(component_data)
-            # self.rdb_manager.set_table(self.components_table_path, components_table)
+            self.rdb_manager.set_table(self.components_table_path, components_table)
 
             # Emit signal
             self.component_added.emit(component_id)
@@ -190,7 +193,8 @@ class VisualBCFDataModel(QObject):
             return component_id
 
         except Exception as e:
-            logger.error("Error adding component: %s", e)
+            logger.error("BCF Data Model: Error adding component: %s", e)
+            print(traceback.format_exc())
             return ""
 
     def remove_component(self, component_id: str) -> bool:
@@ -281,7 +285,7 @@ class VisualBCFDataModel(QObject):
                     # Emit update signal
                     self.component_updated.emit(component_id, component)
                     logger.info("Updated component properties: %s", component_id)
-            return True
+                    return True
 
             logger.warning("Component not found for properties update: %s", component_id)
             return False
@@ -331,6 +335,7 @@ class VisualBCFDataModel(QObject):
             for component in components_table:
                 if component.get('name') == component_name:
                     return component.get('id', '')
+            return None  # Add missing return statement
         except Exception as e:
             logger.error("Error getting component ID: %s", e)
             return None
@@ -385,7 +390,7 @@ class VisualBCFDataModel(QObject):
             return None
         except Exception as e:
             logger.error("Error getting component by name: %s", e)
-        return None
+            return None
 
     # Connection Management Methods
 
@@ -455,11 +460,11 @@ class VisualBCFDataModel(QObject):
                     # Save back to RDB
                     self.rdb_manager.set_table(self.connections_table_path, connections_table)
 
-            # Emit signal
+                    # Emit signal
                     self.connection_updated.emit(connection_id)
 
                     logger.info("Updated connection: %s", connection_id)
-            return True
+                    return True
 
             logger.warning("Connection not found for update: %s", connection_id)
             return False
