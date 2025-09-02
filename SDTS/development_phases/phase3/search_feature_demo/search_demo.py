@@ -1,1040 +1,998 @@
 #!/usr/bin/env python3
 """
-Search Feature Demo
-
-This demo showcases search functionality across different widget types:
-- Tab Widget (with nested widgets)
-- Tree Widget
-- Table Widget  
-- Text Edit Widget
-
-Each widget has its own search implementation that can be triggered
-from a unified search bar or individual widget search buttons.
+Search Feature Demo using QTreeView and QTableView with Model-View Architecture
+This demo follows the same pattern as legacy_bcf_manager.py with TreeItem and TreeModel classes.
 """
 
 import sys
-import random
-from typing import List, Dict, Any, Optional
+import os
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTabWidget, QTreeWidget, QTreeWidgetItem, QTableWidget, QTableWidgetItem,
-    QTextEdit, QLineEdit, QPushButton, QLabel, QComboBox, QGroupBox,
-    QSplitter, QScrollArea, QFrame, QMessageBox, QAbstractItemView
+    QTabWidget, QTreeView, QTableView, QTextEdit, QLineEdit,
+    QPushButton, QLabel, QGroupBox, QHeaderView, QAbstractItemView
 )
-from PySide6.QtCore import Qt, QTimer, Signal, QObject
-from PySide6.QtGui import QFont, QColor, QPalette, QTextCursor, QTextCharFormat
+from PySide6.QtCore import (
+    Qt, QAbstractItemModel, QModelIndex, Signal, QObject,
+    QAbstractTableModel, QSortFilterProxyModel
+)
+from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor, QSyntaxHighlighter, QTextDocument
 
 
-class SearchHighlighter:
-    """Helper class for highlighting search results in text widgets."""
+class TreeItem:
+    """Internal class to represent tree items - following legacy_bcf_manager.py pattern"""
     
-    def __init__(self, text_widget):
-        self.text_widget = text_widget
-        self.highlight_format = QTextCharFormat()
-        self.highlight_format.setBackground(QColor(255, 255, 0, 100))  # Light yellow
-        self.highlight_format.setForeground(QColor(0, 0, 0))
+    def __init__(self, name, parent=None, data=None):
+        self.name = name
+        self.data = data or {}
+        self.children = []
+        self.parent = parent
+        self.icon = None
+        self.font = QFont()
+        self.view_type = None
         
-    def highlight_text(self, search_text: str):
-        """Highlight all occurrences of search text."""
-        if not search_text:
-            return
+    def append_child(self, child):
+        self.children.append(child)
+        child.parent = self
+        
+    def child(self, row):
+        return self.children[row] if 0 <= row < len(self.children) else None
+        
+    def child_count(self):
+        return len(self.children)
+        
+    def row(self):
+        return self.parent.children.index(self) if self.parent else 0
+
+
+class TreeModel(QAbstractItemModel):
+    """Model that creates a tree structure - following legacy_bcf_manager.py pattern"""
+    
+    def __init__(self, data=None, parent=None):
+        super().__init__(parent)
+        self.root = TreeItem("Root")
+        if data:
+            self._build_tree(self.root, data)
             
-        cursor = self.text_widget.textCursor()
-        cursor.movePosition(QTextCursor.Start)
+    def _build_tree(self, parent_node, tree_dict):
+        """Build tree structure from dictionary"""
+        for key, value in tree_dict.items():
+            child_node = TreeItem(key, data=value)
+            
+            # Set view type based on the value
+            if isinstance(value, dict):
+                child_node.view_type = "table"
+            else:
+                child_node.view_type = value
+                
+            # Customize font and icon
+            font = QFont()
+            font.setBold(True if not parent_node.parent else False)
+            child_node.font = font
+            
+            parent_node.append_child(child_node)
+            
+            if isinstance(value, dict):
+                self._build_tree(child_node, value)
+                
+    def index(self, row, column, parent=QModelIndex()):
+        if not self.hasIndex(row, column, parent):
+            return QModelIndex()
+            
+        parent_node = self.get_node(parent)
+        child_node = parent_node.child(row)
+        if child_node:
+            return self.createIndex(row, column, child_node)
+        return QModelIndex()
         
-        # Clear previous highlights
-        self.text_widget.document().setDefaultFont(self.text_widget.font())
+    def parent(self, index):
+        node = self.get_node(index)
+        if not node or not node.parent or node.parent == self.root:
+            return QModelIndex()
+        return self.createIndex(node.parent.row(), 0, node.parent)
         
-        # Find and highlight all occurrences
-        while not cursor.isNull() and not cursor.atEnd():
-            cursor = self.text_widget.document().find(search_text, cursor)
-            if not cursor.isNull():
-                cursor.mergeCharFormat(self.highlight_format)
+    def rowCount(self, parent=QModelIndex()):
+        node = self.get_node(parent)
+        return node.child_count()
+        
+    def columnCount(self, parent=QModelIndex()):
+        return 1
+        
+    def data(self, index, role=Qt.DisplayRole):
+        node = self.get_node(index)
+        if not node:
+            return None
+            
+        if role == Qt.DisplayRole:
+            return node.name
+        elif role == Qt.FontRole:
+            return node.font
+        elif role == Qt.DecorationRole:
+            return node.icon
+        elif role == Qt.UserRole:
+            return node.view_type
+        return None
+        
+    def get_node(self, index):
+        return index.internalPointer() if index.isValid() else self.root
 
 
-class SearchableTreeWidget(QTreeWidget):
-    """Tree widget with search functionality."""
+class TableModel(QAbstractTableModel):
+    """Table model for QTableView"""
+    
+    def __init__(self, data=None, headers=None, parent=None):
+        super().__init__(parent)
+        self._data = data or []
+        self._headers = headers or ["Column 1", "Column 2", "Column 3", "Column 4"]
+        
+    def rowCount(self, parent=QModelIndex()):
+        return len(self._data)
+        
+    def columnCount(self, parent=QModelIndex()):
+        return len(self._headers)
+        
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+            
+        if role == Qt.DisplayRole:
+            row = index.row()
+            col = index.column()
+            if 0 <= row < len(self._data) and 0 <= col < len(self._headers):
+                return str(self._data[row][col])
+        return None
+        
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return self._headers[section]
+            elif orientation == Qt.Vertical:
+                return str(section + 1)
+        return None
+
+
+class SearchHighlighter(QSyntaxHighlighter):
+    """Syntax highlighter for search results in QTextEdit"""
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.search_text = ""
-        self.current_highlight_index = -1
-        self.highlighted_items = []
+        self.search_format = QTextCharFormat()
+        self.search_format.setBackground(QColor(255, 255, 0, 100))  # Yellow highlight
+        self.search_format.setForeground(QColor(0, 0, 0))
+        self.search_pattern = ""
         
-    def search(self, text: str):
-        """Search for text in tree items and highlight results."""
-        self.search_text = text.lower()
-        self.current_highlight_index = -1
+    def highlightBlock(self, text):
+        if self.search_pattern:
+            import re
+            pattern = re.escape(self.search_pattern)
+            for match in re.finditer(pattern, text, re.IGNORECASE):
+                start, end = match.span()
+                self.setFormat(start, end - start, self.search_format)
+                
+    def set_search_pattern(self, pattern):
+        self.search_pattern = pattern
+        self.rehighlight()
+
+
+class SearchableTreeView(QTreeView):
+    """Searchable TreeView with search functionality"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.highlighted_items = []
+        self.current_highlight_index = -1
+        self.search_term = ""
         
-        if not text:
-            self.clear_highlights()
+    def search(self, term):
+        """Search for items in the tree"""
+        self.search_term = term.lower()
+        self.highlighted_items = []
+        self.current_highlight_index = -1
+        
+        if not term:
             return
             
-        # Find all matching items
-        self._find_matching_items(self.invisibleRootItem())
+        model = self.model()
+        if not model:
+            return
+            
+        # Search through all items
+        self._search_recursive(QModelIndex(), model)
         
-        # Highlight first result
         if self.highlighted_items:
             self.current_highlight_index = 0
             self._highlight_current_item()
             
-    def _find_matching_items(self, parent_item):
-        """Recursively find items matching search text."""
-        for i in range(parent_item.childCount()):
-            item = parent_item.child(i)
+    def _search_recursive(self, parent_index, model):
+        """Recursively search through tree items"""
+        for row in range(model.rowCount(parent_index)):
+            index = model.index(row, 0, parent_index)
+            item_text = model.data(index, Qt.DisplayRole)
             
-            # Check if item text matches
-            if self.search_text in item.text(0).lower():
-                self.highlighted_items.append(item)
+            if item_text and self.search_term in item_text.lower():
+                self.highlighted_items.append(index)
                 
-            # Recursively search children
-            if item.childCount() > 0:
-                self._find_matching_items(item)
+            # Search children
+            if model.hasChildren(index):
+                self._search_recursive(index, model)
                 
     def _highlight_current_item(self):
-        """Highlight the current search result."""
+        """Highlight the current search result"""
         if 0 <= self.current_highlight_index < len(self.highlighted_items):
-            item = self.highlighted_items[self.current_highlight_index]
-            self.setCurrentItem(item)
-            self.scrollToItem(item)
+            index = self.highlighted_items[self.current_highlight_index]
+            self.setCurrentIndex(index)
+            self.scrollTo(index, QAbstractItemView.PositionAtCenter)
             
-            # Visual highlight
-            item.setBackground(0, QColor(255, 255, 0, 150))
+    def next_search_result(self):
+        """Move to next search result"""
+        if self.highlighted_items:
+            self.current_highlight_index = (self.current_highlight_index + 1) % len(self.highlighted_items)
+            self._highlight_current_item()
             
-    def clear_highlights(self):
-        """Clear all search highlights."""
-        for item in self.highlighted_items:
-            item.setBackground(0, QColor(255, 255, 255, 0))
+    def previous_search_result(self):
+        """Move to previous search result"""
+        if self.highlighted_items:
+            self.current_highlight_index = (self.current_highlight_index - 1) % len(self.highlighted_items)
+            self._highlight_current_item()
+            
+    def clear_search(self):
+        """Clear search highlighting"""
         self.highlighted_items = []
         self.current_highlight_index = -1
-        
-    def next_search_result(self):
-        """Move to next search result."""
-        if not self.highlighted_items:
-            return
-            
-        # Clear previous highlight
-        if 0 <= self.current_highlight_index < len(self.highlighted_items):
-            self.highlighted_items[self.current_highlight_index].setBackground(0, QColor(255, 255, 0, 150))
-            
-        self.current_highlight_index = (self.current_highlight_index + 1) % len(self.highlighted_items)
-        self._highlight_current_item()
-        
-    def previous_search_result(self):
-        """Move to previous search result."""
-        if not self.highlighted_items:
-            return
-            
-        # Clear previous highlight
-        if 0 <= self.current_highlight_index < len(self.highlighted_items):
-            self.highlighted_items[self.current_highlight_index].setBackground(0, QColor(255, 255, 0, 150))
-            
-        self.current_highlight_index = (self.current_highlight_index - 1) % len(self.highlighted_items)
-        self._highlight_current_item()
+        self.search_term = ""
 
 
-class SearchableTableWidget(QTableWidget):
-    """Table widget with search functionality."""
+class SearchableTableView(QTableView):
+    """Searchable TableView with search functionality"""
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.search_text = ""
-        self.current_highlight_index = -1
         self.highlighted_cells = []
-        
-    def search(self, text: str):
-        """Search for text in table cells and highlight results."""
-        self.search_text = text.lower()
         self.current_highlight_index = -1
-        self.highlighted_cells = []
+        self.search_term = ""
         
-        if not text:
-            self.clear_highlights()
+    def search(self, term):
+        """Search for items in the table"""
+        self.search_term = term.lower()
+        self.highlighted_cells = []
+        self.current_highlight_index = -1
+        
+        if not term:
             return
             
-        # Find all matching cells
-        for row in range(self.rowCount()):
-            for col in range(self.columnCount()):
-                item = self.item(row, col)
-                if item and self.search_text in item.text().lower():
-                    self.highlighted_cells.append((row, col))
+        model = self.model()
+        if not model:
+            return
+            
+        # Search through all cells
+        for row in range(model.rowCount()):
+            for col in range(model.columnCount()):
+                index = model.index(row, col)
+                cell_text = model.data(index, Qt.DisplayRole)
+                
+                if cell_text and self.search_term in cell_text.lower():
+                    self.highlighted_cells.append(index)
                     
-        # Highlight first result
         if self.highlighted_cells:
             self.current_highlight_index = 0
             self._highlight_current_cell()
             
     def _highlight_current_cell(self):
-        """Highlight the current search result cell."""
+        """Highlight the current search result"""
         if 0 <= self.current_highlight_index < len(self.highlighted_cells):
-            row, col = self.highlighted_cells[self.current_highlight_index]
-            self.setCurrentCell(row, col)
-            self.scrollToItem(self.item(row, col))
+            index = self.highlighted_cells[self.current_highlight_index]
+            self.setCurrentIndex(index)
+            self.scrollTo(index, QAbstractItemView.PositionAtCenter)
             
-            # Visual highlight
-            item = self.item(row, col)
-            if item:
-                item.setBackground(QColor(255, 255, 0, 150))
-                
-    def clear_highlights(self):
-        """Clear all search highlights."""
-        for row, col in self.highlighted_cells:
-            item = self.item(row, col)
-            if item:
-                item.setBackground(QColor(255, 255, 255, 0))
+    def next_search_result(self):
+        """Move to next search result"""
+        if self.highlighted_cells:
+            self.current_highlight_index = (self.current_highlight_index + 1) % len(self.highlighted_cells)
+            self._highlight_current_cell()
+            
+    def previous_search_result(self):
+        """Move to previous search result"""
+        if self.highlighted_cells:
+            self.current_highlight_index = (self.current_highlight_index - 1) % len(self.highlighted_cells)
+            self._highlight_current_cell()
+            
+    def clear_search(self):
+        """Clear search highlighting"""
         self.highlighted_cells = []
         self.current_highlight_index = -1
-        
-    def next_search_result(self):
-        """Move to next search result."""
-        if not self.highlighted_cells:
-            return
-            
-        # Clear previous highlight
-        if 0 <= self.current_highlight_index < len(self.highlighted_cells):
-            row, col = self.highlighted_cells[self.current_highlight_index]
-            item = self.item(row, col)
-            if item:
-                item.setBackground(QColor(255, 255, 0, 150))
-                
-        self.current_highlight_index = (self.current_highlight_index + 1) % len(self.highlighted_cells)
-        self._highlight_current_cell()
-        
-    def previous_search_result(self):
-        """Move to previous search result."""
-        if not self.highlighted_cells:
-            return
-            
-        # Clear previous highlight
-        if 0 <= self.current_highlight_index < len(self.highlighted_cells):
-            row, col = self.highlighted_cells[self.current_highlight_index]
-            item = self.item(row, col)
-            if item:
-                item.setBackground(QColor(255, 255, 0, 150))
-                
-        self.current_highlight_index = (self.current_highlight_index - 1) % len(self.highlighted_cells)
-        self._highlight_current_cell()
+        self.search_term = ""
 
 
 class SearchableTextEdit(QTextEdit):
-    """Text edit widget with search functionality."""
+    """Searchable TextEdit with search functionality"""
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.highlighter = SearchHighlighter(self)
-        self.search_text = ""
-        self.current_highlight_index = -1
+        self.highlighter = SearchHighlighter(self.document())
         self.highlighted_positions = []
-        
-    def search(self, text: str):
-        """Search for text and highlight results."""
-        self.search_text = text
         self.current_highlight_index = -1
-        self.highlighted_positions = []
+        self.search_term = ""
         
-        if not text:
-            self.highlighter.highlight_text("")
+    def search(self, term):
+        """Search for text in the document"""
+        self.search_term = term
+        self.highlighted_positions = []
+        self.current_highlight_index = -1
+        
+        if not term:
+            self.highlighter.set_search_pattern("")
             return
             
         # Find all occurrences
         cursor = self.textCursor()
         cursor.movePosition(QTextCursor.Start)
         
-        while not cursor.isNull() and not cursor.atEnd():
-            cursor = self.document().find(text, cursor)
-            if not cursor.isNull():
-                self.highlighted_positions.append(cursor.position())
-                
-        # Highlight all occurrences
-        self.highlighter.highlight_text(text)
-        
-        # Move to first result
+        while True:
+            cursor = self.document().find(term, cursor)
+            if cursor.isNull():
+                break
+            self.highlighted_positions.append(cursor.position())
+            
         if self.highlighted_positions:
             self.current_highlight_index = 0
-            self._move_to_current_result()
+            self._highlight_current_position()
             
-    def _move_to_current_result(self):
-        """Move cursor to current search result."""
+        self.highlighter.set_search_pattern(term)
+        
+    def _highlight_current_position(self):
+        """Highlight the current search result"""
         if 0 <= self.current_highlight_index < len(self.highlighted_positions):
+            position = self.highlighted_positions[self.current_highlight_index]
             cursor = self.textCursor()
-            cursor.setPosition(self.highlighted_positions[self.current_highlight_index])
+            cursor.setPosition(position)
             self.setTextCursor(cursor)
             self.ensureCursorVisible()
             
     def next_search_result(self):
-        """Move to next search result."""
-        if not self.highlighted_positions:
-            return
+        """Move to next search result"""
+        if self.highlighted_positions:
+            self.current_highlight_index = (self.current_highlight_index + 1) % len(self.highlighted_positions)
+            self._highlight_current_position()
             
-        self.current_highlight_index = (self.current_highlight_index + 1) % len(self.highlighted_positions)
-        self._move_to_current_result()
-        
     def previous_search_result(self):
-        """Move to previous search result."""
-        if not self.highlighted_positions:
-            return
+        """Move to previous search result"""
+        if self.highlighted_positions:
+            self.current_highlight_index = (self.current_highlight_index - 1) % len(self.highlighted_positions)
+            self._highlight_current_position()
             
-        self.current_highlight_index = (self.current_highlight_index - 1) % len(self.highlighted_positions)
-        self._move_to_current_result()
+    def clear_search(self):
+        """Clear search highlighting"""
+        self.highlighted_positions = []
+        self.current_highlight_index = -1
+        self.search_term = ""
+        self.highlighter.set_search_pattern("")
 
 
 class TabSearchManager(QObject):
-    """Manages search functionality across all widgets in tabs."""
+    """Manages search across different tabs and widgets"""
     
-    def __init__(self, tab_widget):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.tab_widget = None
+        self.search_widgets = {}
+        
+    def set_tab_widget(self, tab_widget):
+        """Set the tab widget to manage"""
         self.tab_widget = tab_widget
-        self.searchable_widgets = {}  # tab_index -> widget mapping
         
-    def register_widget(self, tab_index: int, widget):
-        """Register a searchable widget for a specific tab."""
-        self.searchable_widgets[tab_index] = widget
+    def register_widget(self, tab_index, widget):
+        """Register a searchable widget for a tab"""
+        self.search_widgets[tab_index] = widget
         
-    def search_in_current_tab(self, text: str):
-        """Search in the currently active tab."""
-        current_index = self.tab_widget.currentIndex()
-        if current_index in self.searchable_widgets:
-            widget = self.searchable_widgets[current_index]
+    def search_all_tabs(self, term):
+        """Search across all registered widgets"""
+        for tab_index, widget in self.search_widgets.items():
             if hasattr(widget, 'search'):
-                widget.search(text)
+                widget.search(term)
                 
-    def search_in_all_tabs(self, text: str):
-        """Search in all registered tabs."""
-        for tab_index, widget in self.searchable_widgets.items():
-            if hasattr(widget, 'search'):
-                widget.search(text)
-                
-    def next_result_in_current_tab(self):
-        """Move to next search result in current tab."""
-        current_index = self.tab_widget.currentIndex()
-        if current_index in self.searchable_widgets:
-            widget = self.searchable_widgets[current_index]
-            if hasattr(widget, 'next_search_result'):
-                widget.next_search_result()
-                
-    def previous_result_in_current_tab(self):
-        """Move to previous search result in current tab."""
-        current_index = self.tab_widget.currentIndex()
-        if current_index in self.searchable_widgets:
-            widget = self.searchable_widgets[current_index]
-            if hasattr(widget, 'previous_search_result'):
-                widget.previous_search_result()
+    def clear_all_searches(self):
+        """Clear search in all registered widgets"""
+        for widget in self.search_widgets.values():
+            if hasattr(widget, 'clear_search'):
+                widget.clear_search()
 
 
 class SearchDemoWindow(QMainWindow):
-    """Main window demonstrating search functionality across different widgets."""
+    """Main window demonstrating search functionality with QTreeView and QTableView"""
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Search Feature Demo")
+        self.setWindowTitle("Search Feature Demo - TreeView & TableView")
         self.setGeometry(100, 100, 1200, 800)
         
-        # Initialize components
-        self.tab_widget = None
-        self.tree_widget = None
-        self.table_widget = None
-        self.text_edit = None
-        self.search_manager = None
+        # Initialize search manager
+        self.search_manager = TabSearchManager()
         
-        # Setup UI
         self._setup_ui()
+        self._setup_search_controls()
+        self._setup_tab_widget()
         self._populate_data()
         self._setup_search_functionality()
         
     def _setup_ui(self):
-        """Setup the main UI layout."""
+        """Setup the main UI"""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        # Main layout
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(10)
+        self.main_layout = QVBoxLayout(central_widget)
         
-        # Title
-        title_label = QLabel("Search Feature Demo")
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;")
-        main_layout.addWidget(title_label)
-        
-        # Search controls
-        self._setup_search_controls(main_layout)
-        
-        # Tab widget
-        self._setup_tab_widget(main_layout)
-        
-    def _setup_search_controls(self, parent_layout):
-        """Setup the search control panel."""
+    def _setup_search_controls(self):
+        """Setup search controls"""
         search_group = QGroupBox("Search Controls")
         search_layout = QHBoxLayout(search_group)
         
         # Search input
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Enter search text...")
-        self.search_input.setMinimumWidth(300)
+        self.search_input.setPlaceholderText("Enter search term...")
         search_layout.addWidget(QLabel("Search:"))
         search_layout.addWidget(self.search_input)
         
-        # Search scope
-        self.search_scope = QComboBox()
-        self.search_scope.addItems(["Current Tab", "All Tabs"])
-        search_layout.addWidget(QLabel("Scope:"))
-        search_layout.addWidget(self.search_scope)
-        
-        # Search button
+        # Search buttons
         self.search_button = QPushButton("Search")
-        self.search_button.clicked.connect(self._perform_search)
-        search_layout.addWidget(self.search_button)
-        
-        # Navigation buttons
-        self.prev_button = QPushButton("← Previous")
-        self.prev_button.clicked.connect(self._previous_result)
-        search_layout.addWidget(self.prev_button)
-        
-        self.next_button = QPushButton("Next →")
-        self.next_button.clicked.connect(self._next_result)
-        search_layout.addWidget(self.next_button)
-        
-        # Clear button
+        self.next_button = QPushButton("Next")
+        self.previous_button = QPushButton("Previous")
         self.clear_button = QPushButton("Clear")
-        self.clear_button.clicked.connect(self._clear_search)
+        
+        search_layout.addWidget(self.search_button)
+        search_layout.addWidget(self.previous_button)
+        search_layout.addWidget(self.next_button)
         search_layout.addWidget(self.clear_button)
         
-        search_layout.addStretch()
-        parent_layout.addWidget(search_group)
+        # Search status
+        self.search_status_label = QLabel("No search performed")
+        search_layout.addWidget(self.search_status_label)
         
-    def _setup_tab_widget(self, parent_layout):
-        """Setup the tab widget with different widget types."""
+        self.main_layout.addWidget(search_group)
+        
+    def _setup_tab_widget(self):
+        """Setup the tab widget with different views"""
         self.tab_widget = QTabWidget()
+        self.search_manager.set_tab_widget(self.tab_widget)
         
-        # Tab 1: Tree Widget
+        # Tree View Tab
         self._setup_tree_tab()
         
-        # Tab 2: Table Widget
+        # Table View Tab
         self._setup_table_tab()
         
-        # Tab 3: Text Edit Widget
+        # Text Edit Tab
         self._setup_text_edit_tab()
         
-        # Tab 4: Complex Tab (with nested widgets)
+        # Complex Tab (TreeView + TableView + TextEdit)
         self._setup_complex_tab()
         
-        parent_layout.addWidget(self.tab_widget)
+        self.main_layout.addWidget(self.tab_widget)
         
     def _setup_tree_tab(self):
-        """Setup the tree widget tab."""
+        """Setup tree view tab"""
         tree_widget = QWidget()
         layout = QVBoxLayout(tree_widget)
         
-        # Title
-        title = QLabel("Tree Widget Search Demo")
-        title.setStyleSheet("font-size: 14px; font-weight: bold; color: #34495e;")
-        layout.addWidget(title)
+        self.tree_view = SearchableTreeView()
+        layout.addWidget(self.tree_view)
         
-        # Tree widget
-        self.tree_widget = SearchableTreeWidget()
-        self.tree_widget.setHeaderLabel("File System Tree")
-        layout.addWidget(self.tree_widget)
-        
-        self.tab_widget.addTab(tree_widget, "Tree Widget")
+        self.tab_widget.addTab(tree_widget, "Tree View")
+        self.search_manager.register_widget(0, self.tree_view)
         
     def _setup_table_tab(self):
-        """Setup the table widget tab."""
+        """Setup table view tab"""
         table_widget = QWidget()
         layout = QVBoxLayout(table_widget)
         
-        # Title
-        title = QLabel("Table Widget Search Demo")
-        title.setStyleSheet("font-size: 14px; font-weight: bold; color: #34495e;")
-        layout.addWidget(title)
+        self.table_view = SearchableTableView()
+        self.table_view.setAlternatingRowColors(True)
+        self.table_view.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.table_view)
         
-        # Table widget
-        self.table_widget = SearchableTableWidget()
-        self.table_widget.setColumnCount(4)
-        self.table_widget.setHorizontalHeaderLabels(["Name", "Type", "Status", "Description"])
-        layout.addWidget(self.table_widget)
-        
-        self.tab_widget.addTab(table_widget, "Table Widget")
+        self.tab_widget.addTab(table_widget, "Table View")
+        self.search_manager.register_widget(1, self.table_view)
         
     def _setup_text_edit_tab(self):
-        """Setup the text edit widget tab."""
+        """Setup text edit tab"""
         text_widget = QWidget()
         layout = QVBoxLayout(text_widget)
         
-        # Title
-        title = QLabel("Text Edit Widget Search Demo")
-        title.setStyleSheet("font-size: 14px; font-weight: bold; color: #34495e;")
-        layout.addWidget(title)
-        
-        # Text edit widget
         self.text_edit = SearchableTextEdit()
-        self.text_edit.setFont(QFont("Courier", 10))
         layout.addWidget(self.text_edit)
         
-        self.tab_widget.addTab(text_widget, "Text Edit Widget")
+        self.tab_widget.addTab(text_widget, "Text Edit")
+        self.search_manager.register_widget(2, self.text_edit)
         
     def _setup_complex_tab(self):
-        """Setup a complex tab with multiple widget types."""
+        """Setup complex tab with multiple widgets"""
         complex_widget = QWidget()
         layout = QVBoxLayout(complex_widget)
         
-        # Title
-        title = QLabel("Complex Tab - Multiple Widget Types")
-        title.setStyleSheet("font-size: 14px; font-weight: bold; color: #34495e;")
-        layout.addWidget(title)
+        # Create horizontal layout for tree and table
+        top_layout = QHBoxLayout()
         
-        # Splitter for multiple widgets
-        splitter = QSplitter(Qt.Horizontal)
+        # Tree view
+        self.complex_tree = SearchableTreeView()
+        self.complex_tree.setObjectName("complex_tree")
+        top_layout.addWidget(self.complex_tree, 1)
         
-        # Left side: Tree widget
-        left_widget = QWidget()
-        left_layout = QVBoxLayout(left_widget)
-        left_layout.addWidget(QLabel("Project Structure:"))
+        # Table view
+        self.complex_table = SearchableTableView()
+        self.complex_table.setObjectName("complex_table")
+        self.complex_table.setAlternatingRowColors(True)
+        top_layout.addWidget(self.complex_table, 1)
         
-        self.complex_tree = SearchableTreeWidget()
-        self.complex_tree.setHeaderLabel("Projects")
-        left_layout.addWidget(self.complex_tree)
+        layout.addLayout(top_layout)
         
-        splitter.addWidget(left_widget)
-        
-        # Right side: Table widget
-        right_widget = QWidget()
-        right_layout = QVBoxLayout(right_widget)
-        right_layout.addWidget(QLabel("Project Details:"))
-        
-        self.complex_table = SearchableTableWidget()
-        self.complex_table.setColumnCount(3)
-        self.complex_table.setHorizontalHeaderLabels(["Project", "Language", "Status"])
-        right_layout.addWidget(self.complex_table)
-        
-        splitter.addWidget(right_widget)
-        
-        layout.addWidget(splitter)
-        
-        # Bottom: Text area
-        bottom_widget = QWidget()
-        bottom_layout = QVBoxLayout(bottom_widget)
-        bottom_layout.addWidget(QLabel("Project Description:"))
-        
+        # Text edit
         self.complex_text = SearchableTextEdit()
-        self.complex_text.setMaximumHeight(150)
-        bottom_layout.addWidget(self.complex_text)
+        self.complex_text.setObjectName("complex_text")
+        layout.addWidget(self.complex_text)
         
-        # Search status label
-        self.complex_search_status_label = QLabel("Search results will appear here")
-        self.complex_search_status_label.setStyleSheet("color: #7f8c8d; font-style: italic; padding: 5px;")
-        self.complex_search_status_label.setAlignment(Qt.AlignCenter)
-        bottom_layout.addWidget(self.complex_search_status_label)
+        # Status label for complex tab
+        self.complex_search_status_label = QLabel("No search performed")
+        layout.addWidget(self.complex_search_status_label)
         
-        layout.addWidget(bottom_widget)
+        self.tab_widget.addTab(complex_widget, "Complex View")
         
-        self.tab_widget.addTab(complex_widget, "Complex Tab")
+        # Register widgets for complex tab
+        self.search_manager.register_widget(3, self.complex_tree)
+        self.search_manager.register_widget(3, self.complex_table)
+        self.search_manager.register_widget(3, self.complex_text)
         
     def _populate_data(self):
-        """Populate all widgets with sample data."""
+        """Populate all widgets with sample data"""
         self._populate_tree()
         self._populate_table()
         self._populate_text_edit()
         self._populate_complex_tab()
         
     def _populate_tree(self):
-        """Populate the tree widget with sample data."""
-        # File system structure
-        root = QTreeWidgetItem(self.tree_widget, ["Root Directory"])
+        """Populate tree view with sample data"""
+        tree_data = {
+            "Components": {
+                "Bands": {
+                    "Band 1": "table",
+                    "Band 2": "table",
+                    "Band 3": "table",
+                },
+                "Boards": {
+                    "Board 1": "table",
+                    "Board 2": "table",
+                    "Board 3": "table",
+                },
+                "RCCs": {
+                    "RCC 1": "table",
+                    "RCC 2": "table",
+                    "RCC 3": "table",
+                },
+            },
+            "Devices": {
+                "Input Devices": {
+                    "Sensor 1": "input",
+                    "Sensor 2": "input",
+                    "Button 1": "input",
+                },
+                "Output Devices": {
+                    "LED 1": "output",
+                    "Motor 1": "output",
+                    "Display 1": "output",
+                },
+            },
+            "Settings": {
+                "General": "settings",
+                "Advanced": "settings",
+                "Network": "settings",
+            }
+        }
         
-        # Documents
-        docs = QTreeWidgetItem(root, ["Documents"])
-        QTreeWidgetItem(docs, ["report.pdf"])
-        QTreeWidgetItem(docs, ["presentation.pptx"])
-        QTreeWidgetItem(docs, ["data.xlsx"])
-        
-        # Images
-        images = QTreeWidgetItem(root, ["Images"])
-        QTreeWidgetItem(images, ["photo1.jpg"])
-        QTreeWidgetItem(images, ["photo2.png"])
-        QTreeWidgetItem(images, ["screenshot.png"])
-        
-        # Code
-        code = QTreeWidgetItem(root, ["Code"])
-        python = QTreeWidgetItem(code, ["Python"])
-        QTreeWidgetItem(python, ["main.py"])
-        QTreeWidgetItem(python, ["utils.py"])
-        QTreeWidgetItem(python, ["config.py"])
-        
-        js = QTreeWidgetItem(code, ["JavaScript"])
-        QTreeWidgetItem(js, ["app.js"])
-        QTreeWidgetItem(js, ["style.css"])
-        QTreeWidgetItem(js, ["index.html"])
-        
-        self.tree_widget.expandAll()
+        model = TreeModel(tree_data)
+        self.tree_view.setModel(model)
         
     def _populate_table(self):
-        """Populate the table widget with sample data."""
-        sample_data = [
-            ["Device A", "Sensor", "Active", "Temperature sensor with high accuracy"],
-            ["Device B", "Actuator", "Inactive", "Motor controller for robotic arm"],
-            ["Device C", "Display", "Active", "LCD screen for user interface"],
-            ["Device D", "Processor", "Active", "Main CPU for system control"],
-            ["Device E", "Memory", "Active", "RAM module for data storage"],
-            ["Device F", "Network", "Inactive", "WiFi module for connectivity"],
-            ["Device G", "Storage", "Active", "SSD for persistent storage"],
-            ["Device H", "Camera", "Active", "HD camera for image capture"]
+        """Populate table view with sample data"""
+        headers = ["Name", "Type", "Status", "Value", "Description"]
+        data = [
+            ["Device 1", "Input", "Active", "100", "Primary input device"],
+            ["Device 2", "Output", "Inactive", "0", "Secondary output device"],
+            ["Device 3", "Sensor", "Active", "75", "Temperature sensor"],
+            ["Device 4", "Motor", "Active", "50", "Stepper motor"],
+            ["Device 5", "LED", "Inactive", "0", "Status indicator"],
+            ["Device 6", "Button", "Active", "1", "User input button"],
+            ["Device 7", "Display", "Active", "100", "LCD display"],
+            ["Device 8", "Relay", "Inactive", "0", "Switching relay"],
         ]
         
-        self.table_widget.setRowCount(len(sample_data))
-        for row, data in enumerate(sample_data):
-            for col, text in enumerate(data):
-                item = QTableWidgetItem(text)
-                self.table_widget.setItem(row, col, item)
-                
-        self.table_widget.resizeColumnsToContents()
+        model = TableModel(data, headers)
+        self.table_view.setModel(model)
         
     def _populate_text_edit(self):
-        """Populate the text edit widget with sample data."""
-        sample_text = """
-# Sample Code and Documentation
+        """Populate text edit with sample content"""
+        content = """
+System Configuration Report
+==========================
 
-## Python Example
-def search_function(text, data):
-    \"\"\"Search for text in data structure.\"\"\"
-    results = []
-    for item in data:
-        if text.lower() in item.lower():
-            results.append(item)
-    return results
+Device Status Summary:
+- Total Devices: 8
+- Active Devices: 5
+- Inactive Devices: 3
 
-## Configuration Example
-[Database]
-host = localhost
-port = 5432
-database = myapp
-username = admin
-password = secret123
+Device Details:
+1. Device 1 (Input) - Status: Active, Value: 100
+   Description: Primary input device for user interaction
+   
+2. Device 2 (Output) - Status: Inactive, Value: 0
+   Description: Secondary output device for system feedback
+   
+3. Device 3 (Sensor) - Status: Active, Value: 75
+   Description: Temperature sensor monitoring system heat
+   
+4. Device 4 (Motor) - Status: Active, Value: 50
+   Description: Stepper motor for mechanical operations
+   
+5. Device 5 (LED) - Status: Inactive, Value: 0
+   Description: Status indicator for system state
+   
+6. Device 6 (Button) - Status: Active, Value: 1
+   Description: User input button for manual control
+   
+7. Device 7 (Display) - Status: Active, Value: 100
+   Description: LCD display for system information
+   
+8. Device 8 (Relay) - Status: Inactive, Value: 0
+   Description: Switching relay for power control
 
-## Log Entries
-2024-01-15 10:30:15 INFO: Application started
-2024-01-15 10:30:16 DEBUG: Database connection established
-2024-01-15 10:30:17 INFO: User authentication successful
-2024-01-15 10:30:18 WARN: High memory usage detected
-2024-01-15 10:30:19 ERROR: Failed to connect to external service
+System Performance:
+- CPU Usage: 45%
+- Memory Usage: 60%
+- Network Status: Connected
+- Storage Available: 2.5 GB
 
-## Notes
-- Remember to backup data regularly
-- Check system logs for errors
-- Monitor resource usage
-- Update dependencies monthly
+Configuration Notes:
+- All devices are properly configured
+- Network settings are optimized
+- Security protocols are active
+- Backup systems are operational
         """
-        self.text_edit.setPlainText(sample_text.strip())
+        
+        self.text_edit.setPlainText(content.strip())
         
     def _populate_complex_tab(self):
-        """Populate the complex tab with sample data."""
-        # Populate complex tree
-        root = QTreeWidgetItem(self.complex_tree, ["Projects"])
+        """Populate complex tab with sample data"""
+        # Tree data
+        complex_tree_data = {
+            "System Components": {
+                "Hardware": {
+                    "CPU": "hardware",
+                    "Memory": "hardware",
+                    "Storage": "hardware",
+                },
+                "Software": {
+                    "OS": "software",
+                    "Applications": "software",
+                    "Drivers": "software",
+                },
+            }
+        }
         
-        web_projects = QTreeWidgetItem(root, ["Web Projects"])
-        QTreeWidgetItem(web_projects, ["E-commerce Platform"])
-        QTreeWidgetItem(web_projects, ["Blog System"])
-        QTreeWidgetItem(web_projects, ["Dashboard"])
+        tree_model = TreeModel(complex_tree_data)
+        self.complex_tree.setModel(tree_model)
         
-        mobile_projects = QTreeWidgetItem(root, ["Mobile Apps"])
-        QTreeWidgetItem(mobile_projects, ["Fitness Tracker"])
-        QTreeWidgetItem(mobile_projects, ["Weather App"])
-        QTreeWidgetItem(mobile_projects, ["Task Manager"])
-        
-        desktop_projects = QTreeWidgetItem(root, ["Desktop Applications"])
-        QTreeWidgetItem(desktop_projects, ["Image Editor"])
-        QTreeWidgetItem(desktop_projects, ["Text Editor"])
-        QTreeWidgetItem(desktop_projects, ["File Manager"])
-        
-        self.complex_tree.expandAll()
-        
-        # Populate complex table
-        project_data = [
-            ["E-commerce Platform", "React/Node.js", "In Development"],
-            ["Blog System", "Django/Python", "Completed"],
-            ["Dashboard", "Vue.js/Express", "Testing"],
-            ["Fitness Tracker", "React Native", "In Development"],
-            ["Weather App", "Flutter", "Completed"],
-            ["Task Manager", "Swift", "Planning"],
-            ["Image Editor", "C++/Qt", "In Development"],
-            ["Text Editor", "Python/Tkinter", "Completed"],
-            ["File Manager", "Java/Swing", "Testing"]
+        # Table data
+        table_headers = ["Component", "Type", "Status", "Version"]
+        table_data = [
+            ["CPU", "Hardware", "Active", "v2.1"],
+            ["Memory", "Hardware", "Active", "v1.0"],
+            ["Storage", "Hardware", "Active", "v3.2"],
+            ["OS", "Software", "Active", "v5.1"],
+            ["Applications", "Software", "Active", "v2.3"],
+            ["Drivers", "Software", "Active", "v1.8"],
         ]
         
-        self.complex_table.setRowCount(len(project_data))
-        for row, data in enumerate(project_data):
-            for col, text in enumerate(data):
-                item = QTableWidgetItem(text)
-                self.complex_table.setItem(row, col, item)
-                
-        self.complex_table.resizeColumnsToContents()
+        table_model = TableModel(table_data, table_headers)
+        self.complex_table.setModel(table_model)
         
-        # Populate complex text
-        complex_text_content = """
-# Project Management Overview
+        # Text content
+        text_content = """
+Complex System Overview
+======================
 
-## Active Projects
-- E-commerce Platform: React frontend with Node.js backend
-- Fitness Tracker: Cross-platform mobile app using React Native
-- Image Editor: Desktop application built with C++ and Qt
+This complex view demonstrates search functionality across multiple widget types:
+- TreeView: Hierarchical component structure
+- TableView: Tabular component data
+- TextEdit: Detailed system information
 
-## Completed Projects
-- Blog System: Django-based content management system
-- Weather App: Flutter mobile application with real-time data
-- Text Editor: Simple Python-based text editor
+Search Features:
+- Cross-widget navigation
+- Highlighted results
+- Next/Previous navigation
+- Real-time search status
 
-## Upcoming Projects
-- Task Manager: iOS application using Swift
-- File Manager: Java-based desktop file browser
-
-## Development Guidelines
-- Use version control for all projects
-- Follow coding standards and best practices
-- Implement comprehensive testing
-- Document all APIs and user interfaces
+System Architecture:
+- Modular design
+- Scalable components
+- Real-time monitoring
+- Automated management
         """
-        self.complex_text.setPlainText(complex_text_content.strip())
+        
+        self.complex_text.setPlainText(text_content.strip())
         
     def _setup_search_functionality(self):
-        """Setup the search functionality."""
-        self.search_manager = TabSearchManager(self.tab_widget)
-        
-        # Register searchable widgets
-        self.search_manager.register_widget(0, self.tree_widget)
-        self.search_manager.register_widget(1, self.table_widget)
-        self.search_manager.register_widget(2, self.text_edit)
-        
-        # For complex tab, we'll search in all its widgets
-        # This is handled specially in the search methods
-        
-        # Connect search input to search functionality
+        """Setup search functionality"""
         self.search_input.returnPressed.connect(self._perform_search)
+        self.search_button.clicked.connect(self._perform_search)
+        self.next_button.clicked.connect(self._next_result)
+        self.previous_button.clicked.connect(self._previous_result)
+        self.clear_button.clicked.connect(self._clear_search)
         
     def _perform_search(self):
-        """Perform search based on current scope."""
-        search_text = self.search_input.text()
-        scope = self.search_scope.currentText()
+        """Perform search across all tabs"""
+        search_term = self.search_input.text().strip()
         
-        if scope == "Current Tab":
-            self.search_manager.search_in_current_tab(search_text)
-        else:  # All Tabs
-            self.search_manager.search_in_all_tabs(search_text)
+        if not search_term:
+            self._clear_search()
+            return
             
-        # Special handling for complex tab
-        if self.tab_widget.currentIndex() == 3:  # Complex tab
-            self._search_in_complex_tab(search_text)
-            
-    def _search_in_complex_tab(self, text: str):
-        """Search in all widgets of the complex tab."""
-        if hasattr(self, 'complex_tree'):
-            self.complex_tree.search(text)
-        if hasattr(self, 'complex_table'):
-            self.complex_table.search(text)
-        if hasattr(self, 'complex_text'):
-            self.complex_text.search(text)
-            
-        # Update the search status display
-        self._update_complex_tab_search_status()
+        current_tab = self.tab_widget.currentIndex()
         
-        # Initialize navigation to first widget with results
+        if current_tab == 3:  # Complex tab
+            self._search_in_complex_tab(search_term)
+        else:
+            # Search in current tab
+            widget = self.search_manager.search_widgets.get(current_tab)
+            if widget and hasattr(widget, 'search'):
+                widget.search(search_term)
+                self._update_search_status(widget, search_term)
+                
+    def _search_in_complex_tab(self, search_term):
+        """Search in complex tab across all widgets"""
+        total_results = 0
+        
+        # Search in tree
+        self.complex_tree.search(search_term)
+        tree_results = len(self.complex_tree.highlighted_items)
+        total_results += tree_results
+        
+        # Search in table
+        self.complex_table.search(search_term)
+        table_results = len(self.complex_table.highlighted_cells)
+        total_results += table_results
+        
+        # Search in text
+        self.complex_text.search(search_term)
+        text_results = len(self.complex_text.highlighted_positions)
+        total_results += text_results
+        
+        # Update status
+        status_text = f"Found {total_results} results: Tree({tree_results}), Table({table_results}), Text({text_results})"
+        self.complex_search_status_label.setText(status_text)
+        
+        # Initialize navigation to first result
         self._initialize_complex_tab_navigation()
         
     def _initialize_complex_tab_navigation(self):
-        """Initialize navigation to the first widget with results."""
+        """Initialize navigation to first available result in complex tab"""
         first_widget = self._get_first_widget_with_results()
         if first_widget:
-            # Set the first widget as active and highlight first result
-            first_widget.current_highlight_index = 0
-            if hasattr(first_widget, '_highlight_current_item'):
-                first_widget._highlight_current_item()
-            elif hasattr(first_widget, '_highlight_current_cell'):
-                first_widget._highlight_current_cell()
-            elif hasattr(first_widget, '_move_to_current_result'):
-                first_widget._move_to_current_result()
             self._highlight_active_complex_widget(first_widget)
+            
+    def _get_first_widget_with_results(self):
+        """Get the first widget that has search results"""
+        if self.complex_tree.highlighted_items:
+            return self.complex_tree
+        elif self.complex_table.highlighted_cells:
+            return self.complex_table
+        elif self.complex_text.highlighted_positions:
+            return self.complex_text
+        return None
         
-    def _update_complex_tab_search_status(self):
-        """Update the search status display for complex tab."""
-        if not hasattr(self, 'complex_search_status_label'):
-            return
+    def _highlight_active_complex_widget(self, widget):
+        """Highlight the currently active widget in complex tab"""
+        # Remove previous highlighting
+        for w in [self.complex_tree, self.complex_table, self.complex_text]:
+            w.setStyleSheet("")
             
-        total_results = 0
-        widget_results = {}
+        # Highlight current widget
+        widget.setStyleSheet("border: 2px solid blue;")
         
-        if hasattr(self, 'complex_tree') and self.complex_tree.highlighted_items:
-            tree_count = len(self.complex_tree.highlighted_items)
-            total_results += tree_count
-            widget_results['Tree'] = tree_count
-            
-        if hasattr(self, 'complex_table') and self.complex_table.highlighted_cells:
-            table_count = len(self.complex_table.highlighted_cells)
-            total_results += table_count
-            widget_results['Table'] = table_count
-            
-        if hasattr(self, 'complex_text') and self.complex_text.highlighted_positions:
-            text_count = len(self.complex_text.highlighted_positions)
-            total_results += text_count
-            widget_results['Text'] = text_count
-            
-        if total_results > 0:
-            status_text = f"Found {total_results} results: "
-            status_text += ", ".join([f"{widget}: {count}" for widget, count in widget_results.items()])
-            self.complex_search_status_label.setText(status_text)
-            self.complex_search_status_label.setStyleSheet("color: #27ae60; font-weight: bold;")
-        else:
-            self.complex_search_status_label.setText("No results found")
-            self.complex_search_status_label.setStyleSheet("color: #e74c3c; font-weight: bold;")
-            
     def _next_result(self):
-        """Move to next search result."""
+        """Move to next search result"""
         current_tab = self.tab_widget.currentIndex()
         
         if current_tab == 3:  # Complex tab
             self._next_result_complex_tab()
         else:
-            self.search_manager.next_result_in_current_tab()
-            
+            widget = self.search_manager.search_widgets.get(current_tab)
+            if widget and hasattr(widget, 'next_search_result'):
+                widget.next_search_result()
+                self._update_search_status(widget, widget.search_term)
+                
     def _previous_result(self):
-        """Move to previous search result."""
+        """Move to previous search result"""
         current_tab = self.tab_widget.currentIndex()
         
         if current_tab == 3:  # Complex tab
             self._previous_result_complex_tab()
         else:
-            self.search_manager.previous_result_in_current_tab()
-            
+            widget = self.search_manager.search_widgets.get(current_tab)
+            if widget and hasattr(widget, 'previous_search_result'):
+                widget.previous_search_result()
+                self._update_search_status(widget, widget.search_term)
+                
     def _next_result_complex_tab(self):
-        """Move to next search result across all widgets in complex tab."""
-        # Get current widget and result index
-        current_widget, current_index = self._get_current_complex_widget_state()
-        
-        if current_widget is None:
+        """Move to next result in complex tab"""
+        current_widget = self._get_current_complex_widget_state()
+        if not current_widget:
             return
             
         # Check if we're at the last result in current widget
         is_at_last_result = False
         
-        if hasattr(current_widget, 'highlighted_items') and current_widget.highlighted_items:
-            is_at_last_result = (current_widget.current_highlight_index >= len(current_widget.highlighted_items) - 1)
-        elif hasattr(current_widget, 'highlighted_cells') and current_widget.highlighted_cells:
-            is_at_last_result = (current_widget.current_highlight_index >= len(current_widget.highlighted_cells) - 1)
-        elif hasattr(current_widget, 'highlighted_positions') and current_widget.highlighted_positions:
-            is_at_last_result = (current_widget.current_highlight_index >= len(current_widget.highlighted_positions) - 1)
-            
-        # If we're at the last result, move to next widget
+        if current_widget == self.complex_tree:
+            is_at_last_result = (self.complex_tree.current_highlight_index == 
+                               len(self.complex_tree.highlighted_items) - 1)
+        elif current_widget == self.complex_table:
+            is_at_last_result = (self.complex_table.current_highlight_index == 
+                               len(self.complex_table.highlighted_cells) - 1)
+        elif current_widget == self.complex_text:
+            is_at_last_result = (self.complex_text.current_highlight_index == 
+                               len(self.complex_text.highlighted_positions) - 1)
+                               
         if is_at_last_result:
+            # Move to first result in next widget
             next_widget = self._get_next_complex_widget(current_widget)
-            if next_widget and hasattr(next_widget, 'highlighted_items') and next_widget.highlighted_items:
-                # Move to first result in next widget
-                next_widget.current_highlight_index = 0
-                next_widget._highlight_current_item()
-                self._highlight_active_complex_widget(next_widget)
-            elif next_widget and hasattr(next_widget, 'highlighted_cells') and next_widget.highlighted_cells:
-                # Move to first result in next widget
-                next_widget.current_highlight_index = 0
-                next_widget._highlight_current_cell()
-                self._highlight_active_complex_widget(next_widget)
-            elif next_widget and hasattr(next_widget, 'highlighted_positions') and next_widget.highlighted_positions:
-                # Move to first result in next widget
-                next_widget.current_highlight_index = 0
-                next_widget._move_to_current_result()
+            if next_widget:
+                if hasattr(next_widget, 'current_highlight_index'):
+                    next_widget.current_highlight_index = 0
+                if hasattr(next_widget, 'next_search_result'):
+                    next_widget.next_search_result()
                 self._highlight_active_complex_widget(next_widget)
         else:
             # Move to next result within current widget
             if hasattr(current_widget, 'next_search_result'):
                 current_widget.next_search_result()
                 self._highlight_active_complex_widget(current_widget)
-            
+                
     def _previous_result_complex_tab(self):
-        """Move to previous search result across all widgets in complex tab."""
-        # Get current widget and result index
-        current_widget, current_index = self._get_current_complex_widget_state()
-        
-        if current_widget is None:
+        """Move to previous result in complex tab"""
+        current_widget = self._get_current_complex_widget_state()
+        if not current_widget:
             return
             
         # Check if we're at the first result in current widget
         is_at_first_result = False
         
-        if hasattr(current_widget, 'highlighted_items') and current_widget.highlighted_items:
-            is_at_first_result = (current_widget.current_highlight_index <= 0)
-        elif hasattr(current_widget, 'highlighted_cells') and current_widget.highlighted_cells:
-            is_at_first_result = (current_widget.current_highlight_index <= 0)
-        elif hasattr(current_widget, 'highlighted_positions') and current_widget.highlighted_positions:
-            is_at_first_result = (current_widget.current_highlight_index <= 0)
+        if current_widget == self.complex_tree:
+            is_at_first_result = (self.complex_tree.current_highlight_index == 0)
+        elif current_widget == self.complex_table:
+            is_at_first_result = (self.complex_table.current_highlight_index == 0)
+        elif current_widget == self.complex_text:
+            is_at_first_result = (self.complex_text.current_highlight_index == 0)
             
-        # If we're at the first result, move to previous widget
         if is_at_first_result:
+            # Move to last result in previous widget
             prev_widget = self._get_previous_complex_widget(current_widget)
-            if prev_widget and hasattr(prev_widget, 'highlighted_items') and prev_widget.highlighted_items:
-                # Move to last result in previous widget
-                prev_widget.current_highlight_index = len(prev_widget.highlighted_items) - 1
-                prev_widget._highlight_current_item()
-                self._highlight_active_complex_widget(prev_widget)
-            elif prev_widget and hasattr(prev_widget, 'highlighted_cells') and prev_widget.highlighted_cells:
-                # Move to last result in previous widget
-                prev_widget.current_highlight_index = len(prev_widget.highlighted_cells) - 1
-                prev_widget._highlight_current_cell()
-                self._highlight_active_complex_widget(prev_widget)
-            elif prev_widget and hasattr(prev_widget, 'highlighted_positions') and prev_widget.highlighted_positions:
-                # Move to last result in previous widget
-                prev_widget.current_highlight_index = len(prev_widget.highlighted_positions) - 1
-                prev_widget._move_to_current_result()
+            if prev_widget:
+                if hasattr(prev_widget, 'current_highlight_index'):
+                    if prev_widget == self.complex_tree:
+                        prev_widget.current_highlight_index = len(self.complex_tree.highlighted_items) - 1
+                    elif prev_widget == self.complex_table:
+                        prev_widget.current_highlight_index = len(self.complex_table.highlighted_cells) - 1
+                    elif prev_widget == self.complex_text:
+                        prev_widget.current_highlight_index = len(self.complex_text.highlighted_positions) - 1
+                if hasattr(prev_widget, 'previous_search_result'):
+                    prev_widget.previous_search_result()
                 self._highlight_active_complex_widget(prev_widget)
         else:
             # Move to previous result within current widget
             if hasattr(current_widget, 'previous_search_result'):
                 current_widget.previous_search_result()
                 self._highlight_active_complex_widget(current_widget)
-            
+                
     def _get_current_complex_widget_state(self):
-        """Get the current active widget and its state in the complex tab."""
-        # Check which widget currently has focus or active search results
-        if hasattr(self, 'complex_tree') and self.complex_tree.highlighted_items:
-            return self.complex_tree, self.complex_tree.current_highlight_index
-        elif hasattr(self, 'complex_table') and self.complex_table.highlighted_cells:
-            return self.complex_table, self.complex_table.current_highlight_index
-        elif hasattr(self, 'complex_text') and self.complex_text.highlighted_positions:
-            return self.complex_text, self.complex_text.current_highlight_index
-        else:
-            # Default to first widget with results
-            if hasattr(self, 'complex_tree') and self.complex_tree.highlighted_items:
-                return self.complex_tree, 0
-            elif hasattr(self, 'complex_table') and self.complex_table.highlighted_cells:
-                return self.complex_table, 0
-            elif hasattr(self, 'complex_text') and self.complex_text.highlighted_positions:
-                return self.complex_text, 0
-        return None, -1
+        """Get the currently active widget in complex tab"""
+        if self.complex_tree.current_highlight_index >= 0:
+            return self.complex_tree
+        elif self.complex_table.current_highlight_index >= 0:
+            return self.complex_table
+        elif self.complex_text.current_highlight_index >= 0:
+            return self.complex_text
+        return None
         
     def _get_next_complex_widget(self, current_widget):
-        """Get the next widget in the complex tab cycle with proper circular navigation."""
-        # Define the widget order for circular navigation
+        """Get the next widget in complex tab with results"""
         widget_order = ['complex_tree', 'complex_table', 'complex_text']
+        current_index = 0
         
-        # Find current widget index
-        current_index = -1
+        # Find current widget in order
         for i, widget_name in enumerate(widget_order):
             if getattr(self, widget_name) == current_widget:
                 current_index = i
                 break
-        
-        if current_index == -1:
-            return None
-            
-        # Try to find next widget with results, starting from next position
+                
+        # Look for next widget with results
         for offset in range(1, len(widget_order) + 1):
             next_index = (current_index + offset) % len(widget_order)
             next_widget_name = widget_order[next_index]
             next_widget = getattr(self, next_widget_name)
             
-            # Check if next widget has results
-            if hasattr(next_widget, 'highlighted_items') and next_widget.highlighted_items:
+            if next_widget_name == 'complex_tree' and next_widget.highlighted_items:
                 return next_widget
-            elif hasattr(next_widget, 'highlighted_cells') and next_widget.highlighted_cells:
+            elif next_widget_name == 'complex_table' and next_widget.highlighted_cells:
                 return next_widget
-            elif hasattr(next_widget, 'highlighted_positions') and next_widget.highlighted_positions:
+            elif next_widget_name == 'complex_text' and next_widget.highlighted_positions:
                 return next_widget
                 
-        # If no other widget has results, return current widget (fallback)
-        return current_widget
-        
-    def _highlight_active_complex_widget(self, active_widget):
-        """Highlight the currently active widget in the complex tab."""
-        # Reset all widget borders
-        if hasattr(self, 'complex_tree'):
-            self.complex_tree.setStyleSheet("")
-        if hasattr(self, 'complex_table'):
-            self.complex_table.setStyleSheet("")
-        if hasattr(self, 'complex_text'):
-            self.complex_text.setStyleSheet("")
-            
-        # Highlight the active widget
-        if active_widget == self.complex_tree:
-            self.complex_tree.setStyleSheet("border: 3px solid #3498db; border-radius: 5px;")
-        elif active_widget == self.complex_table:
-            self.complex_table.setStyleSheet("border: 3px solid #3498db; border-radius: 5px;")
-        elif active_widget == self.complex_text:
-            self.complex_text.setStyleSheet("border: 3px solid #3498db; border-radius: 5px;")
+        return None
         
     def _get_previous_complex_widget(self, current_widget):
-        """Get the previous widget in the complex tab cycle with proper circular navigation."""
-        # Define the widget order for circular navigation (reverse order for previous)
+        """Get the previous widget in complex tab with results"""
         widget_order = ['complex_tree', 'complex_table', 'complex_text']
+        current_index = 0
         
-        # Find current widget index
-        current_index = -1
+        # Find current widget in order
         for i, widget_name in enumerate(widget_order):
             if getattr(self, widget_name) == current_widget:
                 current_index = i
                 break
-        
-        if current_index == -1:
-            return None
-            
-        # Try to find previous widget with results, starting from previous position
+                
+        # Look for previous widget with results
         for offset in range(1, len(widget_order) + 1):
             prev_index = (current_index - offset) % len(widget_order)
             prev_widget_name = widget_order[prev_index]
             prev_widget = getattr(self, prev_widget_name)
             
-            # Check if previous widget has results
-            if hasattr(prev_widget, 'highlighted_items') and prev_widget.highlighted_items:
+            if prev_widget_name == 'complex_tree' and prev_widget.highlighted_items:
                 return prev_widget
-            elif hasattr(prev_widget, 'highlighted_cells') and prev_widget.highlighted_cells:
+            elif prev_widget_name == 'complex_table' and prev_widget.highlighted_cells:
                 return prev_widget
-            elif hasattr(prev_widget, 'highlighted_positions') and prev_widget.highlighted_positions:
+            elif prev_widget_name == 'complex_text' and prev_widget.highlighted_positions:
                 return prev_widget
                 
-        # If no other widget has results, return current widget (fallback)
-        return current_widget
-        
-    def _get_first_widget_with_results(self):
-        """Get the first widget that has search results."""
-        widget_order = ['complex_tree', 'complex_table', 'complex_text']
-        
-        for widget_name in widget_order:
-            widget = getattr(self, widget_name)
-            if hasattr(widget, 'highlighted_items') and widget.highlighted_items:
-                return widget
-            elif hasattr(widget, 'highlighted_cells') and widget.highlighted_cells:
-                return widget
-            elif hasattr(widget, 'highlighted_positions') and widget.highlighted_positions:
-                return widget
         return None
+        
+    def _update_search_status(self, widget, search_term):
+        """Update search status label"""
+        if hasattr(widget, 'highlighted_items'):
+            count = len(widget.highlighted_items)
+        elif hasattr(widget, 'highlighted_cells'):
+            count = len(widget.highlighted_cells)
+        elif hasattr(widget, 'highlighted_positions'):
+            count = len(widget.highlighted_positions)
+        else:
+            count = 0
+            
+        if count > 0:
+            current_index = getattr(widget, 'current_highlight_index', 0) + 1
+            self.search_status_label.setText(f"Found {count} results for '{search_term}' - {current_index}/{count}")
+        else:
+            self.search_status_label.setText(f"No results found for '{search_term}'")
             
     def _clear_search(self):
-        """Clear all search results and highlights."""
+        """Clear all search results"""
         self.search_input.clear()
+        self.search_status_label.setText("No search performed")
+        self.complex_search_status_label.setText("No search performed")
         
-        # Clear highlights in all widgets
-        if hasattr(self, 'tree_widget'):
-            self.tree_widget.clear_highlights()
-        if hasattr(self, 'table_widget'):
-            self.table_widget.clear_highlights()
-        if hasattr(self, 'text_edit'):
-            self.text_edit.search("")
-        if hasattr(self, 'complex_tree'):
-            self.complex_tree.clear_highlights()
-        if hasattr(self, 'complex_table'):
-            self.complex_table.clear_highlights()
-        if hasattr(self, 'complex_text'):
-            self.complex_text.search("")
+        # Clear search in all widgets
+        for widget in self.search_manager.search_widgets.values():
+            if hasattr(widget, 'clear_search'):
+                widget.clear_search()
+                
+        # Remove highlighting from complex tab widgets
+        for widget in [self.complex_tree, self.complex_table, self.complex_text]:
+            widget.setStyleSheet("")
 
 
 def main():
-    """Main function to run the search demo."""
+    """Main function to run the demo"""
     app = QApplication(sys.argv)
     
-    # Set application style
-    app.setStyle('Fusion')
-    
-    # Create and show the main window
     window = SearchDemoWindow()
     window.show()
     
-    # Run the application
     sys.exit(app.exec())
 
 
 if __name__ == "__main__":
     main()
+
