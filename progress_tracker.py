@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolTip
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolTip, QScrollArea
 from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QPainterPath
 from PySide6.QtCore import QRect, QPoint
@@ -85,20 +85,39 @@ class ProgressArrow(QWidget):
 
 
 class ProgressTracker(QWidget):
-    """Main progress tracker widget"""
+    """Main progress tracker widget with scroll area"""
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.layout = QHBoxLayout(self)
+        
+        # Create scroll area
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setFrameStyle(QScrollArea.NoFrame)
+        
+        # Create content widget for the progress items
+        self.content_widget = QWidget()
+        self.layout = QHBoxLayout(self.content_widget)
         self.layout.setContentsMargins(10, 15, 10, 15)  # Reduced margins
         self.layout.setSpacing(0)  # No spacing between elements
+        
+        # Set the content widget in scroll area
+        self.scroll_area.setWidget(self.content_widget)
+        
+        # Create main layout for this widget
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(self.scroll_area)
         
         self.bubbles = []
         self.arrows = []
         self.current_step = 0
         
-        # Set minimum height for the widget
-        self.setMinimumHeight(50)
+        # Set minimum height for the widget to make bubbles clearly visible
+        self.setMinimumHeight(70)
+        self.setMaximumHeight(70)  # Fixed height to prevent vertical expansion
         
     def addStep(self, title):
         """Add a new step to the progress tracker"""
@@ -109,18 +128,21 @@ class ProgressTracker(QWidget):
             self.layout.addWidget(arrow)
         
         # Add bubble
-        bubble = ProgressBubble(title, parent=self)
+        bubble = ProgressBubble(title, parent=self.content_widget)
         self.bubbles.append(bubble)
         self.layout.addWidget(bubble)
         
-        # Update layout
+        # Update layout and ensure the new step is visible
         self.layout.update()
+        self.scroll_area.ensureWidgetVisible(bubble)
         
     def completeCurrentStep(self):
         """Mark current step as completed and move to next"""
         if self.current_step < len(self.bubbles):
             self.bubbles[self.current_step].setCompleted(True)
             self.current_step += 1
+            # Scroll to show the current step
+            self.scrollToCurrentStep()
             
     def getCurrentStep(self):
         """Get current step number (0-based)"""
@@ -143,3 +165,16 @@ class ProgressTracker(QWidget):
         self.bubbles.clear()
         self.arrows.clear()
         self.current_step = 0
+        
+        # Reset scroll position to beginning
+        self.scroll_area.horizontalScrollBar().setValue(0)
+        
+    def scrollToCurrentStep(self):
+        """Scroll to show the current step"""
+        if self.current_step < len(self.bubbles):
+            self.scroll_area.ensureWidgetVisible(self.bubbles[self.current_step])
+            
+    def scrollToEnd(self):
+        """Scroll to show the last step"""
+        if self.bubbles:
+            self.scroll_area.ensureWidgetVisible(self.bubbles[-1])
