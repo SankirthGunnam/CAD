@@ -1,7 +1,7 @@
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Iterator
 import logging
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, Qt
 
 # Use centralized path setup from BCF package
 import apps.RBM5.BCF  # This automatically sets up the path
@@ -52,6 +52,22 @@ class RDBManager(QObject):
         """Handle database changes"""
         self.data_changed.emit(path)
 
+    def __contains__(self, path: str) -> bool:
+        """Check if path exists in database"""
+        return bool(self.db.get_value(path))
+
+    def __getitem__(self, path: str) -> Any:
+        """Get value at specified path"""
+        return self.db.get_value(path)
+
+    def __setitem__(self, path: str, value: Any) -> bool:
+        """Set value at specified path"""
+        return self.db.set_value(path, value)
+
+    def __delitem__(self, path: str) -> bool:
+        """Delete value at specified path"""
+        return self.db.delete_value(path)
+
     def get_value(self, path: str) -> Any:
         """Get value at specified path"""
         return self.db.get_value(path)
@@ -85,11 +101,11 @@ class RDBManager(QObject):
         return self.db.delete_row(path, row_index)
 
     def get_model(self, path: str,
-                  columns: List[Dict[str, str]]) -> "RDBTableModel":
+                  columns: List[Dict[str, str]]) -> "TableModel":
         """Create a Qt model for the specified table"""
-        from apps.RBM5.BCF.source.models.visual_bcf.rdb_table_model import RDBTableModel
+        from apps.RBM5.BCF.source.models.visual_bcf.rdb_table_model import TableModel
 
-        return RDBTableModel(self, path, columns)
+        return TableModel(self, path, columns)
 
     def close(self):
         """Close the database connection and clean up resources"""

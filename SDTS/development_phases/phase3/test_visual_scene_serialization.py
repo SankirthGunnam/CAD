@@ -13,7 +13,9 @@ import os
 from pathlib import Path
 
 import os
-os.environ['DISPLAY'] = ':1'  # Set before importing PySide6
+# Set DISPLAY to current system display (usually :0)
+if 'DISPLAY' not in os.environ:
+    os.environ['DISPLAY'] = ':0'  # Set before importing PySide6
 
 # For WSL2 with X11 forwarding, set DISPLAY to Windows X11 server
 # os.environ["DISPLAY"] = ":0"  # Uncomment when X11 server is running
@@ -40,6 +42,7 @@ from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
 from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import (
     VisualBCFDataModel,
 )
+import apps.RBM5.BCF.source.RDB.paths as paths
 from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
 
 # Add the current project to Python path
@@ -66,6 +69,7 @@ class VisualSerializationTestWindow(QMainWindow):
 
         # Initialize RDB manager
         self.rdb_manager = RDBManager(self.temp_db_path)
+        self.add_visual_data()
 
         # Create manager with proper MVC architecture
         self.bcf_manager = VisualBCFManager(parent=self, rdb_manager=self.rdb_manager)
@@ -97,6 +101,78 @@ class VisualSerializationTestWindow(QMainWindow):
 
         # Don't auto-add test components - let user add them manually
         # self.add_test_components()
+
+    def add_visual_data(self):
+        """Setup test data in RDBManager from JSON file"""
+        import json
+        
+        self.rdb_manager[paths.CURRENT_REVISION] = "1.0.0"
+        
+        # Load test data from JSON file
+        json_file = Path(__file__).parent / "test_device_data.json"
+        try:
+            with open(json_file, 'r') as f:
+                test_data = json.load(f)
+            
+            # Load DCF devices
+            self.rdb_manager[paths.DCF_DEVICES] = test_data.get("dcf_devices", [])
+            
+            # Load MIPI devices
+            self.rdb_manager[paths.BCF_DEV_MIPI(self.rdb_manager[paths.CURRENT_REVISION])] = test_data.get("mipi_devices", [])
+            
+            # Load GPIO devices  
+            self.rdb_manager[paths.BCF_DEV_GPIO(self.rdb_manager[paths.CURRENT_REVISION])] = test_data.get("gpio_devices", [])
+            
+            # Load IO connections
+            self.rdb_manager[paths.BCF_DB_IO_CONNECT] = test_data.get("io_connections", [])
+            
+            print(f"✅ Loaded test data from {json_file}")
+            print(f"   - {len(test_data.get('dcf_devices', []))} DCF devices")
+            print(f"   - {len(test_data.get('mipi_devices', []))} MIPI devices") 
+            print(f"   - {len(test_data.get('gpio_devices', []))} GPIO devices")
+            print(f"   - {len(test_data.get('io_connections', []))} IO connections")
+            
+        except FileNotFoundError:
+            print(f"⚠️  JSON file not found: {json_file}")
+            print("   Using minimal test data instead...")
+            self._setup_minimal_data()
+        except Exception as e:
+            print(f"❌ Error loading JSON data: {e}")
+            print("   Using minimal test data instead...")
+            self._setup_minimal_data()
+    
+    def _setup_minimal_data(self):
+        """Setup minimal test data as fallback"""
+        # Add some basic test data
+        self.rdb_manager[paths.DCF_DEVICES] = [{
+            "ID": "1",
+            "Device Name": "Device 1",
+            "Control Type": "MIPI",
+            "Module": "Module 1",
+        }]
+        self.rdb_manager[paths.BCF_DEV_MIPI(self.rdb_manager[paths.CURRENT_REVISION])] = [{
+            "ID": "1",
+            "DCF": "DCF 1",
+            "Name": "Device 1",
+            "USID": "USID 1",
+            "Module": "Module 1",
+        }]
+        self.rdb_manager[paths.BCF_DEV_GPIO(self.rdb_manager[paths.CURRENT_REVISION])] = [{
+            "ID": "1",
+            "DCF": "DCF 1",
+            "Name": "Device 1",
+            "USID": "USID 1",
+            "Module": "Module 1",
+        }]
+        self.rdb_manager[paths.BCF_DB_IO_CONNECT] = [{
+            "Connection ID": "1",
+            "Source Device": "Device 1",
+            "Source Pin": "Pin 1",
+            "Source Sub Block": "Sub Block 1",
+            "Dest Device": "Device 2",
+            "Dest Pin": "Pin 2",
+            "Dest Sub Block": "Sub Block 2",
+        }]
 
     def setup_ui(self):
         """Setup the main UI layout"""

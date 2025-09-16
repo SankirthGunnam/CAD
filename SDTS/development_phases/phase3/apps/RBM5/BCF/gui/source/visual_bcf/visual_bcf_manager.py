@@ -18,18 +18,11 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
     QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
     QLabel,
-    QMessageBox,
     QSplitter,
     QTabWidget)
 from PySide6.QtCore import Signal, Qt, QPointF
 
-from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
-from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
-from apps.RBM5.BCF.gui.source.visual_bcf.artifacts import ComponentWithPins, ComponentPin, Wire
-from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import FloatingToolbar
 from apps.RBM5.BCF.source.controllers.visual_bcf.device_settings_controller import DeviceSettingsController
 from apps.RBM5.BCF.source.controllers.visual_bcf.io_connect_controller import IOConnectController
 from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualBCFDataModel
@@ -66,88 +59,47 @@ class VisualBCFManager(QMainWindow):
 
         # Initialize properties - controller will create these
         self.vbcf_info_tab_widget = None
-        self.device_list_controller = None
+        self.device_settings_controller = None
         self.io_connect_controller = None
 
         # MVC components - only model and controller
         self.data_model = None
         self.visual_bcf_controller = None
 
-        # Setup MVC architecture - this is now the main responsibility
-        self._setup_mvc_components()
-
         # Setup minimal UI layout with controller's view
         self._setup_ui_layout()
+        print("✓ UI layout added to manager")
 
         # Setup tab widget
         self._setup_tab_widget()
+        print("✓ Tab widget added to manager")
 
         # Connect controller signals
         self._connect_controller_signals()
+        print("✓ Controller signals connected to manager")
 
         # Setup status bar
         self._setup_status_bar()
+        print("✓ Status bar added to layout")
 
         # Initial status
         self.status_updated.emit(
             "Visual BCF Manager initialized - Phase 3 (Controller-centric MVC)")
 
-    def _setup_mvc_components(self):
-        """Setup MVC components: Model and Controller (Controller creates View/Scene)"""
-        try:
-            if self.rdb_manager:
-                # Create the data model first
-                self.data_model = VisualBCFDataModel(self.rdb_manager)
-                print("✓ VisualBCFDataModel created successfully")
-
-                # Create controller immediately - it will create its own
-                # view/scene
-                self.visual_bcf_controller = VisualBCFController(
-                    parent_widget=self, data_model=self.data_model)
-                print("✓ VisualBCFController created successfully with own view/scene")
-
-            else:
-                print("⚠️ No RDB manager available - MVC components not initialized")
-
-        except Exception as e:
-            print(f"❌ Error setting up MVC components: {e}")
-            self.data_model = None
-            self.visual_bcf_controller = None
-
-    def _finalize_mvc_setup(self):
-        """Finalize MVC setup by creating the controller after view is available"""
-        try:
-            if self.data_model and self.view:
-                # Create the VisualBCF controller now that view is available
-                self.visual_bcf_controller = VisualBCFController(
-                    self.view, self.data_model)
-                print("✓ VisualBCFController created successfully")
-
-                # Connect controller signals if needed
-                self._connect_controller_signals()
-
-            else:
-                print("⚠️ Cannot create controller - missing data model or view")
-                self.visual_bcf_controller = None
-
-        except Exception as e:
-            print(f"❌ Error creating VisualBCFController: {e}")
-            self.visual_bcf_controller = None
-
     def refresh_tables_from_data_model(self):
         """Refresh all tables from the single source of truth data model"""
         print("🔄 refresh_tables_from_data_model called!")
         try:
-            if self.device_settings_controller and hasattr(self.device_settings_controller._model, 'refresh_from_data_model'):
+            if self.device_settings_controller and hasattr(self.device_settings_controller.model, 'refresh_from_data_model'):
                 print("🔄 Refreshing device settings tables...")
-                success = self.device_settings_controller._model.refresh_from_data_model()
+                success = self.device_settings_controller.model.refresh_from_data_model()
                 print(f"✓ Device Settings tables refresh: {success}")
             else:
                 print("⚠️ Device settings controller or model not available")
 
-            if self.io_connect_controller and hasattr(self.io_connect_controller._model, 'refresh_from_data_model'):
+            if self.io_connect_controller and hasattr(self.io_connect_controller.model, 'refresh_from_data_model'):
                 print("🔄 Refreshing IO connect table...")
-                success = self.io_connect_controller._model.refresh_from_data_model()
+                success = self.io_connect_controller.model.refresh_from_data_model()
                 print(f"✓ IO Connect table refresh: {success}")
             else:
                 print("⚠️ IO connect controller or model not available")
@@ -169,10 +121,6 @@ class VisualBCFManager(QMainWindow):
 
     def _setup_ui_layout(self):
         """Setup minimal UI layout using controller's view"""
-        if not self.visual_bcf_controller:
-            print("⚠️ No controller available - cannot setup UI layout")
-            return
-
         # Create central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -182,30 +130,9 @@ class VisualBCFManager(QMainWindow):
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(5)
 
-        # Add info label
-        info_label = QLabel(
-            "Visual BCF Manager - Phase 3: Controller-centric MVC Architecture")
-        info_label.setStyleSheet(
-            "font-weight: bold; color: #2c3e50; padding: 5px;")
-        layout.addWidget(info_label)
-
         # Create horizontal splitter
-        splitter = QSplitter(Qt.Horizontal)
-        layout.addWidget(splitter)
-
-        # Left side: Graphics view from controller
-        controller_view = self.visual_bcf_controller.get_view()
-        if controller_view:
-            splitter.addWidget(controller_view)
-            print("✓ Controller's view added to layout")
-        else:
-            print("⚠️ No view available from controller")
-
-        # Right side: Tab widget (will be setup after this)
-        # Placeholder for now - will be added by _setup_tab_widget
-        # Set splitter proportions (70% graphics view, 30% tabs)
-        splitter.setStretchFactor(0, 7)  # Graphics view
-        splitter.setStretchFactor(1, 3)  # Tab widget
+        self.splitter = QSplitter(Qt.Horizontal)
+        layout.addWidget(self.splitter)
 
     def _setup_tab_widget(self):
         """Setup the tab widget with Device Settings and IO Connect tabs"""
@@ -215,95 +142,48 @@ class VisualBCFManager(QMainWindow):
         # Set tab position to west (left side)
         self.vbcf_info_tab_widget.setTabPosition(QTabWidget.West)
 
+        print("✓ Setting up Device Settings tab")
         # Create Device Settings tab using new MVC controller
-        if DeviceSettingsController:
-            try:
-                # Create controller with proper RDB manager and data model reference
-                self.device_settings_controller = DeviceSettingsController(
-                    rdb_manager=self.rdb_manager,
-                    parent=self,
-                    data_model=self.data_model  # Pass reference to main data model
-                )
-                print(
-                    "created device settings controller",
-                    self.device_settings_controller)
-                # For backward compatibility, also store as
-                # device_list_controller
-                self.device_list_controller = self.device_settings_controller
-
-                # Get the view widget from controller
-                device_widget = self.device_settings_controller.view
-                if device_widget:
-                    self.vbcf_info_tab_widget.addTab(
-                        device_widget, "Device Settings")
-                    print("✓ Device Settings tab added successfully")
-                else:
-                    print("✗ Failed to get Device Settings widget")
-            except Exception as e:
-                print(f"✗ Failed to create Device Settings controller: {e}")
-                self.device_settings_controller = None
-                self.device_list_controller = None
+        self.device_settings_controller = DeviceSettingsController(
+            rdb_manager=self.rdb_manager,
+            parent=self,
+        )
+        print(f"✓ Device Settings controller: {self.device_settings_controller}")
+        device_widget = self.device_settings_controller.view
+        if device_widget:
+            self.vbcf_info_tab_widget.addTab(device_widget, "Device Settings")
+            self.device_settings_controller.init_tab(revision=1)
+            print("✓ Device Settings tab added successfully")
         else:
-            print("✗ DeviceSettingsController not available")
-            self.device_settings_controller = None
-            self.device_list_controller = None
+            print("✗ Failed to get Device Settings widget")
 
         # Create IO Connect tab using new MVC controller
-        if IOConnectController:
-            try:
-                # Create controller with proper RDB manager and data model reference
-                self.io_connect_controller = IOConnectController(
-                    rdb_manager=self.rdb_manager,
-                    parent=self,
-                    data_model=self.data_model  # Pass reference to main data model
-                )
-
-                # Get the view widget from controller
-                io_widget = self.io_connect_controller.get_widget()
-                if io_widget:
-                    self.vbcf_info_tab_widget.addTab(io_widget, "IO Connect")
-                    print("✓ IO Connect tab added successfully")
-                else:
-                    print("✗ Failed to get IO Connect widget")
-            except Exception as e:
-                print(f"✗ Failed to create IO Connect controller: {e}")
-                self.io_connect_controller = None
+        self.io_connect_controller = IOConnectController(
+            rdb_manager=self.rdb_manager,
+            parent=self,
+        )
+        print(f"✓ IO Connect controller: {self.io_connect_controller}")
+        io_widget = self.io_connect_controller.view
+        if io_widget:
+            self.vbcf_info_tab_widget.addTab(io_widget, "IO Connect")
+            self.io_connect_controller.init_tab(revision=1)
+            print("✓ IO Connect tab added successfully")
         else:
-            print("✗ IOConnectController not available")
-            self.io_connect_controller = None
+            print("✗ Failed to get IO Connect widget")
+
+        self.data_model = VisualBCFDataModel(self.rdb_manager)
+        self.visual_bcf_controller = VisualBCFController(
+            parent_widget=self, data_model=self.data_model)
+        print("✓ VisualBCFController created successfully with own view/scene")
 
         # Set minimum size for tab widget
         self.vbcf_info_tab_widget.setMinimumWidth(350)
 
         # Add tab widget to the splitter (get splitter from central widget)
-        central_widget = self.centralWidget()
-        if central_widget:
-            layout = central_widget.layout()
-            if layout:
-                for i in range(layout.count()):
-                    item = layout.itemAt(i)
-                    if item and isinstance(item.widget(), QSplitter):
-                        splitter = item.widget()
-                        splitter.addWidget(self.vbcf_info_tab_widget)
-                        print("✓ Tab widget added to splitter")
-                        break
-
-        # Initialize controllers if they were created successfully
-        try:
-            if self.device_settings_controller:
-                # Initialize with default revision
-                self.device_settings_controller.init_tab(revision=1)
-                print("✓ Device Settings controller initialized")
-        except Exception as e:
-            print(f"✗ Failed to initialize Device Settings controller: {e}")
-
-        try:
-            if self.io_connect_controller:
-                # Initialize with default revision
-                self.io_connect_controller.init_tab(revision=1)
-                print("✓ IO Connect controller initialized")
-        except Exception as e:
-            print(f"✗ Failed to initialize IO Connect controller: {e}")
+        self.splitter.addWidget(self.visual_bcf_controller.get_view())
+        self.splitter.addWidget(self.vbcf_info_tab_widget)
+        self.splitter.setStretchFactor(0, 7)  # Graphics view
+        self.splitter.setStretchFactor(1, 3)  # Tab widget
 
     def _setup_status_bar(self):
         """Setup the status bar"""
@@ -321,16 +201,16 @@ class VisualBCFManager(QMainWindow):
         self.error_occurred.connect(self._handle_error)
 
         # Connect tab controller signals (using new MVC structure)
-        if self.device_list_controller:
+        if self.device_settings_controller:
             # Connect to MVC controller signals
-            if hasattr(self.device_list_controller, 'gui_event'):
-                self.device_list_controller.gui_event.connect(
+            if hasattr(self.device_settings_controller, 'gui_event'):
+                self.device_settings_controller.gui_event.connect(
                     self._on_controller_gui_event)
             # Try to connect legacy signals if available
-            elif hasattr(self.device_list_controller, 'device_selected'):
-                self.device_list_controller.device_selected.connect(
+            elif hasattr(self.device_settings_controller, 'device_selected'):
+                self.device_settings_controller.device_selected.connect(
                     self._on_device_selected)
-                self.device_list_controller.device_modified.connect(
+                self.device_settings_controller.device_modified.connect(
                     self._on_device_modified)
 
         if self.io_connect_controller:

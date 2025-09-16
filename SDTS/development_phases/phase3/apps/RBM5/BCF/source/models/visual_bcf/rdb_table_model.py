@@ -7,7 +7,7 @@ from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex
 from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
 
 
-class RDBTableModel(QAbstractTableModel):
+class TableModel(QAbstractTableModel):
     """Qt model for displaying and editing database tables with nested structures"""
 
     def __init__(
@@ -21,10 +21,15 @@ class RDBTableModel(QAbstractTableModel):
         self.db = db
         self.table_path = table_path
         self.columns = columns
+        print(f"✓ TableModel initialized with db type: {type(db)}, table_path: {table_path}")
 
         # Only connect signal if db is not None
         if self.db is not None and hasattr(self.db, 'data_changed'):
             self.db.data_changed.connect(self._on_data_changed)
+
+    # Note: TableModel inherits from QAbstractTableModel, not QWidget
+    # It doesn't have a setModel method - this was causing segfault
+    # The model is set on the view widget, not the model itself
 
     def _on_data_changed(self, changed_path: str) -> None:
         """Handle database changes"""
@@ -35,7 +40,12 @@ class RDBTableModel(QAbstractTableModel):
         """Return number of rows in the table"""
         if self.db is None:
             return 0
-        return len(self.db.get_table(self.table_path))
+        try:
+            table_data = self.db.get_table(self.table_path)
+            return len(table_data) if table_data else 0
+        except Exception as e:
+            print(f"Error getting table {self.table_path}: {e}")
+            return 0
 
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
         """Return number of columns in the table"""
@@ -47,20 +57,13 @@ class RDBTableModel(QAbstractTableModel):
             return None
 
         if role == Qt.DisplayRole or role == Qt.EditRole:
-            row = self.db.get_row(self.table_path, index.row())
-            if row:
-                column_key = self.columns[index.column()]["key"]
-                # Handle nested paths in column keys
-                if "." in column_key:
-                    parts = column_key.split(".")
-                    value = row
-                    for part in parts:
-                        if isinstance(value, dict):
-                            value = value.get(part)
-                        else:
-                            return None
-                    return value
-                return row.get(column_key)
+            try:
+                row = index.row()
+                print('table data', self.db[self.table_path][row], self.columns[index.column()])
+                return self.db[self.table_path][row][self.columns[index.column()]]
+            except Exception as e:
+                print(f"Error getting data for row {index.row()}: {e}")
+                return None
         return None
 
     def setData(
@@ -101,7 +104,7 @@ class RDBTableModel(QAbstractTableModel):
             role: int = Qt.DisplayRole) -> Any:
         """Return header data"""
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return self.columns[section]["name"]
+            return self.columns[section]
         return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:

@@ -7,6 +7,7 @@ from PySide6.QtCore import QObject, Signal
 # Use centralized path setup from BCF package
 import apps.RBM5.BCF  # This automatically sets up the path
 
+from apps.RBM5.BCF.source.RDB.paths import Path
 from apps.RBM5.BCF.source.RDB.database_interface import DatabaseInterface
 
 
@@ -63,9 +64,9 @@ class JSONDatabase(QObject):
         except Exception:
             return False
 
-    def _get_path_parts(self, path: str) -> List[str]:
+    def _get_path_parts(self, path: str|Path) -> List[str]:
         """Split path into parts, handling both dot and slash notation"""
-        return path.replace("/", ".").split(".")
+        return str(path).replace("/", ".").split(".")
 
     def _get_node(self, path: str) -> Any:
         """Get node at specified path"""

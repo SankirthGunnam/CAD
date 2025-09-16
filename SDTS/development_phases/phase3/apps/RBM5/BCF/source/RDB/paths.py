@@ -78,11 +78,13 @@ CONFIG = Path("config")
 
 # Device Configuration
 DEVICE_CONFIG = CONFIG / "device"
+DEVICE_SELECTION = DEVICE_CONFIG / "selection"
 DEVICE_SETTINGS = DEVICE_CONFIG / "settings"
 DEVICE_PROPERTIES = DEVICE_CONFIG / "properties"
 DEVICE_INTERFACE = DEVICE_CONFIG / "interface"
 DEVICE_MIPI = DEVICE_INTERFACE / "mipi"
 DEVICE_GPIO = DEVICE_INTERFACE / "gpio"
+STATIC_MIPI_CHANNELS = DEVICE_INTERFACE / "static_mipi_channels"
 
 # Band Management
 BAND_CONFIG = CONFIG / "band"
@@ -112,24 +114,24 @@ RCC_BUILD = RCC_CONFIG / "build"
 # ============================================================================
 
 # Model Configurations
-MODEL_CONFIG = Path("model")
-MODEL_INFO = MODEL_CONFIG / "model_info"
-MODEL_NAME = MODEL_CONFIG / "model"
-MODEL_MODEM = MODEL_CONFIG / "modem"
-MODEL_RFIC = MODEL_CONFIG / "rfic"
-MODEL_MFRVAR = MODEL_CONFIG / "mfrvar"
-MODEL_BOARD = MODEL_CONFIG / "board"
-MODEL_CARRIER = MODEL_CONFIG / "carrier"
-MODEL_PATH = MODEL_CONFIG / "model_path"
-MODEL_PROJECT_CODE = MODEL_CONFIG / "project_code"
-MODEL_SDTS_VERSION = MODEL_CONFIG / "sdts_version"
-MODEL_RBM_VERSION = MODEL_CONFIG / "rbm_version"
-MODEL_REVISIONS = MODEL_CONFIG / "revisions"
-MODEL_CURRENT_REVISION = MODEL_CONFIG / "current-revision"
-MODEL_REVISION_STRING = MODEL_CONFIG / "revision_string"
-MODEL_REVISION_HEX = MODEL_CONFIG / "revision_hex"
-MODEL_REVISION_INT = MODEL_CONFIG / "revision_int"
-MODEL_REVISION_BASE_FLAG = MODEL_CONFIG / "revision_base_flag"
+MODEL_INFO = Path("model")
+MODEL = MODEL_INFO / "model"
+MODEM = MODEL_INFO / "modem"
+RFIC = MODEL_INFO / "rfic"
+MFRVAR = MODEL_INFO / "mfrvar"
+BOARD = MODEL_INFO / "board"
+CARRIER = MODEL_INFO / "carrier"
+MODEL_PATH = MODEL_INFO / "model_path"
+PROJECT_CODE = MODEL_INFO / "project_code"
+MODEL_BRANCH = MODEL_INFO / "branch"
+SDTS_VERSION = "sdts/version"
+RBM_VERSION = "rbm/version"
+REVISIONS = MODEL_INFO / "revisions"
+CURRENT_REVISION = MODEL_INFO / "current_revision"
+REVISION_STRING = MODEL_INFO / "revision_string"
+REVISION_HEX = MODEL_INFO / "revision_hex"
+REVISION_INT = MODEL_INFO / "revision_int"
+REVISION_BASE_FLAG = MODEL_INFO / "revision_base_flag"
 
 # Board Configurations (Extended)
 BOARD_CUSTOM_CODE = BOARD_CONFIG / "custom_code"
@@ -139,19 +141,19 @@ BOARD_RF_SUB_BOARD_REVISION = BOARD_CONFIG / "support_rf_sub_board_revision"
 BOARD_POINTER_ASSIGNMENT = BOARD_CONFIG / "pointer_assignment"
 
 # BCF Configurations
-BCF_CONFIG_ROOT = CONFIG / "bcf"
-BCF_CONFIG_MAIN = BCF_CONFIG_ROOT / "bcf_config"
-BCF_MAIN = BCF_CONFIG_ROOT / "bcf_main"
-BCF_DEVICE_CONFIG = BCF_CONFIG_ROOT / "bcf_device_config"
-BCF_DB = BCF_CONFIG_ROOT / "bcf_db"
-BCF_DB_ANT = BCF_DB / "bcf_db_ant"
-BCF_DB_CPL = BCF_DB / "bcf_db_cpl"
-BCF_DB_FILTER = BCF_DB / "bcf_db_filter"
-BCF_DB_EXT_IO = BCF_DB / "bcf_db_ext_io"
-BCF_DB_IO_CONNECT = BCF_DB / "bcf_db_io_connect"
-BCF_DEV_MIPI = BCF_CONFIG_ROOT / "bcf_dev_mipi"
-BCF_DEV_GPIO = BCF_CONFIG_ROOT / "bcf_dev_gpio"
-BCF_DCF_FOR_BCF = BCF_CONFIG_ROOT / "dcf_for_bcf"
+BCF_CONFIG = CONFIG / "bcf"
+BCF_CONFIG_MAIN = BCF_CONFIG / "bcf_config"
+BCF_MAIN = BCF_CONFIG / "bcf_main"
+BCF_DEVICE_CONFIG = BCF_CONFIG / "bcf_device_config"
+BCF_DB = lambda rev: BCF_CONFIG / rev / f"bcf_db" # type: ignore
+BCF_DB_ANT = lambda rev: BCF_DB / rev / f"bcf_db_ant" # type: ignore
+BCF_DB_CPL = lambda rev: BCF_DB / rev / f"bcf_db_cpl" # type: ignore
+BCF_DB_FILTER = lambda rev: BCF_DB / rev / f"bcf_db_filter" # type: ignore
+BCF_DB_EXT_IO = lambda rev: BCF_DB / rev / f"bcf_db_ext_io" # type: ignore
+BCF_DEV_MIPI = lambda rev: BCF_CONFIG / rev / f"bcf_dev_mipi" # type: ignore
+BCF_DEV_GPIO = lambda rev: BCF_CONFIG / rev / f"bcf_dev_gpio" # type: ignore
+BCF_DCF_FOR_BCF = lambda rev: BCF_CONFIG / rev / f"dcf_for_bcf" # type: ignore
+
 
 # DCF Configurations
 DCF_CONFIG_ROOT = CONFIG / "dcf"
@@ -175,13 +177,9 @@ DEVICE_GPIO = DEVICE_INTERFACE / "gpio"
 DCF_DEVICES_AVAILABLE = DCF_CONFIG_ROOT / "devices"
 DCF_CONFIG = CONFIG / "dcf"
 
-def BCF_DEV_MIPI(rev):
-    """Get the BCF dev MIPI path for a specific revision"""
-    return BCF_DB / f"dev_mipi_rev_{rev}"
 
 # IO Connect Table Paths (Enhanced)
-BCF_DB_IO_CONNECT = BCF_DB / "bcf_db_io_connect"
-BCF_DB_IO_CONNECT_ENHANCED = BCF_DB / "bcf_db_io_connect_enhanced"
+BCF_DB_IO_CONNECT = "config/bcf/bcf_db_io_connect" # type: ignore
 
 # Band Management (Enhanced from existing BAND_CONFIG)
 BAND_FOR_RAT = BAND_CONFIG / "Band_for_rat"
@@ -206,8 +204,10 @@ GSM_CONFIG = CONFIG / "gsm"
 PAM_CONFIG = CONFIG / "pam"
 ET_DPD_CONFIG = CONFIG / "et_dpd"
 
-# Helper function to build paths (kept for backward compatibility)
 
+# Helper function to build paths (kept for backward compatibility)
+DYNAMIC_MIPI_VERSION = CONFIG / "dynamic_mipi_version"
+DYNAMIC_ANT_TYPES = CONFIG / "device_ant_types"
 
 def build_path(*parts: str) -> str:
     """Build a path from parts using slash notation"""
