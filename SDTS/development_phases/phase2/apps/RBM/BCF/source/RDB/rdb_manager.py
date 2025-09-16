@@ -83,7 +83,7 @@ class RDBManager(QObject):
         from ..models.rdb_table_model import RDBTableModel
 
         return RDBTableModel(self, path, columns)
-    
+
     def close(self):
         """Close the database connection and clean up resources"""
         try:

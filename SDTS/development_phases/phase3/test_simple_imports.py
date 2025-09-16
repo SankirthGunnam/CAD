@@ -53,11 +53,11 @@ try:
     # Create RDB manager
     rdb_manager = RDBManager("test_device_config.json")
     print("✓ RDB manager created")
-    
+
     # Initialize data model
     data_model = VisualBCFDataModel(rdb_manager)
     print("✓ Data model initialized")
-    
+
     # Test adding a component
     component_id = data_model.add_component(
         name="Test Component",
@@ -65,16 +65,16 @@ try:
         position=(100, 100)
     )
     print(f"✓ Component added: {component_id}")
-    
+
     # Test getting table data
     available_devices = data_model.get_available_devices_for_table()
     print(f"✓ Available devices: {len(available_devices)}")
-    
+
     io_connections = data_model.get_io_connections_for_table()
     print(f"✓ IO connections: {len(io_connections)}")
-    
+
     print("🎉 All tests passed!")
-    
+
 except Exception as e:
     print(f"✗ Error during testing: {e}")
     import traceback

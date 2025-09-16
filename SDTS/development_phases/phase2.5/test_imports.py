@@ -16,11 +16,11 @@ try:
     print("\n1. Testing apps.RBM5.BCF import (should auto-configure path)...")
     import apps.RBM5.BCF
     print("✓ Successfully imported apps.RBM5.BCF")
-    
+
     # Check if apps directory was added to sys.path
     apps_dirs = [path for path in sys.path if 'apps' in path]
     print(f"✓ Apps directories in sys.path: {apps_dirs}")
-    
+
 except ImportError as e:
     print(f"✗ Failed to import apps.RBM5.BCF: {e}")
 
@@ -29,13 +29,13 @@ try:
     print("\n2. Testing RDB module imports...")
     from apps.RBM5.BCF.source.RDB.database_interface import DatabaseInterface
     print("✓ Successfully imported DatabaseInterface")
-    
+
     from apps.RBM5.BCF.source.RDB.json_db import JSONDatabase
     print("✓ Successfully imported JSONDatabase")
-    
+
     from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
     print("✓ Successfully imported RDBManager")
-    
+
 except ImportError as e:
     print(f"✗ Failed to import RDB modules: {e}")
 
@@ -44,7 +44,7 @@ try:
     print("\n3. Testing model imports...")
     from apps.RBM5.BCF.source.models.visual_bcf.rdb_table_model import RDBTableModel
     print("✓ Successfully imported RDBTableModel")
-    
+
 except ImportError as e:
     print(f"✗ Failed to import model classes: {e}")
 
@@ -54,7 +54,7 @@ try:
     import setup_paths
     print(f"✓ Project root: {setup_paths.PROJECT_ROOT}")
     print(f"✓ Apps dir: {setup_paths.APPS_DIR}")
-    
+
 except ImportError as e:
     print(f"✗ Failed to import setup_paths: {e}")
 

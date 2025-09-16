@@ -22,14 +22,14 @@ def qapp():
 def mock_rbm_main(qapp):
     """Mock RBMMain to avoid complex dependencies in main window tests"""
     from PySide6.QtWidgets import QWidget
-    
+
     class MockRBMMain(QWidget):
         def __init__(self):
             super().__init__()
             # Add any required attributes/methods
             self.data_changed = Mock()
             self.error_occurred = Mock()
-    
+
     with patch('main.RBMMain') as mock:
         mock.return_value = MockRBMMain()
         yield mock.return_value
@@ -43,7 +43,7 @@ class TestSDTSMainWindow:
         # Given: A clean application state
         # When: Creating a main window
         window = SDTSMainWindow()
-        
+
         # Then: Window should be properly initialized
         assert window.windowTitle() == "SDTS - Schematic Design Tool Suite"
         assert window.minimumSize().width() == 1200
@@ -55,7 +55,7 @@ class TestSDTSMainWindow:
         """Test RBM module integration"""
         # Given: A main window
         window = SDTSMainWindow()
-        
+
         # When: Window is created
         # Then: RBM should be integrated
         assert window.rbm == mock_rbm_main
@@ -65,10 +65,10 @@ class TestSDTSMainWindow:
         """Test toolbar actions are created correctly"""
         # Given: A main window
         window = SDTSMainWindow()
-        
+
         # When: Checking toolbar actions
         actions = window.toolbar.actions()
-        
+
         # Then: RBM action should exist
         assert len(actions) > 0
         rbm_action = actions[0]
@@ -80,10 +80,10 @@ class TestSDTSMainWindow:
         window = SDTSMainWindow()
         actions = window.toolbar.actions()
         rbm_action = actions[0]
-        
+
         # When: Triggering RBM action
         rbm_action.trigger()
-        
+
         # Then: Stacked widget should show RBM
         assert window.stacked_widget.currentWidget() == mock_rbm_main
 
@@ -91,10 +91,10 @@ class TestSDTSMainWindow:
         """Test that show event properly initializes components"""
         # Given: A main window
         window = SDTSMainWindow()
-        
+
         # When: Showing the window (simulate show event)
         window.showEvent(None)
-        
+
         # Then: Window should be properly displayed
         # Note: RBM initialization happens in RBM's own showEvent
 
@@ -102,10 +102,10 @@ class TestSDTSMainWindow:
         """Test that close event properly cleans up resources"""
         # Given: A main window with resources
         window = SDTSMainWindow()
-        
+
         # When: Closing the window
         window.closeEvent(None)
-        
+
         # Then: Resources should be cleaned up
         # Note: RBM cleanup happens in RBM's own closeEvent
 
@@ -118,17 +118,17 @@ class TestSDTSMainWindow:
             # Then: Exception should be raised and logged
             with pytest.raises(Exception, match="Test error"):
                 SDTSMainWindow()
-            
+
             mock_logger.error.assert_called()
 
     def test_minimum_window_size_enforced(self, qapp, mock_rbm_main):
         """Test that minimum window size is enforced"""
         # Given: A main window
         window = SDTSMainWindow()
-        
+
         # When: Checking window constraints
         min_size = window.minimumSize()
-        
+
         # Then: Minimum size should be enforced
         assert min_size.width() >= 1200
         assert min_size.height() >= 800
@@ -148,11 +148,11 @@ class TestMainFunction:
         mock_qapp_class.return_value = mock_app
         mock_window_class.return_value = mock_window
         mock_app.exec.return_value = 0
-        
+
         # When: Running main function
         with patch('sys.exit') as mock_exit:
             main()
-        
+
         # Then: Application should be created and run
         mock_qapp_class.assert_called_once_with(sys.argv)
         mock_window_class.assert_called_once()
@@ -169,28 +169,28 @@ class TestMainFunction:
         # Given: Window creation raises an exception
         test_error = Exception("Test initialization error")
         mock_window_class.side_effect = test_error
-        
+
         # When: Running main function
         # Then: Exception should be handled and logged
         with pytest.raises(Exception, match="Test initialization error"):
             main()
-        
+
         mock_logger.error.assert_called_with(f"Error in main: {test_error}")
 
     @patch('main.QApplication')
-    @patch('main.SDTSMainWindow') 
+    @patch('main.SDTSMainWindow')
     @patch('main.logger')
     def test_main_function_app_creation_failure(self, mock_logger, mock_window_class, mock_qapp_class):
         """Test main function handles app creation failure"""
         # Given: QApplication creation fails
         test_error = Exception("App creation failed")
         mock_qapp_class.side_effect = test_error
-        
+
         # When: Running main function
         # Then: Exception should be handled
         with pytest.raises(Exception, match="App creation failed"):
             main()
-        
+
         mock_logger.error.assert_called_with(f"Error in main: {test_error}")
 
 
@@ -204,11 +204,11 @@ class TestIntegration:
         with patch('main.RBMMain') as mock_rbm:
             mock_rbm_instance = Mock()
             mock_rbm.return_value = mock_rbm_instance
-            
+
             # When: Creating and showing main window
             window = SDTSMainWindow()
             window.show()
-            
+
             # Then: Window should be visible and functional
             assert window.isVisible()
             assert window.stacked_widget.count() == 1
@@ -219,10 +219,10 @@ class TestIntegration:
         # Given: A main window
         window = SDTSMainWindow()
         window.show()
-        
+
         # When: Processing events
         QTest.qWait(100)  # Wait for 100ms
-        
+
         # Then: Window should remain responsive
         assert window.isVisible()
         assert not window.isMinimized()
@@ -235,13 +235,13 @@ class TestPerformance:
     def test_startup_time(self, qapp, mock_rbm_main):
         """Test application startup time is reasonable"""
         import time
-        
+
         # Given: Clean state
         start_time = time.time()
-        
+
         # When: Creating main window
         window = SDTSMainWindow()
-        
+
         # Then: Startup should be fast (< 1 second)
         startup_time = time.time() - start_time
         assert startup_time < 1.0
@@ -250,14 +250,14 @@ class TestPerformance:
         """Test memory usage during initialization"""
         import psutil
         import os
-        
+
         # Given: Current process
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss
-        
+
         # When: Creating main window
         window = SDTSMainWindow()
-        
+
         # Then: Memory increase should be reasonable (< 100MB)
         final_memory = process.memory_info().rss
         memory_increase = final_memory - initial_memory

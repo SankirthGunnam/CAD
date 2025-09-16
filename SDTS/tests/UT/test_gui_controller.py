@@ -52,15 +52,15 @@ class TestGUIController:
     # def test_error_handling(self, qapp):
     #     """Test error handling and display"""
     #     controller = GUIController()
-    # 
+    #
     #     # Create mock slots
     #     mock_error_slot = Mock()
     #     controller.error_occurred.connect(mock_error_slot)
-    # 
+    #
     #     # Simulate error
     #     test_error = "Test error"
     #     controller._on_error(test_error)
-    # 
+    #
     #     # Verify error signal was emitted
     #     mock_error_slot.assert_called_once_with(test_error)
 
@@ -71,7 +71,7 @@ class TestGUIController:
         # Mock the manager methods
         with patch.object(controller.legacy_manager, 'update_table') as mock_legacy_update, \
              patch.object(controller.visual_manager, 'update_scene') as mock_visual_update:
-            
+
             # Test data update
             test_data = {"key": "value"}
             controller.update_data(test_data)
@@ -88,7 +88,7 @@ class TestGUIController:
         with patch.object(controller, 'core_controller') as mock_core:
             from apps.RBM.BCF.source.RCC.core_controller import ToolState
             mock_core.current_state = ToolState.IDLE
-            
+
             # Create mock slot
             mock_slot = Mock()
             controller.add_chip_signal.connect(mock_slot)
@@ -116,14 +116,14 @@ class TestGUIController:
     # def test_cleanup(self, qapp):
     #     """Test cleanup on window close"""
     #     controller = GUIController()
-    # 
+    #
     #     # Mock cleanup methods
     #     controller.legacy_manager.cleanup = Mock()
     #     controller.visual_manager.cleanup = Mock()
-    # 
+    #
     #     # Simulate window close
     #     controller.closeEvent(None)
-    # 
+    #
     #     # Verify cleanup was called
     #     assert controller.legacy_manager.cleanup.called
     #     assert controller.visual_manager.cleanup.called

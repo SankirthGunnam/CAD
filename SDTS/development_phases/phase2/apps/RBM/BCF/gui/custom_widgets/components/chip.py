@@ -55,14 +55,14 @@ class Chip(QGraphicsItem):
                 self.scene().update()
 
         return super().itemChange(change, value)
-    
+
     def _update_connections(self):
         """Update all connections associated with this chip's pins"""
         # Get the scene to find connection components
         scene = self.scene()
         if not scene:
             return
-        
+
         # Find all connection components in the scene and update them
         from .connection import Connection as ConnectionComponent
         for item in scene.items():
@@ -70,15 +70,15 @@ class Chip(QGraphicsItem):
                 # Check if this connection involves our chip's pins
                 if self._connection_involves_our_pins(item):
                     item.update_path()
-                    
+
     def _connection_involves_our_pins(self, connection_component):
         """Check if a connection involves any of this chip's pins"""
         if not connection_component.model.start_pin and not connection_component.model.end_pin:
             return False
-            
+
         # Check if any of our pins match the connection's pins
         for pin in self.model.pins:
-            if (connection_component.model.start_pin == pin or 
+            if (connection_component.model.start_pin == pin or
                 connection_component.model.end_pin == pin):
                 return True
         return False

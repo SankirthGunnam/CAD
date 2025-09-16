@@ -23,29 +23,29 @@ from .package_image_generator import PackageImageGenerator
 
 class ChipSelectionDialog(QDialog):
     """Dialog for selecting RF front-end devices with vendor categorization"""
-    
+
     chip_selected = Signal(dict)  # Emits selected chip information
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Select RF Front-End Device")
         self.setModal(True)
         self.setMinimumSize(800, 600)
         self.resize(900, 700)
-        
+
         # Initialize chip database
         self.chip_database = self._initialize_chip_database()
         self.selected_chip = None
         self.current_search = ""
         self.current_type_filter = "All Types"
-        
+
         # Initialize package image generator
         self.package_generator = PackageImageGenerator()
-        
+
         self._setup_ui()
         self._connect_signals()
         self._populate_vendor_list()
-        
+
     def _initialize_chip_database(self) -> Dict[str, List[Dict]]:
         """Initialize the RF chip database with vendors and their chips"""
         return {
@@ -64,7 +64,7 @@ class ChipSelectionDialog(QDialog):
                     "description": "Highly integrated RF front-end module for 5G Sub-6GHz applications"
                 },
                 {
-                    "name": "QM78XXX Series", 
+                    "name": "QM78XXX Series",
                     "part_number": "QM78001",
                     "type": "Power Amplifier",
                     "frequency": "3.3 - 4.2 GHz",
@@ -120,7 +120,7 @@ class ChipSelectionDialog(QDialog):
                 {
                     "name": "BGM13P28",
                     "part_number": "BGM13P28F12",
-                    "type": "RF Power Amplifier", 
+                    "type": "RF Power Amplifier",
                     "frequency": "2.5 - 2.8 GHz",
                     "applications": "LTE Band 7/41, 5G",
                     "channels": "1TX",
@@ -179,7 +179,7 @@ class ChipSelectionDialog(QDialog):
                     "applications": "LTE/5G Sub-6GHz",
                     "channels": "2TX/2RX",
                     "gain": "25 dB",
-                    "power": "27 dBm", 
+                    "power": "27 dBm",
                     "package": "LGA 4x4mm",
                     "image": "lga_4x4.png",
                     "description": "Integrated FEM with PA, LNA, and switch functions"
@@ -363,25 +363,25 @@ class ChipSelectionDialog(QDialog):
                 }
             ]
         }
-    
+
     def _setup_ui(self):
         """Setup the user interface"""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(10)
-        
+
         # Create main splitter
         main_splitter = QSplitter(Qt.Horizontal)
         main_layout.addWidget(main_splitter)
-        
+
         # Left side - Vendor and chip list with search
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
-        
+
         # Search and filter section
         search_group = QGroupBox("Search & Filter")
         search_layout = QVBoxLayout(search_group)
-        
+
         # Search field
         search_row = QHBoxLayout()
         search_row.addWidget(QLabel("Search:"))
@@ -389,7 +389,7 @@ class ChipSelectionDialog(QDialog):
         self.search_field.setPlaceholderText("Search by name, part number, or application...")
         search_row.addWidget(self.search_field)
         search_layout.addLayout(search_row)
-        
+
         # Type filter
         filter_row = QHBoxLayout()
         filter_row.addWidget(QLabel("Type:"))
@@ -397,7 +397,7 @@ class ChipSelectionDialog(QDialog):
         self.type_filter.addItems([
             "All Types",
             "RF Front-End Module",
-            "Power Amplifier", 
+            "Power Amplifier",
             "Low Noise Amplifier",
             "RF Switch",
             "RF Filter",
@@ -412,9 +412,9 @@ class ChipSelectionDialog(QDialog):
         self.type_filter.setFocusPolicy(Qt.StrongFocus)
         filter_row.addWidget(self.type_filter)
         search_layout.addLayout(filter_row)
-        
+
         left_layout.addWidget(search_group)
-        
+
         # Vendor list
         vendor_group = QGroupBox("RF Device Vendors")
         vendor_layout = QVBoxLayout(vendor_group)
@@ -422,28 +422,28 @@ class ChipSelectionDialog(QDialog):
         self.vendor_list.setMaximumHeight(150)
         vendor_layout.addWidget(self.vendor_list)
         left_layout.addWidget(vendor_group)
-        
+
         # Chip list
         chip_group = QGroupBox("Available Chips")
         chip_layout = QVBoxLayout(chip_group)
         self.chip_list = QListWidget()
         chip_layout.addWidget(self.chip_list)
         left_layout.addWidget(chip_group)
-        
+
         main_splitter.addWidget(left_widget)
-        
+
         # Right side - Chip details
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
-        
+
         # Chip image area
         image_group = QGroupBox("Chip Package")
         image_layout = QVBoxLayout(image_group)
-        
+
         # Create a horizontal layout to center the image
         image_center_layout = QHBoxLayout()
         image_center_layout.addStretch()  # Left spacer
-        
+
         self.chip_image = QLabel()
         self.chip_image.setMinimumSize(250, 180)
         self.chip_image.setMaximumSize(250, 180)  # Set fixed size to prevent scaling issues
@@ -458,51 +458,51 @@ class ChipSelectionDialog(QDialog):
         """)
         self.chip_image.setAlignment(Qt.AlignCenter)
         self.chip_image.setText("Package Image\n(Preview)")
-        
+
         image_center_layout.addWidget(self.chip_image)
         image_center_layout.addStretch()  # Right spacer
-        
+
         image_layout.addLayout(image_center_layout)
         right_layout.addWidget(image_group)
-        
+
         # Chip properties
         properties_group = QGroupBox("Chip Properties")
         properties_layout = QVBoxLayout(properties_group)
-        
+
         # Create scrollable area for properties
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        
+
         self.properties_widget = QWidget()
         self.properties_layout = QGridLayout(self.properties_widget)
         self.properties_layout.setAlignment(Qt.AlignTop)
         scroll_area.setWidget(self.properties_widget)
-        
+
         properties_layout.addWidget(scroll_area)
         right_layout.addWidget(properties_group)
-        
+
         main_splitter.addWidget(right_widget)
-        
+
         # Set splitter proportions: 25% for search/chips, 75% for details
         main_splitter.setStretchFactor(0, 1)  # Left side (search/chips)
         main_splitter.setStretchFactor(1, 3)  # Right side (details) - 3x larger
         main_splitter.setSizes([225, 675])  # Initial sizes in pixels
-        
+
         # Button layout
         button_layout = QHBoxLayout()
         button_layout.addStretch()
-        
+
         self.ok_button = QPushButton("Add Chip")
         self.ok_button.setEnabled(False)
         self.ok_button.setMinimumSize(100, 35)
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.setMinimumSize(100, 35)
-        
+
         button_layout.addWidget(self.ok_button)
         button_layout.addWidget(self.cancel_button)
         main_layout.addLayout(button_layout)
-        
+
     def _connect_signals(self):
         """Connect widget signals"""
         self.vendor_list.currentItemChanged.connect(self._on_vendor_selection_changed)
@@ -511,41 +511,41 @@ class ChipSelectionDialog(QDialog):
         self.type_filter.currentTextChanged.connect(self._on_type_filter_changed)
         self.ok_button.clicked.connect(self._on_ok_clicked)
         self.cancel_button.clicked.connect(self.reject)
-        
+
     def _populate_vendor_list(self):
         """Populate the vendor list"""
         for vendor in self.chip_database.keys():
             item = QListWidgetItem(vendor)
             item.setFont(QFont("Arial", 10, QFont.Bold))
             self.vendor_list.addItem(item)
-            
+
     def _on_vendor_selection_changed(self, current_item, previous_item):
         """Handle vendor selection change"""
         if not current_item:
             return
-            
+
         vendor = current_item.text()
         self._populate_chip_list(vendor)
         self._clear_chip_details()
-        
+
     def _populate_chip_list(self, vendor: str):
         """Populate chip list for selected vendor with filtering"""
         self.chip_list.clear()
-        
+
         if vendor in self.chip_database:
             for chip in self.chip_database[vendor]:
                 if self._chip_matches_filters(chip):
                     item = QListWidgetItem(f"{chip['name']} ({chip['part_number']})")
                     item.setData(Qt.UserRole, chip)
                     self.chip_list.addItem(item)
-                    
+
     def _chip_matches_filters(self, chip: Dict) -> bool:
         """Check if chip matches current search and type filters"""
         # Check type filter
         if self.current_type_filter != "All Types":
             if chip.get('type', '') != self.current_type_filter:
                 return False
-                
+
         # Check search filter
         if self.current_search:
             search_lower = self.current_search.lower()
@@ -556,29 +556,29 @@ class ChipSelectionDialog(QDialog):
                 chip.get('type', ''),
                 chip.get('frequency', '')
             ]
-            
+
             if not any(search_lower in field.lower() for field in searchable_fields):
                 return False
-                
+
         return True
-        
+
     def _on_search_changed(self, text: str):
         """Handle search text change"""
         self.current_search = text
         self._refresh_chip_list()
-        
+
     def _on_type_filter_changed(self, filter_type: str):
         """Handle type filter change"""
         self.current_type_filter = filter_type
         self._refresh_chip_list()
-        
+
     def _refresh_chip_list(self):
         """Refresh the chip list with current filters"""
         current_vendor_item = self.vendor_list.currentItem()
         if current_vendor_item:
             vendor = current_vendor_item.text()
             self._populate_chip_list(vendor)
-                
+
     def _on_chip_selection_changed(self, current_item, previous_item):
         """Handle chip selection change"""
         if not current_item:
@@ -586,17 +586,17 @@ class ChipSelectionDialog(QDialog):
             self.ok_button.setEnabled(False)
             self._clear_chip_details()
             return
-            
+
         chip_data = current_item.data(Qt.UserRole)
         self.selected_chip = chip_data
         self.ok_button.setEnabled(True)
         self._update_chip_details(chip_data)
-        
+
     def _update_chip_details(self, chip_data: Dict):
         """Update chip details display"""
         # Clear existing properties
         self._clear_chip_details()
-        
+
         # Update chip image with actual package visualization
         image_name = chip_data.get('image', '')
         if image_name:
@@ -605,8 +605,8 @@ class ChipSelectionDialog(QDialog):
                 # Scale image to fit the label with fixed size to prevent continuous scaling
                 fixed_size = self.chip_image.minimumSize()
                 scaled_pixmap = pixmap.scaled(
-                    fixed_size, 
-                    Qt.KeepAspectRatio, 
+                    fixed_size,
+                    Qt.KeepAspectRatio,
                     Qt.SmoothTransformation
                 )
                 self.chip_image.setPixmap(scaled_pixmap)
@@ -616,7 +616,7 @@ class ChipSelectionDialog(QDialog):
                 self.chip_image.setText(f"Package: {chip_data.get('package', 'N/A')}\n(Image Preview)")
         else:
             self.chip_image.setText(f"Package: {chip_data.get('package', 'N/A')}\n(Image Preview)")
-        
+
         # Update properties
         properties = [
             ("Part Number", chip_data.get('part_number', 'N/A')),
@@ -628,16 +628,16 @@ class ChipSelectionDialog(QDialog):
             ("Max Power", chip_data.get('power', 'N/A')),
             ("Package", chip_data.get('package', 'N/A')),
         ]
-        
+
         for i, (label, value) in enumerate(properties):
             label_widget = QLabel(f"{label}:")
             label_widget.setFont(QFont("Arial", 9, QFont.Bold))
             value_widget = QLabel(str(value))
             value_widget.setWordWrap(True)
-            
+
             self.properties_layout.addWidget(label_widget, i, 0, Qt.AlignTop)
             self.properties_layout.addWidget(value_widget, i, 1, Qt.AlignTop)
-            
+
         # Add description
         if chip_data.get('description'):
             desc_label = QLabel("Description:")
@@ -645,28 +645,28 @@ class ChipSelectionDialog(QDialog):
             desc_value = QLabel(chip_data['description'])
             desc_value.setWordWrap(True)
             desc_value.setStyleSheet("QLabel { padding: 5px; background-color: #f0f0f0; border-radius: 4px; }")
-            
+
             row = len(properties)
             self.properties_layout.addWidget(desc_label, row, 0, Qt.AlignTop)
             self.properties_layout.addWidget(desc_value, row, 1, Qt.AlignTop)
-            
+
     def _clear_chip_details(self):
         """Clear chip details display"""
         self.chip_image.clear()
         self.chip_image.setText("Package Image\n(Preview)")
-        
+
         # Clear properties layout
         while self.properties_layout.count():
             child = self.properties_layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
-                
+
     def _on_ok_clicked(self):
         """Handle OK button click"""
         if self.selected_chip:
             self.chip_selected.emit(self.selected_chip)
             self.accept()
-            
+
     def get_selected_chip(self) -> Optional[Dict]:
         """Get the currently selected chip data"""
         return self.selected_chip

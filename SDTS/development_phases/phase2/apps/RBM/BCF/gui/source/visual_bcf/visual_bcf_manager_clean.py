@@ -30,13 +30,13 @@ from apps.RBM.BCF.source.RDB.rdb_manager import RDBManager
 class VisualBCFManager(QWidget):
     """
     Manager for the visual BCF interface with graphics scene and view.
-    
+
     This class acts as the View layer in the MVC architecture, handling:
     - UI coordination and layout
     - Signal connections and event handling
     - View management (zoom, fit, reset)
     - Delegates all business logic to the Controller
-    
+
     Architecture is always enabled - no fallback logic.
     """
 
@@ -177,14 +177,14 @@ class VisualBCFManager(QWidget):
         """Add the selected chip from dialog to the scene (delegate to controller)"""
         try:
             chip_name = f"{chip_data['name']} ({chip_data['part_number']})"
-            
+
             # Determine component type based on chip type
             chip_type = chip_data.get('type', '')
             if 'RF Front-End Module' in chip_type:
                 component_type = 'device'
                 function_type = 'FEM'
             elif 'Power Amplifier' in chip_type:
-                component_type = 'device' 
+                component_type = 'device'
                 function_type = 'PA'
             elif 'Switch' in chip_type:
                 component_type = 'device'
@@ -195,7 +195,7 @@ class VisualBCFManager(QWidget):
             else:
                 component_type = 'chip'
                 function_type = 'Generic'
-            
+
             # Determine chip size based on package type
             package = chip_data.get('package', '')
             if 'QFN' in package:
@@ -208,7 +208,7 @@ class VisualBCFManager(QWidget):
                 width, height = 120, 80
             else:
                 width, height = 180, 120  # Default size
-            
+
             # Create properties from chip data
             properties = {
                 'function_type': function_type,
@@ -221,7 +221,7 @@ class VisualBCFManager(QWidget):
                 'part_number': chip_data.get('part_number', ''),
                 'metadata': chip_data
             }
-            
+
             # Add component via controller
             component_id = self.controller.add_component(
                 name=chip_name,
@@ -229,7 +229,7 @@ class VisualBCFManager(QWidget):
                 position=(position.x(), position.y()),
                 properties=properties
             )
-            
+
             if component_id:
                 print(f"✅ Added chip '{chip_name}' via controller with ID: {component_id}")
             else:
@@ -347,34 +347,34 @@ class VisualBCFManager(QWidget):
         try:
             import logging
             logger = logging.getLogger(__name__)
-            
+
             # Model - Data access layer
             self.data_model = VisualBCFDataModel(self.rdb_manager)
             logger.info("Visual BCF Data Model created")
-            
+
             # Controller - Coordinates between model and view
             self.controller = VisualBCFController(self.view, self.data_model)
             logger.info("Visual BCF Controller created")
-            
+
             # Connect controller signals to manager signals
             self.controller.operation_completed.connect(self._on_controller_operation_completed)
             self.controller.error_occurred.connect(self._on_controller_error_occurred)
             self.controller.component_selected.connect(self._on_controller_component_selected)
-            
+
             # Connect user deletion signal to handle Legacy BCF synchronization
             self.controller.component_removed_by_user.connect(self._on_visual_component_removed_by_user)
-            
+
             # Set controller reference in scene for user deletions
             self.scene.set_controller(self.controller)
-            
+
             logger.info("Architecture components setup complete")
-            
+
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error setting up architecture components: {e}")
             self.error_occurred.emit(f"Failed to setup architecture: {str(e)}")
-    
+
     def _on_controller_operation_completed(self, operation: str, message: str):
         """Handle controller operation completed"""
         self.data_changed.emit({
@@ -382,11 +382,11 @@ class VisualBCFManager(QWidget):
             "message": message,
             "source": "controller"
         })
-    
+
     def _on_controller_error_occurred(self, error_message: str):
         """Handle controller error"""
         self.error_occurred.emit(error_message)
-    
+
     def _on_controller_component_selected(self, component_id: str):
         """Handle controller component selection"""
         if self.data_model:
@@ -399,27 +399,27 @@ class VisualBCFManager(QWidget):
                     "component_type": component_data.component_type,
                     "source": "controller"
                 })
-    
+
     def _on_visual_component_removed_by_user(self, component_name: str):
         """Handle user-initiated component deletion from Visual BCF scene"""
         try:
             import logging
             logger = logging.getLogger(__name__)
             logger.info(f"🎨 Visual BCF: User deleted component '{component_name}' - removing from Legacy BCF")
-            
+
             # Find and remove the corresponding device from Legacy BCF
             device_settings = self.rdb_manager.get_table("config.device.settings")
             device_index_to_remove = -1
-            
+
             for i, device in enumerate(device_settings):
                 if device.get('name') == component_name:
                     device_index_to_remove = i
                     break
-            
+
             if device_index_to_remove >= 0:
                 # Remove the device from Legacy BCF
                 success = self.rdb_manager.delete_row("config.device.settings", device_index_to_remove)
-                
+
                 if success:
                     logger.info(f"✅ Successfully removed device '{component_name}' from Legacy BCF")
                     self.data_changed.emit({
@@ -440,15 +440,15 @@ class VisualBCFManager(QWidget):
                     "message": f"Removed '{component_name}' from Visual BCF (not found in Legacy BCF)",
                     "source": "bidirectional_sync"
                 })
-            
+
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error handling Visual BCF user deletion for '{component_name}': {e}")
             self.error_occurred.emit(f"Failed to sync deletion of '{component_name}': {str(e)}")
-    
+
     # View Coordination Methods (delegate business logic to Controller)
-    
+
     def add_lte_modem(self, position: tuple = None, name: str = None) -> str:
         """Add LTE modem component"""
         if not position:
@@ -456,37 +456,37 @@ class VisualBCFManager(QWidget):
             center = self.view.mapToScene(self.view.viewport().rect().center())
             position = (center.x(), center.y())
         return self.controller.add_lte_modem(position, name)
-    
+
     def add_5g_modem(self, position: tuple = None, name: str = None) -> str:
         """Add 5G modem component"""
         if not position:
             center = self.view.mapToScene(self.view.viewport().rect().center())
             position = (center.x() + 150, center.y())
         return self.controller.add_5g_modem(position, name)
-    
+
     def add_rfic_chip_data_driven(self, position: tuple = None, name: str = None) -> str:
         """Add RFIC chip component"""
         if not position:
             center = self.view.mapToScene(self.view.viewport().rect().center())
             position = (center.x(), center.y() + 150)
         return self.controller.add_rfic_chip(position, name)
-    
+
     def add_generic_chip_data_driven(self, position: tuple = None, name: str = None) -> str:
         """Add generic chip component"""
         if not position:
             center = self.view.mapToScene(self.view.viewport().rect().center())
             position = (center.x() + 300, center.y())
         return self.controller.add_generic_chip(position, name)
-    
+
     def sync_with_legacy_bcf(self):
         """Sync with Legacy BCF"""
         self.controller.sync_with_legacy_bcf()
-    
+
     def import_from_legacy_bcf(self, component_names: List[str] = None):
         """Import components from Legacy BCF with duplicate prevention"""
         try:
             result = self.controller.import_from_legacy_bcf(component_names)
-            
+
             if result['imported'] > 0 or result['skipped'] > 0:
                 self.data_changed.emit({
                     "action": "import_legacy",
@@ -495,19 +495,19 @@ class VisualBCFManager(QWidget):
                     "message": f"Imported {result['imported']} new devices, skipped {result['skipped']} duplicates",
                     "source": "data_driven"
                 })
-                
+
         except Exception as e:
             self.error_occurred.emit(f"Failed to import from Legacy BCF: {str(e)}")
-    
+
     def auto_import_on_startup(self):
         """Auto-import devices from Legacy BCF on startup (delegate to controller)"""
         try:
             import logging
             logger = logging.getLogger(__name__)
             logger.info("🔄 Auto-importing devices from Legacy BCF on startup...")
-            
+
             result = self.controller.auto_import_on_startup()
-            
+
             # Emit startup import complete signal
             self.data_changed.emit({
                 "action": "auto_import_startup",
@@ -516,49 +516,49 @@ class VisualBCFManager(QWidget):
                 "skipped": result['skipped'],
                 "source": "data_driven"
             })
-            
+
             logger.info(f"✅ Auto-import completed: {result['imported']} imported, {result['skipped']} skipped")
-            
+
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error during auto-import on startup: {e}")
             self.error_occurred.emit(f"Auto-import failed: {str(e)}")
-    
+
     def remove_component_by_name(self, name: str) -> bool:
         """Remove component by name"""
         return self.controller.remove_component_by_name(name)
-    
+
     def get_model_statistics(self) -> Dict[str, Any]:
         """Get statistics from data model"""
         return self.controller.get_statistics()
-    
+
     def is_architecture_enabled(self) -> bool:
         """Check if data-driven architecture is enabled (always True)"""
         return True
-    
+
     def get_data_model(self) -> VisualBCFDataModel:
         """Get the data model"""
         return self.data_model
-    
+
     def get_controller(self) -> VisualBCFController:
         """Get the controller"""
         return self.controller
-    
+
     def clear_scene_data_driven(self):
         """Clear scene using data-driven controller"""
         self.controller.clear_scene()
-    
+
     def fit_in_view(self):
         """Fit all components in view"""
         scene_rect = self.scene.itemsBoundingRect()
         if not scene_rect.isEmpty():
             self.view.fitInView(scene_rect, Qt.KeepAspectRatio)
-    
+
     def reset_view(self):
         """Reset view transformation"""
         self.view.resetTransform()
-    
+
     def cleanup(self):
         """Clean up resources"""
         try:
@@ -571,7 +571,7 @@ class VisualBCFManager(QWidget):
                     self.controller.component_selected.disconnect()
                 except:
                     pass
-            
+
             # Clear all components from scene
             components = self.scene.get_components()[:]
             for component in components:

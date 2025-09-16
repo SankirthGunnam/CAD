@@ -47,10 +47,10 @@ class TestCoreController:
         # First transition to BUILDING state (valid from IDLE)
         controller.state_machine.transition(ToolEvent.BUILD)
         assert controller.state_machine.get_state() == ToolState.BUILDING
-        
+
         # Then transition to ERROR state (valid from BUILDING)
         controller.state_machine.transition(ToolEvent.ERROR, {"error_message": "Test error"})
-        
+
         # Verify state is ERROR and error message is set
         assert controller.state_machine.get_state() == ToolState.ERROR
         assert controller.error_message == "Test error"
@@ -58,7 +58,7 @@ class TestCoreController:
     def test_worker_request_creation(self, mock_rdb_manager):
         """Test worker request creation"""
         controller = CoreController(mock_rdb_manager)
-        
+
         # Import WorkerRequest and WorkerPriority for proper format
         from apps.RBM.BCF.source.RCC.core_controller import WorkerRequest, WorkerPriority
 
@@ -77,17 +77,17 @@ class TestCoreController:
     def test_get_status(self, mock_rdb_manager):
         """Test status reporting"""
         controller = CoreController(mock_rdb_manager)
-        
+
         # Test initial status
         status = controller.get_status()
         assert status["state"] == "IDLE"
         assert status["error_message"] == ""
-        
+
         # Test status after build
         controller.state_machine.transition(ToolEvent.BUILD)
         status = controller.get_status()
         assert status["state"] == "BUILDING"
-        
+
         # Test status after error (from BUILDING state)
         controller.state_machine.transition(ToolEvent.ERROR, {"error_message": "Test error"})
         status = controller.get_status()

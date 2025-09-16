@@ -43,19 +43,19 @@ for test_info in test_modules:
             try:
                 print(f"   Testing {name} package...")
                 package = __import__(module_path, fromlist=expected_classes)
-                
+
                 missing_classes = []
                 for cls_name in expected_classes:
                     if not hasattr(package, cls_name):
                         missing_classes.append(cls_name)
-                
+
                 if missing_classes:
                     failed_imports.append((name, f"Missing classes: {missing_classes}"))
                     print(f"   ✗ {name}: Missing {missing_classes}")
                 else:
                     successful_imports.append(name)
                     print(f"   ✓ {name}: All expected classes available")
-                    
+
             except ImportError as e:
                 if "PySide6" in str(e):
                     skipped_imports.append((name, "PySide6 dependency"))
@@ -69,7 +69,7 @@ for test_info in test_modules:
             try:
                 print(f"   Testing {name}...")
                 module = __import__(module_path, fromlist=[class_name])
-                
+
                 if hasattr(module, class_name):
                     cls = getattr(module, class_name)
                     successful_imports.append(name)
@@ -77,7 +77,7 @@ for test_info in test_modules:
                 else:
                     failed_imports.append((name, f"Class {class_name} not found"))
                     print(f"   ✗ {name}: Class {class_name} not found in module")
-                    
+
             except ImportError as e:
                 if "PySide6" in str(e):
                     skipped_imports.append((name, "PySide6 dependency"))
@@ -112,7 +112,7 @@ except Exception as e:
 try:
     print("   Testing scene.py import pattern...")
     from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
-    from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.chip import ComponentWithPins  
+    from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.chip import ComponentWithPins
     from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire
     print("   ✓ Scene.py import pattern working correctly")
     successful_imports.append("Scene Import Pattern")
@@ -131,19 +131,19 @@ try:
     # Test if the __all__ exports work
     artifacts = apps.RBM5.BCF.gui.source.visual_bcf.artifacts
     expected_exports = ['ComponentPin', 'ComponentWithPins', 'Wire']
-    
+
     missing_exports = []
     for export in expected_exports:
         if not hasattr(artifacts, export):
             missing_exports.append(export)
-    
+
     if missing_exports:
         print(f"   ✗ Artifacts package: Missing exports {missing_exports}")
         failed_imports.append(("Artifacts Package Exports", f"Missing: {missing_exports}"))
     else:
         print("   ✓ Artifacts package exports working correctly")
         successful_imports.append("Artifacts Package Exports")
-        
+
 except Exception as e:
     if "PySide6" in str(e):
         print("   ⚠ Artifacts package: Skipped (PySide6 not available)")
@@ -180,7 +180,7 @@ print(f"\n=== Analysis of Your Changes ===")
 print("✅ Excellent improvements made:")
 print("   1. Removed centralized path setup import from individual files")
 print("   2. Converted to clean direct absolute imports")
-print("   3. Eliminated try/except fallback patterns") 
+print("   3. Eliminated try/except fallback patterns")
 print("   4. Simplified import structure significantly")
 
 # Check for remaining relative imports
@@ -191,11 +191,11 @@ import os
 try:
     # Check for any remaining relative imports with dots
     result = subprocess.run([
-        'grep', '-r', '--include=*.py', '-n', 
-        '-E', r'from \.|import \.', 
+        'grep', '-r', '--include=*.py', '-n',
+        '-E', r'from \.|import \.',
         '/home/sankirth/Projects/CAD/SDTS/development_phases/phase2.5/apps/RBM5/BCF'
     ], capture_output=True, text=True)
-    
+
     if result.returncode == 0 and result.stdout.strip():
         print("   ⚠️ Found some remaining relative imports:")
         for line in result.stdout.strip().split('\n'):

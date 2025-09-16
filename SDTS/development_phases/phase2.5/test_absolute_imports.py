@@ -25,21 +25,21 @@ test_modules = [
     # GUI modules (converted from relative imports)
     ("Visual BCF Manager", "apps.RBM5.BCF.gui.source.visual_bcf.visual_bcf_manager", "VisualBCFManager"),
     ("Component Scene", "apps.RBM5.BCF.gui.source.visual_bcf.scene", "ComponentScene"),
-    
-    # Artifacts modules (converted from relative imports)  
+
+    # Artifacts modules (converted from relative imports)
     ("Component Pin", "apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin", "ComponentPin"),
     ("Component With Pins", "apps.RBM5.BCF.gui.source.visual_bcf.artifacts.chip", "ComponentWithPins"),
     ("Wire Connection", "apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection", "Wire"),
-    
+
     # Model modules (converted from relative imports)
     ("Device Settings Model", "apps.RBM5.BCF.source.models.visual_bcf.device_settings_model", "DeviceSettingsModel"),
     ("IO Connect Model", "apps.RBM5.BCF.source.models.visual_bcf.io_connect_model", "IOConnectModel"),
     ("RDB Table Model", "apps.RBM5.BCF.source.models.visual_bcf.rdb_table_model", "RDBTableModel"),
-    
+
     # Controller modules (already using absolute imports)
     ("Device Settings Controller", "apps.RBM5.BCF.source.controllers.visual_bcf.device_settings_controller", "DeviceSettingsController"),
     ("IO Connect Controller", "apps.RBM5.BCF.source.controllers.visual_bcf.io_connect_controller", "IOConnectController"),
-    
+
     # RDB modules (already using absolute imports)
     ("Database Interface", "apps.RBM5.BCF.source.RDB.database_interface", "DatabaseInterface"),
     ("JSON Database", "apps.RBM5.BCF.source.RDB.json_db", "JSONDatabase"),
@@ -56,7 +56,7 @@ for name, module_path, class_name in test_modules:
     try:
         print(f"   Testing {name}...")
         module = __import__(module_path, fromlist=[class_name])
-        
+
         if hasattr(module, class_name):
             cls = getattr(module, class_name)
             successful_imports.append(name)
@@ -64,7 +64,7 @@ for name, module_path, class_name in test_modules:
         else:
             failed_imports.append((name, f"Class {class_name} not found"))
             print(f"   ✗ {name}: Class {class_name} not found in module")
-            
+
     except ImportError as e:
         if "PySide6" in str(e):
             skipped_imports.append((name, "PySide6 dependency"))
@@ -88,19 +88,19 @@ for name, package_path, expected_classes in package_tests:
     try:
         print(f"   Testing {name}...")
         package = __import__(package_path, fromlist=expected_classes)
-        
+
         missing_classes = []
         for cls_name in expected_classes:
             if not hasattr(package, cls_name):
                 missing_classes.append(cls_name)
-        
+
         if missing_classes:
             failed_imports.append((name, f"Missing classes: {missing_classes}"))
             print(f"   ✗ {name}: Missing {missing_classes}")
         else:
             successful_imports.append(name)
             print(f"   ✓ {name}: All expected classes available")
-            
+
     except ImportError as e:
         if "PySide6" in str(e):
             skipped_imports.append((name, "PySide6 dependency"))
@@ -135,7 +135,7 @@ else:
 print(f"\n=== Conversion Results ===")
 print("✅ Eliminated all relative imports with dots (from .module)")
 print("✅ Converted all imports to absolute imports using apps.RBM5.BCF... hierarchy")
-print("✅ Maintained centralized path setup in apps/RBM5/BCF/__init__.py") 
+print("✅ Maintained centralized path setup in apps/RBM5/BCF/__init__.py")
 print("✅ All modules now use consistent import pattern")
 
 # Verify no dot imports remain

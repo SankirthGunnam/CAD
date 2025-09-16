@@ -34,7 +34,7 @@ class TestMainWindowInitialization:
         # Given: A clean application state
         # When: Creating a main window
         window = MainWindow()
-        
+
         # Then: Window should be properly initialized
         assert window.windowTitle() == "SDTS - System Design Tool Suite"
         assert window.minimumSize().width() == 1200
@@ -44,10 +44,10 @@ class TestMainWindowInitialization:
         """Test that central widget is properly configured"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Checking central widget
         central_widget = window.centralWidget()
-        
+
         # Then: Central widget should exist and have correct layout
         assert central_widget is not None
         layout = central_widget.layout()
@@ -62,10 +62,10 @@ class TestMainWindowInitialization:
         """Test that sidebar is created and configured correctly"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Checking sidebar properties
         sidebar = window.sidebar
-        
+
         # Then: Sidebar should be configured correctly
         assert sidebar is not None
         assert sidebar.width() == 50
@@ -75,10 +75,10 @@ class TestMainWindowInitialization:
         """Test that content area is properly configured"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Checking content area
         content_area = window.content_area
-        
+
         # Then: Content area should exist and contain home screen
         assert content_area is not None
         assert content_area.count() > 0
@@ -92,13 +92,13 @@ class TestMainWindowAppButtons:
         """Test that application buttons are created correctly"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Checking app buttons
         app_buttons = window.app_buttons
-        
+
         # Then: Should have correct buttons
         assert "CAD" in app_buttons
-        assert "BCF" in app_buttons  
+        assert "BCF" in app_buttons
         assert "DCF" in app_buttons
         assert len(app_buttons) == 3
 
@@ -106,7 +106,7 @@ class TestMainWindowAppButtons:
         """Test that app buttons have correct properties"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Checking button properties
         for name, button in window.app_buttons.items():
             # Then: Buttons should have correct properties
@@ -120,10 +120,10 @@ class TestMainWindowAppButtons:
         # Given: MainWindow instance
         window = MainWindow()
         cad_button = window.app_buttons["CAD"]
-        
+
         # When: Clicking CAD button
         cad_button.click()
-        
+
         # Then: Should switch to correct app (index 1, after HomeScreen)
         assert window.current_app == 1
 
@@ -132,10 +132,10 @@ class TestMainWindowAppButtons:
         # Given: MainWindow instance
         window = MainWindow()
         bcf_button = window.app_buttons["BCF"]
-        
+
         # When: Clicking BCF button
         bcf_button.click()
-        
+
         # Then: Should switch to correct app (index 2)
         assert window.current_app == 2
 
@@ -144,10 +144,10 @@ class TestMainWindowAppButtons:
         # Given: MainWindow instance
         window = MainWindow()
         dcf_button = window.app_buttons["DCF"]
-        
+
         # When: Clicking DCF button
         dcf_button.click()
-        
+
         # Then: Should switch to correct app (index 3)
         assert window.current_app == 3
 
@@ -159,10 +159,10 @@ class TestMainWindowAppSwitching:
         """Test switching to home screen (index 0)"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Switching to home screen
         window.switch_app(0)
-        
+
         # Then: Should show home screen and no buttons should be checked
         assert window.current_app == 0
         assert window.content_area.currentIndex() == 0
@@ -173,10 +173,10 @@ class TestMainWindowAppSwitching:
         """Test switching to CAD app"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Switching to CAD app (index 1)
         window.switch_app(1)
-        
+
         # Then: CAD button should be checked and content should switch
         assert window.current_app == 1
         assert window.content_area.currentIndex() == 1
@@ -188,10 +188,10 @@ class TestMainWindowAppSwitching:
         """Test switching to BCF app"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Switching to BCF app (index 2)
         window.switch_app(2)
-        
+
         # Then: BCF button should be checked
         assert window.current_app == 2
         assert window.content_area.currentIndex() == 2
@@ -203,10 +203,10 @@ class TestMainWindowAppSwitching:
         """Test switching to DCF app"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Switching to DCF app (index 3)
         window.switch_app(3)
-        
+
         # Then: DCF button should be checked
         assert window.current_app == 3
         assert window.content_area.currentIndex() == 3
@@ -218,13 +218,13 @@ class TestMainWindowAppSwitching:
         """Test multiple sequential app switches"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Switching between multiple apps
         window.switch_app(1)  # CAD
         window.switch_app(2)  # BCF
         window.switch_app(0)  # Home
         window.switch_app(3)  # DCF
-        
+
         # Then: Should end up in DCF with correct button states
         assert window.current_app == 3
         assert window.app_buttons["DCF"].isChecked()
@@ -236,13 +236,13 @@ class TestMainWindowAppSwitching:
         # Given: MainWindow instance
         window = MainWindow()
         initial_app = window.current_app
-        
+
         # When: Trying to switch to invalid index
         try:
             window.switch_app(10)  # Invalid index
         except IndexError:
             pass  # Expected for invalid index
-        
+
         # Then: Should handle gracefully and maintain current state
         # Note: Actual behavior depends on implementation
 
@@ -256,7 +256,7 @@ class TestMainWindowLayout:
         window = MainWindow()
         central_widget = window.centralWidget()
         layout = central_widget.layout()
-        
+
         # When: Checking layout order
         # Then: Sidebar should be first item, content area second
         assert layout.itemAt(0).widget() == window.sidebar
@@ -264,11 +264,11 @@ class TestMainWindowLayout:
 
     def test_layout_stretch_factors(self, qapp, mock_home_screen):
         """Test layout stretch factors"""
-        # Given: MainWindow instance  
+        # Given: MainWindow instance
         window = MainWindow()
         central_widget = window.centralWidget()
         layout = central_widget.layout()
-        
+
         # When: Checking stretch factors
         # Then: Content area should have stretch factor to expand
         # (This would need to be implemented in the actual code)
@@ -279,10 +279,10 @@ class TestMainWindowLayout:
         # Given: MainWindow instance
         window = MainWindow()
         window.show()
-        
+
         # When: Resizing window
         window.resize(1400, 900)
-        
+
         # Then: Sidebar should maintain fixed width
         assert window.sidebar.width() == 50
         # Content area should expand to fill space
@@ -297,10 +297,10 @@ class TestMainWindowStyling:
         # Given: MainWindow instance
         window = MainWindow()
         sidebar = window.sidebar
-        
+
         # When: Checking sidebar style
         style_sheet = sidebar.styleSheet()
-        
+
         # Then: Should have dark theme styling
         assert "background-color: #252526" in style_sheet
         assert "border-right: 1px solid #1e1e1e" in style_sheet
@@ -310,10 +310,10 @@ class TestMainWindowStyling:
         # Given: MainWindow instance
         window = MainWindow()
         sidebar = window.sidebar
-        
+
         # When: Checking button styling in sidebar
         style_sheet = sidebar.styleSheet()
-        
+
         # Then: Button styles should be defined
         assert "QPushButton" in style_sheet
         assert "background-color: transparent" in style_sheet
@@ -325,10 +325,10 @@ class TestMainWindowStyling:
         # Given: MainWindow instance
         window = MainWindow()
         content_area = window.content_area
-        
+
         # When: Checking content area style
         style_sheet = content_area.styleSheet()
-        
+
         # Then: Should have dark background
         assert "background-color: #1e1e1e" in style_sheet
 
@@ -340,7 +340,7 @@ class TestMainWindowInitialState:
         """Test initial application state"""
         # Given: New MainWindow instance
         window = MainWindow()
-        
+
         # When: Checking initial state
         # Then: Should start with home screen (index 0)
         assert window.current_app == 0
@@ -350,7 +350,7 @@ class TestMainWindowInitialState:
         """Test initial button states"""
         # Given: New MainWindow instance
         window = MainWindow()
-        
+
         # When: Checking button states
         # Then: No buttons should be initially checked
         for button in window.app_buttons.values():
@@ -360,7 +360,7 @@ class TestMainWindowInitialState:
         """Test HomeScreen is properly integrated"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Checking home screen integration
         # Then: HomeScreen should be first widget in content area
         assert window.content_area.widget(0) == mock_home_screen
@@ -375,17 +375,17 @@ class TestMainWindowIntegration:
         """Test full window lifecycle"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Showing window and interacting
         window.show()
         QTest.qWait(100)  # Wait for window to appear
-        
+
         # Switch between apps
         window.app_buttons["CAD"].click()
         QTest.qWait(50)
         window.app_buttons["BCF"].click()
         QTest.qWait(50)
-        
+
         # Then: Window should remain stable and responsive
         assert window.isVisible()
         assert window.current_app == 2  # Should be on BCF
@@ -397,12 +397,12 @@ class TestMainWindowIntegration:
         try:
             # Try to create with real HomeScreen
             window = MainWindow()
-            
+
             # When: Window is created successfully
             # Then: Should work with real HomeScreen
             assert window.home_screen is not None
             assert window.content_area.count() > 0
-            
+
         except ImportError:
             # If HomeScreen import fails, that's expected in some test environments
             pytest.skip("HomeScreen not available for integration test")
@@ -424,14 +424,14 @@ class TestMainWindowErrorScenarios:
         """Test button creation resilience"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Trying to add invalid button data
         try:
             window.add_app_button("", "❌", -1)  # Invalid data
         except (ValueError, IndexError):
             # Then: Should handle errors gracefully
             pass
-        
+
         # Original buttons should still work
         assert len(window.app_buttons) >= 3
 
@@ -439,11 +439,11 @@ class TestMainWindowErrorScenarios:
         """Test app switching with boundary conditions"""
         # Given: MainWindow instance
         window = MainWindow()
-        
+
         # When: Testing boundary conditions
         window.switch_app(-1)  # Negative index
         window.switch_app(0)   # Minimum valid
-        
+
         # Then: Should handle gracefully
         assert window.current_app >= 0
 
@@ -455,13 +455,13 @@ class TestMainWindowPerformance:
     def test_window_creation_performance(self, qapp, mock_home_screen):
         """Test window creation performance"""
         import time
-        
+
         # Given: Clean state
         start_time = time.time()
-        
+
         # When: Creating MainWindow
         window = MainWindow()
-        
+
         # Then: Creation should be fast (< 0.5 seconds)
         creation_time = time.time() - start_time
         assert creation_time < 0.5
@@ -469,17 +469,17 @@ class TestMainWindowPerformance:
     def test_app_switching_performance(self, qapp, mock_home_screen):
         """Test app switching performance"""
         import time
-        
+
         # Given: MainWindow instance
         window = MainWindow()
         window.show()
-        
+
         # When: Rapidly switching apps
         start_time = time.time()
         for i in range(100):
             app_index = i % 4  # Cycle through 0,1,2,3
             window.switch_app(app_index)
-        
+
         # Then: Switching should be fast
         switching_time = time.time() - start_time
         assert switching_time < 1.0  # Less than 1 second for 100 switches
@@ -488,17 +488,17 @@ class TestMainWindowPerformance:
         """Test memory usage during app switches"""
         import psutil
         import os
-        
+
         # Given: MainWindow and initial memory
         window = MainWindow()
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss
-        
+
         # When: Performing many app switches
         for i in range(50):
             app_index = i % 4
             window.switch_app(app_index)
-        
+
         # Then: Memory usage should not grow excessively
         final_memory = process.memory_info().rss
         memory_growth = final_memory - initial_memory

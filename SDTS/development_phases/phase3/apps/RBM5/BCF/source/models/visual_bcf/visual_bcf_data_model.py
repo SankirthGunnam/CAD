@@ -149,7 +149,7 @@ class VisualBCFDataModel(QObject):
             # Get external configuration for this component type
 
             config = self.component_configs.get(component_type, {})
-            
+
             # Merge external config with provided properties
             component_props = config.get('default_properties', {}).copy()
             if properties:
@@ -201,7 +201,7 @@ class VisualBCFDataModel(QObject):
         """Remove a component from the scene directly from RDB"""
         try:
             components_table = self.rdb_manager.get_table(self.components_table_path)
-            
+
             # Find the component to get its name for logging
             component_name = ""
             component_found = False
@@ -210,16 +210,16 @@ class VisualBCFDataModel(QObject):
                     component_name = component.get('name', 'Unknown')
                     component_found = True
                     break
-            
+
             if component_found:
                 # Remove the component
                 components_table = [c for c in components_table if c.get('id') != component_id]
                 self.rdb_manager.set_table(self.components_table_path, components_table)
-                
+
                 # Also remove any connections involving this component
                 connections_table = self.rdb_manager.get_table(self.connections_table_path)
-                connections_table = [conn for conn in connections_table 
-                                  if conn.get('from_component_id') != component_id 
+                connections_table = [conn for conn in connections_table
+                                  if conn.get('from_component_id') != component_id
                                   and conn.get('to_component_id') != component_id]
                 self.rdb_manager.set_table(self.connections_table_path, connections_table)
 
@@ -229,7 +229,7 @@ class VisualBCFDataModel(QObject):
 
                 logger.info("Removed component: %s (%s)", component_name, component_id)
                 return True
-            
+
             logger.warning("Component not found: %s", component_id)
             return False
 
@@ -241,17 +241,17 @@ class VisualBCFDataModel(QObject):
         """Update component position directly in RDB"""
         try:
             components_table = self.rdb_manager.get_table(self.components_table_path)
-            
+
             for component in components_table:
                 if component.get('id') == component_id:
                     component['visual_properties']['position'] = {'x': position[0], 'y': position[1]}
                     self.rdb_manager.set_table(self.components_table_path, components_table)
-                    
+
                     # Emit update signal
                     self.component_updated.emit(component_id, component)
                     logger.info("Updated component position: %s", component_id)
                     return True
-            
+
             logger.warning("Component not found for position update: %s", component_id)
             return False
 
@@ -263,14 +263,14 @@ class VisualBCFDataModel(QObject):
         """Update component properties directly in RDB"""
         try:
             components_table = self.rdb_manager.get_table(self.components_table_path)
-            
+
             for component in components_table:
                 if component.get('id') == component_id:
                     # Update properties while maintaining compatibility
                     if 'properties' not in component:
                         component['properties'] = {}
                     component['properties'].update(properties)
-                    
+
                     # Update Legacy BCF compatibility fields
                     if 'function_type' in properties:
                         component['function_type'] = properties['function_type']
@@ -280,9 +280,9 @@ class VisualBCFDataModel(QObject):
                         component['interface'] = properties['interface']
                     if 'config' in properties:
                         component['config'] = properties['config']
-                    
+
                     self.rdb_manager.set_table(self.components_table_path, components_table)
-                    
+
                     # Emit update signal
                     self.component_updated.emit(component_id, component)
                     logger.info("Updated component properties: %s", component_id)
@@ -290,7 +290,7 @@ class VisualBCFDataModel(QObject):
 
             logger.warning("Component not found for properties update: %s", component_id)
             return False
-            
+
         except Exception as e:
             logger.error("Error updating component properties: %s", e)
             return False
@@ -299,17 +299,17 @@ class VisualBCFDataModel(QObject):
         """Update component pins directly in RDB"""
         try:
             components_table = self.rdb_manager.get_table(self.components_table_path)
-            
+
             for component in components_table:
                 if component.get('id') == component_id:
                     component['pins'] = pins
                     self.rdb_manager.set_table(self.components_table_path, components_table)
-                    
+
                     # Emit update signal
                     self.component_updated.emit(component_id, component)
                     logger.info("Updated component pins: %s", component_id)
                     return True
-            
+
             logger.warning("Component not found for pins update: %s", component_id)
             return False
 
@@ -347,13 +347,13 @@ class VisualBCFDataModel(QObject):
             components_table = self.rdb_manager.get_table(self.components_table_path)
             if not components_table:
                 return {}
-            
+
             # Convert list to dictionary with component IDs as keys
             components_dict = {}
             for component in components_table:
                 if isinstance(component, dict) and 'id' in component:
                     components_dict[component['id']] = component
-            
+
             return components_dict
 
         except Exception as e:
@@ -367,7 +367,7 @@ class VisualBCFDataModel(QObject):
             if not components_table:
                 return []
             return components_table.copy()
-            
+
         except Exception as e:
             logger.error("Error getting all components as list: %s", e)
             return []
@@ -457,7 +457,7 @@ class VisualBCFDataModel(QObject):
                 if isinstance(connection, dict) and connection.get('id') == connection_id:
                     # Update the connection with new data
                     connection.update(updated_data)
-                    
+
                     # Save back to RDB
                     self.rdb_manager.set_table(self.connections_table_path, connections_table)
 
@@ -469,7 +469,7 @@ class VisualBCFDataModel(QObject):
 
             logger.warning("Connection not found for update: %s", connection_id)
             return False
-            
+
         except Exception as e:
             logger.error("Error updating connection: %s", e)
             return False
@@ -486,23 +486,23 @@ class VisualBCFDataModel(QObject):
         """Remove a connection directly from RDB"""
         try:
             connections_table = self.rdb_manager.get_table(self.connections_table_path)
-            
+
             # Find and remove the connection
             for i, connection in enumerate(connections_table):
                 if connection.get('id') == connection_id:
                     removed_connection = connections_table.pop(i)
                     self.rdb_manager.set_table(self.connections_table_path, connections_table)
-                    
+
                     # Emit signal
                     if emit_signal:
                         self.connection_removed.emit(connection_id)
-                    
+
                     logger.info("Removed connection: %s", connection_id)
                     return True
-            
+
             logger.warning("Connection not found: %s", connection_id)
             return False
-            
+
         except Exception as e:
             logger.error("Error removing connection: %s", e)
             return False
@@ -531,8 +531,8 @@ class VisualBCFDataModel(QObject):
         """Get all connections for a specific component directly from RDB"""
         try:
             connections_table = self.rdb_manager.get_table(self.connections_table_path) or []
-            return [conn for conn in connections_table 
-                   if conn.get('from_component_id') == component_id or 
+            return [conn for conn in connections_table
+                   if conn.get('from_component_id') == component_id or
                       conn.get('to_component_id') == component_id]
         except Exception as e:
             logger.error("Error getting component connections: %s", e)
@@ -545,7 +545,7 @@ class VisualBCFDataModel(QObject):
         try:
             components = self.get_all_components_as_list()
             legacy_devices = []
-            
+
             for component in components:
                 # Convert Visual BCF component to Legacy BCF format
                 legacy_device = {
@@ -563,9 +563,9 @@ class VisualBCFDataModel(QObject):
                     'dcf_type': component.get('dcf_type', '')
                 }
                 legacy_devices.append(legacy_device)
-            
+
             return legacy_devices
-            
+
         except Exception as e:
             logger.error("Error getting Legacy BCF devices: %s", e)
             return []
@@ -575,7 +575,7 @@ class VisualBCFDataModel(QObject):
         try:
             components = self.get_all_components_as_list()
             table_devices = []
-            
+
             for component in components:
                 # Convert to table format
                 table_device = {
@@ -591,9 +591,9 @@ class VisualBCFDataModel(QObject):
                     "DCF Type": component.get('dcf_type', '')
                 }
                 table_devices.append(table_device)
-            
+
             return table_devices
-            
+
         except Exception as e:
             logger.error("Error getting available devices for table: %s", e)
             return []
@@ -603,7 +603,7 @@ class VisualBCFDataModel(QObject):
         try:
             connections = self.get_all_connections()
             table_connections = []
-            
+
             for connection in connections:
                 # Convert to table format
                 table_connection = {
@@ -618,9 +618,9 @@ class VisualBCFDataModel(QObject):
                     "Status": connection.get('status', '')
                 }
                 table_connections.append(table_connection)
-            
+
             return table_connections
-            
+
         except Exception as e:
             logger.error("Error getting IO connections for table: %s", e)
             return []
@@ -630,17 +630,17 @@ class VisualBCFDataModel(QObject):
         try:
             # Since we're using single source of truth, this method now ensures
             # Visual BCF components have all required Legacy BCF fields
-            
+
             components_table = self.rdb_manager.get_table(self.components_table_path)
             updated = False
-            
+
             for component in components_table:
                 comp_id = component.get('id')
                 comp_type = component.get('component_type', '')
-                
+
                 # Get external configuration for this component type
                 config = self.component_configs.get(comp_type, {})
-                
+
                 # Ensure all Legacy BCF compatibility fields are present
                 if 'usid' not in component:
                     component['usid'] = comp_id[:8]
@@ -663,17 +663,17 @@ class VisualBCFDataModel(QObject):
                 if 'dcf_type' not in component:
                     component['dcf_type'] = 'Standard'
                     updated = True
-                
+
                 # Update properties from external config if missing
                 if 'properties' not in component:
                     component['properties'] = {}
-                
+
                 default_props = config.get('default_properties', {})
                 for key, value in default_props.items():
                     if key not in component['properties']:
                         component['properties'][key] = value
                         updated = True
-                
+
                 # Update Legacy BCF fields from properties
                 if 'function_type' not in component and 'function_type' in component['properties']:
                     component['function_type'] = component['properties']['function_type']
@@ -687,7 +687,7 @@ class VisualBCFDataModel(QObject):
                 if 'config' not in component and 'config' in component['properties']:
                     component['config'] = component['properties']['config']
                     updated = True
-            
+
             if updated:
                 # Update the components table in RDB
                 self.rdb_manager.set_table(self.components_table_path, components_table)
@@ -704,13 +704,13 @@ class VisualBCFDataModel(QObject):
         try:
             # Since we're using single source of truth, this method now ensures
             # all Visual BCF components have the required Legacy BCF fields
-            
+
             # First sync to ensure all fields are present
             self.sync_with_legacy_bcf()
-            
+
             # Get all components (they now have all required Legacy BCF fields)
             components = self.get_all_components_as_list()
-            
+
             logger.info("Visual BCF components exported to Legacy BCF format (single source of truth)")
             return True
 
@@ -725,8 +725,8 @@ class VisualBCFDataModel(QObject):
             # have Legacy BCF compatibility fields
             component_name = component_data.get('name', 'Unknown')
             component_type = component_data.get('component_type', 'Unknown')
-            
-            logger.info("Component '%s' (type: %s) automatically compatible with Legacy BCF (single source of truth)", 
+
+            logger.info("Component '%s' (type: %s) automatically compatible with Legacy BCF (single source of truth)",
                        component_name, component_type)
 
         except Exception as e:
@@ -739,7 +739,7 @@ class VisualBCFDataModel(QObject):
         try:
             # Clear components table
             self.rdb_manager.set_table(self.components_table_path, [])
-            
+
             # Clear connections table
             self.rdb_manager.set_table(self.connections_table_path, [])
 
@@ -754,7 +754,7 @@ class VisualBCFDataModel(QObject):
         try:
             components_table = self.rdb_manager.get_table(self.components_table_path) or []
             connections_table = self.rdb_manager.get_table(self.connections_table_path) or []
-            
+
             return {
                 'component_count': len(components_table),
                 'connection_count': len(connections_table),
@@ -780,11 +780,11 @@ class VisualBCFDataModel(QObject):
         try:
             # Get Visual BCF table statistics
             visual_bcf_stats = self.get_statistics()
-            
+
             # Get table format data counts
             available_devices_count = len(self.get_available_devices_for_table())
             io_connections_count = len(self.get_io_connections_for_table())
-            
+
             # Combine all statistics
             all_stats = {
                 **visual_bcf_stats,
@@ -803,7 +803,7 @@ class VisualBCFDataModel(QObject):
                     'external_config_loaded': len(self.component_configs) > 0
                 }
             }
-            
+
             return all_stats
 
         except Exception as e:

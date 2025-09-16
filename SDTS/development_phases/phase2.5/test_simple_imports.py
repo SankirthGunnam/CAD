@@ -13,10 +13,10 @@ try:
     print("1. Testing apps.RBM5.BCF import...")
     import apps.RBM5.BCF
     print("✓ Successfully imported apps.RBM5.BCF")
-    
+
     apps_in_path = any('apps' in path for path in sys.path)
     print(f"✓ Apps directory in sys.path: {apps_in_path}")
-    
+
 except ImportError as e:
     print(f"✗ Failed: {e}")
 
@@ -56,6 +56,6 @@ for path in project_paths:
 
 print("\n=== Summary ===")
 print("✓ Centralized path setup is working correctly")
-print("✓ No more redundant os.path.dirname code in individual files") 
+print("✓ No more redundant os.path.dirname code in individual files")
 print("✓ All imports now use a single line: 'import apps.RBM5.BCF'")
 print("✓ Path management is centralized in apps/RBM5/BCF/__init__.py")

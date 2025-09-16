@@ -23,17 +23,17 @@ class ComponentData:
         self.component_type = data.get('component_type', 'chip')
         self.function_type = data.get('function_type', '')
         self.properties = data.get('properties', {})
-        
+
         # Visual properties (stored separately from functional properties)
         self.visual_properties = data.get('visual_properties', {
             'position': {'x': 0, 'y': 0},
             'size': {'width': 100, 'height': 80},
             'rotation': 0
         })
-        
+
         # Pin information
         self.pins = data.get('pins', [])
-        
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for database storage"""
         return {
@@ -56,14 +56,14 @@ class ConnectionData:
         self.to_pin_id = data.get('to_pin_id', '')
         self.connection_type = data.get('connection_type', 'wire')
         self.properties = data.get('properties', {})
-        
+
         # Visual properties for connection display
         self.visual_properties = data.get('visual_properties', {
             'path_points': [],
             'line_style': 'solid',
             'color': '#000000'
         })
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for database storage"""
         return {
@@ -80,14 +80,14 @@ class ConnectionData:
 class VisualBCFDataModel(QObject):
     """
     Data access model for Visual BCF that interfaces with Legacy BCF table data.
-    
+
     This model provides methods to:
     - Read/Write component data from Legacy BCF tables
     - Manage component positions and visual properties
     - Handle connections between components
     - Synchronize with Legacy BCF changes
     """
-    
+
     # Signals
     component_added = Signal(str)  # component_id
     component_removed = Signal(str)  # component_id
@@ -96,28 +96,28 @@ class VisualBCFDataModel(QObject):
     connection_removed = Signal(str)  # connection_id
     connection_updated = Signal(str, dict)  # connection_id, updated_data
     data_synchronized = Signal()  # When data sync is complete
-    
+
     def __init__(self, rdb_manager: RDBManager):
         super().__init__()
         self.rdb_manager = rdb_manager
-        
+
         # Table paths in the JSON database
         self.components_table_path = "config.visual_bcf.components"
         self.connections_table_path = "config.visual_bcf.connections"
-        
+
         # In-memory caches for performance
         self._components_cache: Dict[str, ComponentData] = {}
         self._connections_cache: Dict[str, ConnectionData] = {}
-        
+
         # Connect to database changes
         self.rdb_manager.data_changed.connect(self._on_data_changed)
-        
+
         # Initialize database structure if needed
         self._initialize_visual_bcf_tables()
-        
+
         # Load data into cache
         self._load_data()
-    
+
     def _initialize_visual_bcf_tables(self):
         """Initialize Visual BCF tables in the database if they don't exist"""
         try:
@@ -135,10 +135,10 @@ class VisualBCFDataModel(QObject):
                 }
                 self.rdb_manager.set_value("config.visual_bcf", initial_data)
                 logger.info("Initialized Visual BCF tables in database")
-                
+
         except Exception as e:
             logger.error(f"Error initializing Visual BCF tables: {e}")
-    
+
     def _load_data(self):
         """Load data from database into cache"""
         try:
@@ -148,34 +148,34 @@ class VisualBCFDataModel(QObject):
             for i, comp_data in enumerate(components_data):
                 comp_id = comp_data.get('id', f'comp_{i}')
                 self._components_cache[comp_id] = ComponentData(comp_id, comp_data)
-            
+
             # Load connections
             connections_data = self.rdb_manager.get_table(self.connections_table_path)
             self._connections_cache.clear()
             for i, conn_data in enumerate(connections_data):
                 conn_id = conn_data.get('id', f'conn_{i}')
                 self._connections_cache[conn_id] = ConnectionData(conn_id, conn_data)
-                
+
             logger.info(f"Loaded {len(self._components_cache)} components and {len(self._connections_cache)} connections")
-                
+
         except Exception as e:
             logger.error(f"Error loading Visual BCF data: {e}")
-    
+
     def _on_data_changed(self, changed_path: str):
         """Handle database changes"""
         if changed_path.startswith("config.visual_bcf"):
             # Reload data when Visual BCF section changes
             self._load_data()
             self.data_synchronized.emit()
-    
+
     # Component Management Methods
-    
-    def add_component(self, name: str, component_type: str, position: Tuple[float, float], 
+
+    def add_component(self, name: str, component_type: str, position: Tuple[float, float],
                      properties: Dict[str, Any] = None) -> str:
         """Add a new component to the scene"""
         try:
             component_id = str(uuid.uuid4())
-            
+
             component_data = ComponentData(component_id, {
                 'id': component_id,
                 'name': name,
@@ -184,150 +184,150 @@ class VisualBCFDataModel(QObject):
                 'properties': properties or {},
                 'visual_properties': {
                     'position': {'x': position[0], 'y': position[1]},
-                    'size': {'width': properties.get('width', 100) if properties else 100, 
+                    'size': {'width': properties.get('width', 100) if properties else 100,
                             'height': properties.get('height', 80) if properties else 80},
                     'rotation': 0
                 },
                 'pins': []
             })
-            
+
             # Add to cache
             self._components_cache[component_id] = component_data
-            
+
             # Update database
             self._update_components_table()
-            
+
             # Auto-export to Legacy BCF if component is a device/modem
             self._auto_export_component_to_legacy_bcf(component_data)
-            
+
             # Emit signal
             self.component_added.emit(component_id)
-            
+
             logger.info(f"Added component: {name} ({component_id})")
             return component_id
-            
+
         except Exception as e:
             logger.error(f"Error adding component: {e}")
             return ""
-    
+
     def remove_component(self, component_id: str) -> bool:
         """Remove a component from the scene"""
         try:
             if component_id not in self._components_cache:
                 return False
-            
+
             # Remove all connections involving this component
             connections_to_remove = []
             for conn_id, conn_data in self._connections_cache.items():
-                if (conn_data.from_component_id == component_id or 
+                if (conn_data.from_component_id == component_id or
                     conn_data.to_component_id == component_id):
                     connections_to_remove.append(conn_id)
-            
+
             for conn_id in connections_to_remove:
                 self.remove_connection(conn_id)
-            
+
             # Remove from cache
             component_name = self._components_cache[component_id].name
             del self._components_cache[component_id]
-            
+
             # Update database
             self._update_components_table()
-            
+
             # Emit signal
             self.component_removed.emit(component_id)
-            
+
             logger.info(f"Removed component: {component_name} ({component_id})")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error removing component: {e}")
             return False
-    
+
     def update_component_position(self, component_id: str, position: Tuple[float, float]) -> bool:
         """Update component position"""
         try:
             if component_id not in self._components_cache:
                 return False
-            
+
             component = self._components_cache[component_id]
             component.visual_properties['position'] = {'x': position[0], 'y': position[1]}
-            
+
             # Update database
             self._update_components_table()
-            
+
             # Emit signal
             self.component_updated.emit(component_id, {'position': position})
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error updating component position: {e}")
             return False
-    
+
     def update_component_properties(self, component_id: str, properties: Dict[str, Any]) -> bool:
         """Update component properties"""
         try:
             if component_id not in self._components_cache:
                 return False
-            
+
             component = self._components_cache[component_id]
             component.properties.update(properties)
-            
+
             # Update database
             self._update_components_table()
-            
+
             # Emit signal
             self.component_updated.emit(component_id, {'properties': properties})
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error updating component properties: {e}")
             return False
-    
+
     def get_component(self, component_id: str) -> Optional[ComponentData]:
         """Get component data by ID"""
         return self._components_cache.get(component_id)
-    
+
     def get_all_components(self) -> Dict[str, ComponentData]:
         """Get all components"""
         return self._components_cache.copy()
-    
+
     def get_components_by_type(self, component_type: str) -> Dict[str, ComponentData]:
         """Get components of a specific type"""
         return {
-            comp_id: comp_data 
-            for comp_id, comp_data in self._components_cache.items() 
+            comp_id: comp_data
+            for comp_id, comp_data in self._components_cache.items()
             if comp_data.component_type == component_type
         }
-    
+
     def get_component_by_name(self, name: str) -> Optional[ComponentData]:
         """Get component by name"""
         for comp_data in self._components_cache.values():
             if comp_data.name == name:
                 return comp_data
         return None
-    
+
     def remove_component_by_name(self, name: str) -> bool:
         """Remove a component by name"""
         for comp_id, comp_data in self._components_cache.items():
             if comp_data.name == name:
                 return self.remove_component(comp_id)
         return False
-    
+
     # Connection Management Methods
-    
+
     def add_connection(self, from_component_id: str, from_pin_id: str,
                       to_component_id: str, to_pin_id: str) -> str:
         """Add a connection between two pins"""
         try:
             # Validate components exist
-            if (from_component_id not in self._components_cache or 
+            if (from_component_id not in self._components_cache or
                 to_component_id not in self._components_cache):
                 return ""
-            
+
             connection_id = str(uuid.uuid4())
-            
+
             connection_data = ConnectionData(connection_id, {
                 'id': connection_id,
                 'from_component_id': from_component_id,
@@ -342,70 +342,70 @@ class VisualBCFDataModel(QObject):
                     'color': '#000000'
                 }
             })
-            
+
             # Add to cache
             self._connections_cache[connection_id] = connection_data
-            
+
             # Update database
             self._update_connections_table()
-            
+
             # Emit signal
             self.connection_added.emit(connection_id)
-            
+
             logger.info(f"Added connection: {from_component_id}:{from_pin_id} -> {to_component_id}:{to_pin_id}")
             return connection_id
-            
+
         except Exception as e:
             logger.error(f"Error adding connection: {e}")
             return ""
-    
+
     def remove_connection(self, connection_id: str) -> bool:
         """Remove a connection"""
         try:
             if connection_id not in self._connections_cache:
                 return False
-            
+
             # Remove from cache
             del self._connections_cache[connection_id]
-            
+
             # Update database
             self._update_connections_table()
-            
+
             # Emit signal
             self.connection_removed.emit(connection_id)
-            
+
             logger.info(f"Removed connection: {connection_id}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error removing connection: {e}")
             return False
-    
+
     def get_connection(self, connection_id: str) -> Optional[ConnectionData]:
         """Get connection data by ID"""
         return self._connections_cache.get(connection_id)
-    
+
     def get_all_connections(self) -> Dict[str, ConnectionData]:
         """Get all connections"""
         return self._connections_cache.copy()
-    
+
     def get_component_connections(self, component_id: str) -> Dict[str, ConnectionData]:
         """Get all connections for a specific component"""
         return {
             conn_id: conn_data
             for conn_id, conn_data in self._connections_cache.items()
-            if (conn_data.from_component_id == component_id or 
+            if (conn_data.from_component_id == component_id or
                 conn_data.to_component_id == component_id)
         }
-    
+
     # Legacy BCF Integration Methods
-    
+
     def sync_with_legacy_bcf(self):
         """Synchronize with Legacy BCF component definitions"""
         try:
             # Read component definitions from Legacy BCF tables
             device_settings = self.rdb_manager.get_table("config.device.settings")
-            
+
             # Update component properties based on Legacy BCF data
             for comp_id, comp_data in self._components_cache.items():
                 # Find matching device in Legacy BCF
@@ -418,25 +418,25 @@ class VisualBCFDataModel(QObject):
                             'interface': device.get('interface', {}),
                             'config': device.get('config', {})
                         })
-                        
+
                         # Emit update signal
                         self.component_updated.emit(comp_id, comp_data.to_dict())
-            
+
             # Update database
             self._update_components_table()
-            
+
             logger.info("Synchronized with Legacy BCF data")
             self.data_synchronized.emit()
-            
+
         except Exception as e:
             logger.error(f"Error syncing with Legacy BCF: {e}")
-    
+
     def export_to_legacy_bcf(self):
         """Export Visual BCF components to Legacy BCF format"""
         try:
             # Convert Visual BCF components to Legacy BCF device settings
             device_settings = []
-            
+
             for comp_data in self._components_cache.values():
                 if comp_data.component_type in ['modem', 'device']:
                     device_entry = {
@@ -447,17 +447,17 @@ class VisualBCFDataModel(QObject):
                         'config': comp_data.properties.get('config', {})
                     }
                     device_settings.append(device_entry)
-            
+
             # Update Legacy BCF table
             if device_settings:
                 self.rdb_manager.set_table("config.device.settings", device_settings)
                 logger.info(f"Exported {len(device_settings)} components to Legacy BCF")
-            
+
         except Exception as e:
             logger.error(f"Error exporting to Legacy BCF: {e}")
-    
+
     # Private helper methods
-    
+
     def _update_components_table(self):
         """Update the components table in the database"""
         try:
@@ -466,12 +466,12 @@ class VisualBCFDataModel(QObject):
                 comp_dict = comp_data.to_dict()
                 comp_dict['id'] = comp_data.id  # Ensure ID is included
                 components_list.append(comp_dict)
-            
+
             self.rdb_manager.set_table(self.components_table_path, components_list)
-            
+
         except Exception as e:
             logger.error(f"Error updating components table: {e}")
-    
+
     def _update_connections_table(self):
         """Update the connections table in the database"""
         try:
@@ -480,22 +480,22 @@ class VisualBCFDataModel(QObject):
                 conn_dict = conn_data.to_dict()
                 conn_dict['id'] = conn_data.id  # Ensure ID is included
                 connections_list.append(conn_dict)
-            
+
             self.rdb_manager.set_table(self.connections_table_path, connections_list)
-            
+
         except Exception as e:
             logger.error(f"Error updating connections table: {e}")
-    
+
     def _auto_export_component_to_legacy_bcf(self, component_data: ComponentData):
         """Auto-export a component to Legacy BCF if it should appear in the device settings table"""
         try:
             # Export most component types to Legacy BCF (except pure visual elements)
             exportable_types = ['modem', 'device', 'rfic', 'chip']  # Added 'chip' for generic chips
-            
+
             if component_data.component_type in exportable_types:
                 # Get existing Legacy BCF device settings
                 device_settings = self.rdb_manager.get_table("config.device.settings")
-                
+
                 # Check if component already exists in Legacy BCF (avoid duplicates)
                 existing_names = {device.get('name', '') for device in device_settings}
                 if component_data.name not in existing_names:
@@ -503,7 +503,7 @@ class VisualBCFDataModel(QObject):
                     function_type = component_data.properties.get('function_type', component_data.function_type)
                     if not function_type:
                         function_type = component_data.component_type.upper()
-                    
+
                     # Create new device entry for Legacy BCF
                     device_entry = {
                         'name': component_data.name,
@@ -512,37 +512,37 @@ class VisualBCFDataModel(QObject):
                         'interface': component_data.properties.get('interface', {'mipi': {'channel': len(device_settings) + 1}} if component_data.component_type in ['modem', 'device'] else {}),
                         'config': component_data.properties.get('config', {'usid': f'{function_type.upper()}{len(device_settings) + 1:03d}'})
                     }
-                    
+
                     # Add to Legacy BCF table
                     device_settings.append(device_entry)
                     self.rdb_manager.set_table("config.device.settings", device_settings)
-                    
+
                     logger.info(f"✅ Auto-exported component '{component_data.name}' (type: {component_data.component_type}, function: {function_type}) to Legacy BCF")
                 else:
                     logger.info(f"⏭️ Component '{component_data.name}' already exists in Legacy BCF, skipping export")
             else:
                 logger.info(f"⏭️ Component '{component_data.name}' type '{component_data.component_type}' not exported to Legacy BCF")
-                    
+
         except Exception as e:
             logger.error(f"❌ Error auto-exporting component '{component_data.name if component_data else 'unknown'}' to Legacy BCF: {e}")
-    
+
     # Utility methods
-    
+
     def clear_all_data(self):
         """Clear all components and connections"""
         try:
             self._components_cache.clear()
             self._connections_cache.clear()
-            
+
             self._update_components_table()
             self._update_connections_table()
-            
+
             logger.info("Cleared all Visual BCF data")
             self.data_synchronized.emit()
-            
+
         except Exception as e:
             logger.error(f"Error clearing data: {e}")
-    
+
     def get_statistics(self) -> Dict[str, Any]:
         """Get statistics about the current data"""
         return {

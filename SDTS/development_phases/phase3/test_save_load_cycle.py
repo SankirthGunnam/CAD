@@ -18,29 +18,29 @@ from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualB
 def test_save_load_cycle():
     """Test the save/load cycle"""
     print("🧪 Testing Save/Load Cycle...")
-    
+
     try:
         # Create application (needed for Qt)
         app = QApplication.instance()
         if app is None:
             app = QApplication(sys.argv)
-        
+
         # Create RDB manager
         rdb_manager = RDBManager("test_device_config.json")
-        
+
         # Create data model
         data_model = VisualBCFDataModel(rdb_manager)
         print("✅ Data model created")
-        
+
         # Test 1: Add components to the data model
         component1_id = data_model.add_component("TestChip", "chip", (100, 100))
         component2_id = data_model.add_component("TestResistor", "resistor", (200, 200))
         print(f"✅ Components added: {component1_id}, {component2_id}")
-        
+
         # Test 2: Add a connection
         connection_id = data_model.add_connection(component1_id, "R1", component2_id, "A")
         print(f"✅ Connection added: {connection_id}")
-        
+
         # Test 3: Save scene data to RDB tables
         scene_data = {
             "components": [
@@ -54,7 +54,7 @@ def test_save_load_cycle():
                 },
                 {
                     "id": component2_id,
-                    "name": "TestResistor", 
+                    "name": "TestResistor",
                     "type": "resistor",
                     "position": {"x": 200, "y": 200},
                     "properties": {},
@@ -72,17 +72,17 @@ def test_save_load_cycle():
                 }
             ]
         }
-        
+
         save_success = data_model.save_scene_data(scene_data)
         print(f"✅ Scene data saved to RDB: {save_success}")
-        
+
         # Test 4: Load scene data from RDB tables
         loaded_scene = data_model.load_scene_data()
         if loaded_scene:
             components = loaded_scene.get("components", [])
             connections = loaded_scene.get("connections", [])
             print(f"✅ Scene loaded from RDB: {len(components)} components, {len(connections)} connections")
-            
+
             # Verify the data
             if len(components) == 2 and len(connections) == 1:
                 print("✅ Save/Load cycle working correctly!")
@@ -93,7 +93,7 @@ def test_save_load_cycle():
         else:
             print("❌ Failed to load scene data from RDB")
             return False
-        
+
     except Exception as e:
         print(f"❌ Save/Load cycle test failed: {e}")
         import traceback

@@ -124,7 +124,7 @@ class StateMachine(QObject):
             # Update state
             self.previous_state = self.current_state
             self.current_state = transition.target_state
-            
+
             # Store transition data for specific states
             if self.current_state == ToolState.ERROR and "error_message" in data:
                 self.set_state_data("error_message", data["error_message"])

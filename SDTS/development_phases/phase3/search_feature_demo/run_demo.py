@@ -33,13 +33,13 @@ def main():
     """Main launcher function."""
     print("Search Feature Demo Launcher")
     print("=" * 40)
-    
+
     # Check Python version
     if sys.version_info < (3, 7):
         print("Error: Python 3.7 or higher is required.")
         print(f"Current version: {sys.version}")
         return 1
-    
+
     # Check PySide6
     if not check_pyside6():
         print("PySide6 is required but not installed.")
@@ -50,7 +50,7 @@ def main():
         else:
             print("Please install PySide6 manually and try again.")
             return 1
-    
+
     # Import and run the demo
     try:
         from search_demo import main as run_demo
@@ -62,7 +62,7 @@ def main():
     except Exception as e:
         print(f"Error running demo: {e}")
         return 1
-    
+
     return 0
 
 if __name__ == "__main__":

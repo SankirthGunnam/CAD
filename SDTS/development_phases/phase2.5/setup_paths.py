@@ -9,14 +9,14 @@ def setup_project_paths():
     """Setup all necessary paths for the project."""
     # Get the directory containing this file (project root)
     project_root = os.path.dirname(os.path.abspath(__file__))
-    
+
     # Add apps directory to sys.path
     apps_dir = os.path.join(project_root, 'apps')
-    
+
     if apps_dir not in sys.path:
         sys.path.insert(0, apps_dir)
         print(f"Added {apps_dir} to sys.path")
-    
+
     return {
         'project_root': project_root,
         'apps_dir': apps_dir

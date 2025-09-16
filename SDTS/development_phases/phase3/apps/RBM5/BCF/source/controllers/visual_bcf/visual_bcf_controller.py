@@ -92,7 +92,7 @@ class VisualBCFController(QObject):
         self.floating_toolbar.clear_scene_requested.connect(
             self._on_clear_scene)
         self.floating_toolbar.zoom_fit_requested.connect(self._on_zoom_fit)
-        
+
         # Connect scene operation signals
         self.floating_toolbar.load_scene_requested.connect(
             self._on_load_scene)
@@ -291,7 +291,7 @@ class VisualBCFController(QObject):
         try:
             # Get all items currently in the scene
             all_scene_items = list(self.scene.items())
-            
+
             # Identify any items that shouldn't be there
             unexpected_items = []
             for item in all_scene_items:
@@ -299,25 +299,25 @@ class VisualBCFController(QObject):
                 if isinstance(item, (QGraphicsTextItem, ComponentPin)):
                     # These are UI elements that are part of components, don't remove them
                     continue
-                
+
                 # Check if this item is properly tracked
                 is_tracked = False
-                
+
                 # Check if it's a tracked component
                 component_id = self._get_component_id(item)
                 if component_id:
                     is_tracked = True
-                
+
                 # Check if it's a tracked connection
                 if not is_tracked:
                     connection_id = self._get_connection_id(item)
                     if connection_id:
                         is_tracked = True
-                
+
                 # If item is not tracked, mark it for removal
                 if not is_tracked:
                     unexpected_items.append(item)
-            
+
             # Remove any unexpected items
             for item in unexpected_items:
                 try:
@@ -325,10 +325,10 @@ class VisualBCFController(QObject):
                     logger.info("Removed unexpected item during scene refresh: %s", type(item).__name__)
                 except Exception as e:
                     logger.warning("Error removing unexpected item during scene refresh: %s", e)
-            
+
             if unexpected_items:
                 logger.info("Scene refresh completed: removed %s unexpected items", len(unexpected_items))
-            
+
         except Exception as e:
             logger.error("Error during scene refresh: %s", e)
 
@@ -340,7 +340,7 @@ class VisualBCFController(QObject):
             if not component_id:
                 logger.warning("Could not find component ID for moved component: %s", component.name)
                 return
-            
+
             new_position = (pos.x(), pos.y())
             success = self.data_model.update_component_position(component_id, new_position)
             if success:
@@ -390,7 +390,7 @@ class VisualBCFController(QObject):
             if not component_id:
                 logger.warning("Could not find component ID for deleted component: %s", component.name)
                 return False
-            
+
             component_data = self.data_model.get_component(component_id)
             if not component_data:
                 return False
@@ -405,26 +405,26 @@ class VisualBCFController(QObject):
                         # Remove from scene
                         self.scene.removeItem(component)
                     del self._component_graphics_items[component_id]
-                
+
                 # Remove any connections to this component
                 connections_to_remove = []
                 for conn_id, wire in self._connection_graphics_items.items():
                     if wire:
-                        if (hasattr(wire, 'start_pin') and wire.start_pin and 
-                            hasattr(wire.start_pin, 'parent_component') and 
+                        if (hasattr(wire, 'start_pin') and wire.start_pin and
+                            hasattr(wire.start_pin, 'parent_component') and
                             wire.start_pin.parent_component == component):
                             connections_to_remove.append(conn_id)
-                        elif (hasattr(wire, 'end_pin') and wire.end_pin and 
-                              hasattr(wire.end_pin, 'parent_component') and 
+                        elif (hasattr(wire, 'end_pin') and wire.end_pin and
+                              hasattr(wire.end_pin, 'parent_component') and
                               wire.end_pin.parent_component == component):
                             connections_to_remove.append(conn_id)
-                
+
                 # Remove connections
                 for conn_id in connections_to_remove:
                     self.remove_connection(wire)
                     if conn_id in self._connection_graphics_items:
                         del self._connection_graphics_items[conn_id]
-                
+
                 self.operation_completed.emit(
                     "remove_component", f"Removed component: {component_name}")
                 logger.info(
@@ -443,11 +443,11 @@ class VisualBCFController(QObject):
             from_pin_id = wire.start_pin.pin_id
             to_component_id = self._get_component_id(wire.end_pin.parent_component)
             to_pin_id = wire.end_pin.pin_id
-            
+
             if not from_component_id or not to_component_id:
                 logger.error("Could not find component IDs for connection")
                 return ""
-                
+
             connection_id = self.data_model.add_connection(
                 from_component_id, from_pin_id, to_component_id, to_pin_id
             )
@@ -469,7 +469,7 @@ class VisualBCFController(QObject):
             if not connection_id:
                 logger.warning("Could not find connection ID for deleted wire")
                 return False
-            
+
             success = self.data_model.remove_connection(connection_id)
             if success:
                 self._connection_graphics_items.pop(connection_id)
@@ -492,10 +492,10 @@ class VisualBCFController(QObject):
                     "Clear Scene",
                     "Are you sure you want to clear the scene?",
                     QMessageBox.Yes | QMessageBox.No)
-                
+
                 if confirmation == QMessageBox.No:
                     return False
-            
+
             # Clear all data from model
             self.data_model.clear_all_data()
 
@@ -557,33 +557,33 @@ class VisualBCFController(QObject):
                 component_id = comp_data.get("id")
                 component_name = comp_data.get("name", "Unknown")
                 component_type = comp_data.get("component_type", "chip")
-                
+
                 if not component_id:
                     logger.warning("Component missing ID: %s", component_name)
                     continue
-                    
+
                 # Create the component graphics item directly (like the scene does)
                 component = ComponentWithPins(component_name, component_type)
-                
+
                 # Set position
                 pos = comp_data.get("visual_properties", {}).get("position", {"x": 0, "y": 0})
                 component.setPos(pos.get("x", 0), pos.get("y", 0))
-                
+
                 # Add to scene
                 self.scene.addItem(component)
-                
+
                 # Track the graphics item in the controller
                 self._component_graphics_items[component_id] = component
-                
+
                 # Set component properties - DON'T re-add to data model to avoid infinite loop
                 component.component_id = component_id
                 component.properties = comp_data.get("properties", {})
-                
+
                 # Use track_loaded_component instead of add_component to avoid infinite loops
                 self.track_loaded_component(component, component_id)
-                
+
                 logger.info("Component %s (%s) added to scene", component_id, component_name)
-                    
+
             except Exception as e:
                 logger.error("Error loading component %s: %s", comp_data.get('name', 'Unknown'), e)
 
@@ -593,84 +593,84 @@ class VisualBCFController(QObject):
             try:
                 # Get connection ID from the loaded data
                 connection_id = conn_data.get("id")
-                
+
                 if not connection_id:
                     logger.warning("Connection missing ID: %s", conn_data)
                     continue
-                    
+
                 # Get component IDs and pin IDs
                 from_component_id = conn_data.get("from_component_id")
                 to_component_id = conn_data.get("to_component_id")
                 from_pin_id = conn_data.get("from_pin_id")
                 to_pin_id = conn_data.get("to_pin_id")
-                
+
                 if not all([from_component_id, to_component_id, from_pin_id, to_pin_id]):
                     logger.warning("Connection missing required data: %s", conn_data)
                     continue
-                
+
                 # Find the component graphics items
                 from_comp = self._component_graphics_items.get(from_component_id)
                 to_comp = self._component_graphics_items.get(to_component_id)
-                
+
                 if not from_comp or not to_comp:
                     logger.warning("Could not find component graphics for connection %s", connection_id)
                     continue
-                
+
                 # Find the pins on the components
                 from_pin = None
                 to_pin = None
-                
+
                 # Match pins by ID since we're now saving pin IDs consistently
                 for pin in from_comp.pins:
                     if hasattr(pin, 'pin_id') and pin.pin_id == from_pin_id:
                         from_pin = pin
                         break
-                
+
                 for pin in to_comp.pins:
                     if hasattr(pin, 'pin_id') and pin.pin_id == to_pin_id:
                         to_pin = pin
                         break
-                
+
                 if not from_pin or not to_pin:
-                    logger.warning("Could not find pins for connection %s (from_pin: %s, to_pin: %s)", 
+                    logger.warning("Could not find pins for connection %s (from_pin: %s, to_pin: %s)",
                                     connection_id, from_pin_id, to_pin_id)
                     continue
-                
+
                 # Create the wire using the scene's wire creation logic
                 wire = Wire(from_pin, scene=self.scene)
                 if wire.complete_wire(to_pin):
                     # Force wire to recalculate its path and update graphics
                     wire.update_path()
                     wire.force_intersection_recalculation()
-                    
+
                     # Add wire to scene
                     self.scene.addItem(wire)
-                    
+
                     # Force wire to update its geometry
                     wire.update()
-                    
+
                     # Register wire with both connected components
                     from_comp.add_wire(wire)
                     to_comp.add_wire(wire)
-                    
+
                     # Track the graphics item in the controller
                     self._connection_graphics_items[connection_id] = wire
-                    
+
                     # Set wire properties
                     wire.connection_id = connection_id
                     wire.properties = conn_data.get("properties", {})
-                    
+
                     # Force scene update for this wire and ensure it's visible
                     self.scene.update(wire.sceneBoundingRect())
-                    
+
                     # Additional visibility fixes
                     wire.setVisible(True)
                     wire.show()
-                    
+
                     logger.info("Connection %s added to scene", connection_id)
                 else:
                     logger.warning("Failed to complete wire for connection %s", connection_id)
-                    
+
             except Exception as e:
                 logger.error("Error loading connection %s: %s", connection_id, e)
 
@@ -679,7 +679,7 @@ class VisualBCFController(QObject):
         try:
             # Clear current graphics items to prevent conflicts
             self._clear_graphics_items()
-            
+
             # Load components by creating graphics items in the scene
             logger.info("Found %s components to load", len(self.data_model.components))
             self._load_components()
@@ -695,7 +695,7 @@ class VisualBCFController(QObject):
                 if wire:
                     wire.update_path()
                     wire.update()
-            
+
             # Force scene and viewport updates
             self.scene.update()
             self.view.viewport().update()
@@ -724,7 +724,7 @@ class VisualBCFController(QObject):
             # First, clear all items from the scene using QGraphicsScene.clear()
             # This ensures all graphics items are properly removed
             self.scene.clear()
-            
+
             # Clear the tracking dictionaries
             self._component_graphics_items.clear()
             self._connection_graphics_items.clear()

@@ -148,14 +148,14 @@ class ComponentScene(QGraphicsScene):
                 self.removeItem(wire)
                 wire.start_pin.parent_component.remove_wire(wire)
                 wire.end_pin.parent_component.remove_wire(wire)
-                
+
                 # Emit wire removed signal with wire object
                 self.controller.remove_connection(wire)
                 print(f"Wire removed")
             else:
                 # Just remove from scene if wire info is incomplete
                 self.removeItem(wire)
-                
+
         except Exception as e:
             print(f"Error removing wire: {e}")
             # Fallback - just remove from scene

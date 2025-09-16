@@ -14,7 +14,7 @@ from apps.RBM.BCF.gui.custom_widgets.components.connection import (
 
 class RFScene(QGraphicsScene):
     """Scene for RF circuit components"""
-    
+
     # Signals
     add_chip_requested = Signal(QPointF)  # Position where chip should be added
     chip_selected = Signal(object)  # Selected chip component
@@ -29,14 +29,14 @@ class RFScene(QGraphicsScene):
         self._pins: Dict[Pin, PinComponent] = {}  # Map model pins to their widgets
         self._context_menu_pos = QPointF(0, 0)
         self._selected_components = []
-        
+
         # Controller reference for user deletions (set by Visual BCF Manager)
         self._controller = None
 
     @property
     def mouse_pos(self) -> QPointF:
         return self._mouse_pos
-    
+
     def set_controller(self, controller):
         """Set the controller reference for handling user deletions"""
         self._controller = controller
@@ -70,7 +70,7 @@ class RFScene(QGraphicsScene):
     def get_components(self) -> List[Chip]:
         """Get all components in the scene"""
         return [item for item in self.items() if isinstance(item, Chip)]
-    
+
     def get_selected_components(self) -> List[Chip]:
         """Get all selected components in the scene"""
         return [item for item in self.selectedItems() if isinstance(item, Chip)]
@@ -119,16 +119,16 @@ class RFScene(QGraphicsScene):
             self.start_pin = None
         else:
             super().mouseReleaseEvent(event)
-            
+
     def contextMenuEvent(self, event):
         """Handle right-click context menu"""
         self._context_menu_pos = event.scenePos()
-        
+
         # Check if we right-clicked on a component
         item = self.itemAt(event.scenePos(), self.views()[0].transform() if self.views() else None)
-        
+
         context_menu = QMenu()
-        
+
         if isinstance(item, Chip):
             # Right-clicked on a chip
             context_menu.addAction("Select Chip", lambda: self._select_chip(item))
@@ -140,15 +140,15 @@ class RFScene(QGraphicsScene):
         else:
             # Right-clicked on empty space
             context_menu.addAction("Add Chip", self._request_add_chip)
-            
+
             if self.get_selected_components():
                 context_menu.addSeparator()
                 context_menu.addAction("Delete Selected", self._delete_selected)
                 context_menu.addAction("Copy Selected", self._copy_selected)
-            
+
             context_menu.addSeparator()
             context_menu.addAction("Clear Selection", self.clearSelection)
-            
+
         # Show the context menu
         if context_menu.actions():
             # Convert scene position to global position for menu display
@@ -156,23 +156,23 @@ class RFScene(QGraphicsScene):
                 view = self.views()[0]
                 global_pos = view.mapToGlobal(view.mapFromScene(event.scenePos()))
                 context_menu.exec(global_pos)
-                
+
     def _request_add_chip(self):
         """Request to add a chip at the context menu position"""
         self.add_chip_requested.emit(self._context_menu_pos)
-        
+
     def _select_chip(self, chip: Chip):
         """Select a specific chip"""
         self.clearSelection()
         chip.setSelected(True)
         self.chip_selected.emit(chip)
         self.selection_changed.emit(True)
-        
+
     def _copy_chip(self, chip: Chip):
         """Copy a specific chip to clipboard"""
         # TODO: Implement chip copying
         print(f"Copying chip: {chip.model.name}")
-        
+
     def _delete_chip(self, chip: Chip):
         """Delete a specific chip (user-initiated)"""
         if self._controller:
@@ -182,7 +182,7 @@ class RFScene(QGraphicsScene):
             # Fallback to direct removal if no controller
             self.remove_component(chip)
         self.selection_changed.emit(len(self.get_selected_components()) > 0)
-        
+
     def _delete_selected(self):
         """Delete all selected chips (user-initiated)"""
         selected = self.get_selected_components()[:]
@@ -194,20 +194,20 @@ class RFScene(QGraphicsScene):
             for chip in selected:
                 self.remove_component(chip)
         self.selection_changed.emit(False)
-        
+
     def _copy_selected(self):
         """Copy all selected chips"""
         selected = self.get_selected_components()
         if selected:
             print(f"Copying {len(selected)} selected chips")
             # TODO: Implement multiple chip copying
-            
+
     def _show_chip_properties(self, chip: Chip):
         """Show chip properties dialog"""
         try:
             # Import here to avoid circular imports
             from ..views.chip_properties_dialog import ChipPropertiesDialog
-            
+
             # Get chip data from model metadata or create basic data
             chip_data = getattr(chip.model, 'metadata', {})
             if not chip_data:
@@ -220,33 +220,33 @@ class RFScene(QGraphicsScene):
                     'height': chip.model.height,
                     'description': f'Custom chip component: {chip.model.name}'
                 }
-            
+
             # Create and show properties dialog
             dialog = ChipPropertiesDialog(chip_data, parent=self.views()[0] if self.views() else None)
             dialog.properties_updated.connect(lambda updated_data: self._update_chip_properties(chip, updated_data))
             dialog.exec()
-            
+
         except Exception as e:
             print(f"Error showing chip properties: {e}")
-            
+
     def _update_chip_properties(self, chip: Chip, updated_data: dict):
         """Update chip properties with new data"""
         try:
             # Update model metadata
             chip.model.metadata = updated_data
-            
+
             # Update model name if changed
             if 'name' in updated_data:
                 chip.model.name = updated_data['name']
-                
+
             # Force a repaint of the chip
             chip.update()
-            
+
             print(f"Updated properties for chip: {chip.model.name}")
-            
+
         except Exception as e:
             print(f"Error updating chip properties: {e}")
-        
+
     def selectionChanged(self):
         """Override selection changed to emit our signal"""
         super().selectionChanged()

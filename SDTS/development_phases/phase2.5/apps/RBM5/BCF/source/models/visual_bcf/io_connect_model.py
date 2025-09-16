@@ -8,7 +8,7 @@ class IOConnectModel:
     def __init__(self, parent, rdb: "RDBManager"):
         self.parent = parent
         self.rdb = rdb
-        
+
         # Single table for IO connections
         self.connections_model = RDBTableModel(
             db=rdb,

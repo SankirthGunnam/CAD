@@ -34,11 +34,11 @@ class IOConnectModel:
             try:
                 # Get IO connections in table format from the data model
                 io_connections = self.data_model.get_io_connections_for_table()
-                
+
                 # Update the table model with the data
                 if hasattr(self.connections_model, 'set_data'):
                     self.connections_model.set_data(io_connections)
-                
+
                 return True
             except Exception as e:
                 print(f"Error refreshing from data model: {e}")

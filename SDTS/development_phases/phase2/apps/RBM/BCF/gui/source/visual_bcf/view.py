@@ -7,7 +7,7 @@ from .scene import RFScene
 
 class RFView(QGraphicsView):
     """View class for displaying the RF circuit"""
-    
+
     # Signals
     resizeSignal = Signal()
 
@@ -56,7 +56,7 @@ class RFView(QGraphicsView):
                 if hasattr(item, "model") and hasattr(item.model, "remove"):
                     item.model.remove()
         super().keyPressEvent(event)
-        
+
     def resizeEvent(self, event) -> None:
         """Handle resize events and emit signal"""
         super().resizeEvent(event)

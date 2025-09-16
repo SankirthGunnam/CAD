@@ -51,12 +51,12 @@ class DeviceSettingsModel:
                 # Update the all devices table model with the data
                 if hasattr(self.all_devices_model, 'set_data'):
                     self.all_devices_model.set_data(available_devices)
-                
+
                 # For selected devices, we could filter or show a subset
                 # For now, show the same data
                 if hasattr(self.selected_devices_model, 'set_data'):
                     self.selected_devices_model.set_data(available_devices)
-                
+
                 return True
             except Exception as e:
                 print(f"Error refreshing from data model: {e}")

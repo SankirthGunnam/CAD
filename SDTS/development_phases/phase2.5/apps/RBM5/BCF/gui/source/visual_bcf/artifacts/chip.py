@@ -14,26 +14,26 @@ from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
 
 class ComponentWithPins(QGraphicsRectItem):
     """Enhanced component with visible pins for connections"""
-    
+
     def __init__(self, name: str, component_type: str, width: float = 100, height: float = 60):
         super().__init__(0, 0, width, height)
-        
+
         # Component properties
         self.name = name
         self.component_type = component_type
         self.is_selected = False
         self.pins = []  # List of ComponentPin objects
         self.connected_wires = []  # List of wires connected to this component
-        
+
         # Visual properties
         self.setFlag(self.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable, True)
         self.setFlag(self.GraphicsItemFlag.ItemSendsScenePositionChanges, True)
-        
+
         # Set appearance and create pins based on type
         self._setup_appearance()
         self._create_pins()
-        
+
         # Add centered text label
         self.text_item = QGraphicsTextItem(name, self)
         self.text_item.setFont(QFont("Arial", 8))
@@ -43,21 +43,21 @@ class ComponentWithPins(QGraphicsRectItem):
             (width - text_rect.width()) / 2,
             (height - text_rect.height()) / 2
         )
-        
+
     def _create_pins(self):
         """Create pins based on component type with comprehensive layouts"""
         width = self.rect().width()
         height = self.rect().height()
         pin_radius = 4  # Pin radius for centering calculations
-        
+
         if self.component_type == "chip":
             # Comprehensive chip: 6 pins on each side (24 total)
             side_pins = 6
             top_bottom_pins = 6
-            
+
             pin_spacing_vertical = height / (side_pins + 1)  # Vertical spacing for left/right pins
             pin_spacing_horizontal = width / (top_bottom_pins + 1)  # Horizontal spacing for top/bottom pins
-            
+
             # Left side pins (inputs) - perfectly centered on left edge
             input_names = ["DATA_IN", "CLK", "RST", "EN", "CS", "WR"]
             for i in range(side_pins):
@@ -67,7 +67,7 @@ class ComponentWithPins(QGraphicsRectItem):
                 # Position pin so half extends outside left edge (x=0)
                 pin.setPos(-pin_radius, pin_spacing_vertical * (i + 1) - pin_radius)
                 self.pins.append(pin)
-                
+
             # Right side pins (outputs) - perfectly centered on right edge
             output_names = ["DATA_OUT", "INT", "RDY", "ACK", "ERR", "STAT"]
             for i in range(side_pins):
@@ -77,7 +77,7 @@ class ComponentWithPins(QGraphicsRectItem):
                 # Position pin so half extends outside right edge (x=width)
                 pin.setPos(width - pin_radius, pin_spacing_vertical * (i + 1) - pin_radius)
                 self.pins.append(pin)
-                
+
             # Top pins (power/control) - perfectly centered on top edge
             top_names = ["VDD", "VREF", "AVDD", "DVDD", "NC", "TEST"]
             for i in range(top_bottom_pins):
@@ -88,7 +88,7 @@ class ComponentWithPins(QGraphicsRectItem):
                 # Position pin so half extends outside top edge (y=0)
                 pin.setPos(pin_spacing_horizontal * (i + 1) - pin_radius, -pin_radius)
                 self.pins.append(pin)
-                
+
             # Bottom pins (ground/control) - perfectly centered on bottom edge
             bottom_names = ["GND", "AGND", "DGND", "VSS", "BIAS", "SHDN"]
             for i in range(top_bottom_pins):
@@ -99,31 +99,31 @@ class ComponentWithPins(QGraphicsRectItem):
                 # Position pin so half extends outside bottom edge (y=height)
                 pin.setPos(pin_spacing_horizontal * (i + 1) - pin_radius, height - pin_radius)
                 self.pins.append(pin)
-                
+
         elif self.component_type == "resistor":
             # Resistor: 2 pins (left and right) - centered on edges
             pin1 = ComponentPin("A", "A", "terminal", self, "left")
             pin1.setParentItem(self)
             pin1.setPos(-pin_radius, height/2 - pin_radius)
             self.pins.append(pin1)
-            
+
             pin2 = ComponentPin("B", "B", "terminal", self, "right")
             pin2.setParentItem(self)
             pin2.setPos(width - pin_radius, height/2 - pin_radius)
             self.pins.append(pin2)
-            
+
         elif self.component_type == "capacitor":
             # Capacitor: 2 pins (left and right) - centered on edges
             pin1 = ComponentPin("POS", "+", "positive", self, "left")
             pin1.setParentItem(self)
             pin1.setPos(-pin_radius, height/2 - pin_radius)
             self.pins.append(pin1)
-            
+
             pin2 = ComponentPin("NEG", "-", "negative", self, "right")
             pin2.setParentItem(self)
             pin2.setPos(width - pin_radius, height/2 - pin_radius)
             self.pins.append(pin2)
-        
+
     def _setup_appearance(self):
         """Set visual appearance based on component type"""
         if self.component_type == "chip":
@@ -138,22 +138,22 @@ class ComponentWithPins(QGraphicsRectItem):
         else:
             self.setBrush(QBrush(QColor(180, 180, 180)))  # Gray
             self.setPen(QPen(QColor(120, 120, 120), 2))
-            
+
     def contextMenuEvent(self, event):
         """Show context menu on right click"""
         menu = QMenu()
-        
+
         # Add properties action
         properties_action = menu.addAction("Properties")
         delete_action = menu.addAction("Delete")
-        
+
         action = menu.exec(event.screenPos())
-        
+
         if action == properties_action:
             self._show_properties()
         elif action == delete_action:
             self._delete_component()
-            
+
     def _show_properties(self):
         """Show component properties dialog"""
         QMessageBox.information(
@@ -164,29 +164,29 @@ class ComponentWithPins(QGraphicsRectItem):
             f"Position: ({self.x():.1f}, {self.y():.1f})\n"
             f"Size: {self.rect().width()}x{self.rect().height()}"
         )
-        
+
     def _delete_component(self):
         """Delete this component"""
         if hasattr(self.scene(), 'remove_component'):
             self.scene().remove_component(self)
         else:
             self.scene().removeItem(self)
-            
+
     def add_wire(self, wire):
         """Add a wire connection to this component"""
         if wire not in self.connected_wires:
             self.connected_wires.append(wire)
-            
+
     def remove_wire(self, wire):
         """Remove a wire connection from this component"""
         if wire in self.connected_wires:
             self.connected_wires.remove(wire)
-            
+
     def update_connected_wires(self):
         """Update all connected wires when component moves"""
         for wire in self.connected_wires:
             wire.update_line()
-            
+
     def itemChange(self, change, value):
         """Handle item changes, particularly position changes"""
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:

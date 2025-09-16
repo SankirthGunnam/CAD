@@ -65,20 +65,20 @@ def temp_file():
 def mock_rdb_manager():
     """Create a mock RDBManager with common behaviors"""
     manager = Mock(spec=RDBManager)
-    
+
     # Setup common mock behaviors
     manager.get_value.return_value = {}
     manager.set_value.return_value = True
     manager.get_table.return_value = []
     manager.set_table.return_value = True
     manager.close.return_value = None
-    
+
     # Mock signals
     manager.data_changed = Mock()
     manager.data_changed.connect = Mock()
     manager.error_occurred = Mock()
     manager.error_occurred.connect = Mock()
-    
+
     return manager
 
 
@@ -87,11 +87,11 @@ def mock_core_controller(mock_rdb_manager):
     """Create a mock CoreController with dependencies"""
     controller = Mock(spec=CoreController)
     controller.rdb_manager = mock_rdb_manager
-    
+
     # Mock methods
     controller.process_event = Mock()
     controller.get_state = Mock(return_value="IDLE")
-    
+
     # Mock signals
     controller.reply_signal = Mock()
     controller.reply_signal.connect = Mock()
@@ -101,7 +101,7 @@ def mock_core_controller(mock_rdb_manager):
     controller.state_changed.connect = Mock()
     controller.error_occurred = Mock()
     controller.error_occurred.connect = Mock()
-    
+
     return controller
 
 
@@ -109,7 +109,7 @@ def mock_core_controller(mock_rdb_manager):
 def mock_gui_controller():
     """Create a mock GUIController"""
     controller = Mock()
-    
+
     # Mock methods
     controller.show_status = Mock()
     controller.show_error = Mock()
@@ -117,7 +117,7 @@ def mock_gui_controller():
     controller.update_state = Mock()
     controller.refresh_data = Mock()
     controller.add_generated_file = Mock()
-    
+
     # Mock signals
     controller.build_requested = Mock()
     controller.build_requested.connect = Mock()
@@ -129,7 +129,7 @@ def mock_gui_controller():
     controller.error_occurred.connect = Mock()
     controller.data_changed = Mock()
     controller.data_changed.connect = Mock()
-    
+
     return controller
 
 
@@ -199,9 +199,9 @@ def setup_test_environment():
     # Set environment variables for testing
     os.environ["SDTS_TEST_MODE"] = "1"
     os.environ["QT_QPA_PLATFORM"] = "offscreen"  # For headless GUI testing
-    
+
     yield
-    
+
     # Clean up environment
     if "SDTS_TEST_MODE" in os.environ:
         del os.environ["SDTS_TEST_MODE"]
@@ -215,11 +215,11 @@ def mock_file_system(tmp_path):
     (tmp_path / "data").mkdir()
     (tmp_path / "output").mkdir()
     (tmp_path / "logs").mkdir()
-    
+
     # Create sample files
     (tmp_path / "config" / "settings.json").write_text('{"debug": true}')
     (tmp_path / "data" / "sample.txt").write_text("Sample data")
-    
+
     return tmp_path
 
 
@@ -228,24 +228,24 @@ def mock_file_system(tmp_path):
 def performance_timer():
     """Timer for performance testing"""
     import time
-    
+
     class Timer:
         def __init__(self):
             self.start_time = None
             self.end_time = None
-        
+
         def start(self):
             self.start_time = time.perf_counter()
-        
+
         def stop(self):
             self.end_time = time.perf_counter()
-        
+
         @property
         def elapsed(self):
             if self.start_time and self.end_time:
                 return self.end_time - self.start_time
             return None
-    
+
     return Timer()
 
 
@@ -264,10 +264,10 @@ def generate_test_data(data_type: str, count: int = 1):
         "project": lambda: {"id": 1, "name": "test_project", "status": "active"},
         "device": lambda: {"id": 1, "name": "test_device", "type": "RF_DEVICE"},
     }
-    
+
     if data_type not in generators:
         raise ValueError(f"Unknown data type: {data_type}")
-    
+
     if count == 1:
         return generators[data_type]()
     else:

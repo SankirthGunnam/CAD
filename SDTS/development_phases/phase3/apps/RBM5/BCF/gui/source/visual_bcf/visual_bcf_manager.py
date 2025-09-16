@@ -144,14 +144,14 @@ class VisualBCFManager(QMainWindow):
                 print(f"✓ Device Settings tables refresh: {success}")
             else:
                 print("⚠️ Device settings controller or model not available")
-            
+
             if self.io_connect_controller and hasattr(self.io_connect_controller._model, 'refresh_from_data_model'):
                 print("🔄 Refreshing IO connect table...")
                 success = self.io_connect_controller._model.refresh_from_data_model()
                 print(f"✓ IO Connect table refresh: {success}")
             else:
                 print("⚠️ IO connect controller or model not available")
-                
+
         except Exception as e:
             print(f"✗ Error refreshing tables: {e}")
             import traceback

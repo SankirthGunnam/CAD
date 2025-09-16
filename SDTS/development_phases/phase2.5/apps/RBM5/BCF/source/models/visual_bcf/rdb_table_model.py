@@ -21,7 +21,7 @@ class RDBTableModel(QAbstractTableModel):
         self.db = db
         self.table_path = table_path
         self.columns = columns
-        
+
         # Only connect signal if db is not None
         if self.db is not None and hasattr(self.db, 'data_changed'):
             self.db.data_changed.connect(self._on_data_changed)

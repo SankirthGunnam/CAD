@@ -122,83 +122,83 @@ class TreeModel(QAbstractItemModel):
 
     def get_node(self, index):
         return index.internalPointer() if index.isValid() else self.root
-    
+
     def add_item(self, parent_name: str, item_name: str, view_type: str = "table"):
         """Efficiently add a new item to the tree"""
         # Find the parent node
         parent_node = self._find_node_by_name(self.root, parent_name)
         if not parent_node:
             return False
-        
+
         # Create new item
         new_item = TreeItem(item_name)
         new_item.view_type = view_type
         new_item.font = QFont()
         new_item.icon = QIcon.fromTheme("text-x-generic")
-        
+
         # Get the parent index
         parent_index = self._get_index_for_node(parent_node)
         if not parent_index.isValid():
             return False
-        
+
         # Get the row where we'll insert
         row = parent_node.child_count()
-        
+
         # Begin insertion
         self.beginInsertRows(parent_index, row, row)
-        
+
         # Add the item
         parent_node.append_child(new_item)
-        
+
         # End insertion
         self.endInsertRows()
-        
+
         return True
-    
+
     def remove_item(self, item_name: str):
         """Efficiently remove an item from the tree"""
         # Find the item to remove
         item_node = self._find_node_by_name(self.root, item_name)
         if not item_node or not item_node.parent:
             return False
-        
+
         # Get parent node and index
         parent_node = item_node.parent
         parent_index = self._get_index_for_node(parent_node)
         if not parent_index.isValid():
             return False
-        
+
         # Get the row of the item to remove
         row = item_node.row()
-        
+
         # Begin removal
         self.beginRemoveRows(parent_index, row, row)
-        
+
         # Remove the item
         parent_node.children.remove(item_node)
-        
+
         # End removal
         self.endRemoveRows()
-        
+
         return True
-    
+
     def _find_node_by_name(self, start_node: TreeItem, name: str) -> TreeItem:
         """Find a node by name, searching recursively"""
         if start_node.name == name:
             return start_node
-        
+
         for child in start_node.children:
             result = self._find_node_by_name(child, name)
             if result:
                 return result
-        
+
         return None
-    
+
     def _get_index_for_node(self, node: TreeItem) -> QModelIndex:
         """Get the model index for a given node"""
         if not node or node == self.root:
             return QModelIndex()
-        
+
         parent_index = self._get_index_for_node(node.parent)
         row = node.row()
         return self.createIndex(row, 0, node)
@@ -206,40 +206,40 @@ class TreeModel(QAbstractItemModel):
 
 class ContextMenuTreeView(QTreeView):
     """Custom TreeView with context menu functionality"""
-    
+
     # Signals for add/delete operations
     add_item_requested = Signal(str, str)  # parent_name, item_name
     delete_item_requested = Signal(str)    # item_name
-    
+
     def contextMenuEvent(self, event):
         """Override context menu event to show custom menu"""
         index = self.indexAt(event.pos())
         if not index.isValid():
             return
-            
+
         item = index.internalPointer()
         if not item:
             return
-            
+
         # Create context menu
         context_menu = QMenu(self)
-        
+
         # Add "Add Item" action for folders (items with children)
         if item.child_count() > 0 or (item.parent and item.parent != self.model().root):
             add_action = QAction("Add Item", self)
             add_action.triggered.connect(lambda: self._add_item(item))
             context_menu.addAction(add_action)
-        
+
         # Add "Delete Item" action for all items except root
         if item.parent and item.parent != self.model().root:
             delete_action = QAction("Delete Item", self)
             delete_action.triggered.connect(lambda: self._delete_item(item))
             context_menu.addAction(delete_action)
-        
+
         # Show the context menu
         if context_menu.actions():
             context_menu.exec_(event.globalPos())
-    
+
     def _add_item(self, parent_item):
         """Handle adding a new item"""
         item_name, ok = QInputDialog.getText(
@@ -247,12 +247,12 @@ class ContextMenuTreeView(QTreeView):
         )
         if ok and item_name.strip():
             self.add_item_requested.emit(parent_item.name, item_name.strip())
-    
+
     def _delete_item(self, item):
         """Handle deleting an item"""
         reply = QMessageBox.question(
-            self, 
-            "Delete Item", 
+            self,
+            "Delete Item",
             f"Are you sure you want to delete '{item.name}'?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
@@ -304,7 +304,7 @@ class LegacyBCFManager(QWidget):
 
         # Connect signals
         self.tree_view.clicked.connect(self._on_tree_item_clicked)
-        
+
         # Connect context menu signals
         self.tree_view.add_item_requested.connect(self._add_tree_item)
         self.tree_view.delete_item_requested.connect(self._delete_tree_item)
@@ -396,7 +396,7 @@ class LegacyBCFManager(QWidget):
     def close_tab(self, index: int):
         """Close the tab at the specified index"""
         self.tab_widget.removeTab(index)
-    
+
     def update_table(self, data: dict):
         """Update table with new data"""
         try:
@@ -404,7 +404,7 @@ class LegacyBCFManager(QWidget):
             self.data_changed.emit(data)
         except Exception as e:
             self.error_occurred.emit(f"Error updating table: {str(e)}")
-    
+
     def cleanup(self):
         """Clean up resources"""
         try:
@@ -415,13 +415,13 @@ class LegacyBCFManager(QWidget):
                 self.tree_model = None
         except Exception as e:
             self.error_occurred.emit(f"Error during cleanup: {str(e)}")
-    
+
     def _add_tree_item(self, parent_name: str, item_name: str):
         """Handle adding a new item to the tree efficiently"""
         try:
             # Use the efficient model method instead of rebuilding
             success = self.tree_model.add_item(parent_name, item_name)
-            
+
             if success:
                 # Update the underlying data structure
                 for category, items in self.component_structure.items():
@@ -431,27 +431,27 @@ class LegacyBCFManager(QWidget):
                         elif isinstance(items, list):
                             items.append(item_name)
                         break
-                
+
                 # Emit data changed signal
                 self.data_changed.emit({
                     "action": "item_added",
                     "parent": parent_name,
                     "name": item_name
                 })
-                
+
                 print(f"Added item '{item_name}' to '{parent_name}'")
             else:
                 self.error_occurred.emit(f"Failed to add item '{item_name}' to '{parent_name}'")
-                
+
         except Exception as e:
             self.error_occurred.emit(f"Error adding tree item: {str(e)}")
-    
+
     def _delete_tree_item(self, item_name: str):
         """Handle deleting an item from the tree efficiently"""
         try:
             # Use the efficient model method instead of rebuilding
             success = self.tree_model.remove_item(item_name)
-            
+
             if success:
                 # Update the underlying data structure
                 for category, items in self.component_structure.items():
@@ -461,16 +461,16 @@ class LegacyBCFManager(QWidget):
                     elif isinstance(items, list) and item_name in items:
                         items.remove(item_name)
                         break
-                
+
                 # Emit data changed signal
                 self.data_changed.emit({
                     "action": "item_deleted",
                     "name": item_name
                 })
-                
+
                 print(f"Deleted item '{item_name}'")
             else:
                 self.error_occurred.emit(f"Failed to delete item '{item_name}'")
-                
+
         except Exception as e:
             self.error_occurred.emit(f"Error deleting tree item: {str(e)}")

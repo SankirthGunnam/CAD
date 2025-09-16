@@ -215,7 +215,7 @@ class ComponentWithPins(QGraphicsRectItem):
                 wire.update_path()
             elif hasattr(wire, 'update_line'):
                 wire.update_line()  # Fallback for old wire types
-    
+
     def update_connected_wires_full(self):
         """Force full update of all connected wires (use after placement is complete)"""
         for wire in self.connected_wires:
@@ -264,11 +264,11 @@ class ComponentWithPins(QGraphicsRectItem):
                 controller.on_graphics_component_moved(self)
         except Exception as e:
             print(f"Error notifying controller of position change: {e}")
-    
+
     def mouseReleaseEvent(self, event):
         """Handle mouse release to trigger full wire updates after dragging"""
         super().mouseReleaseEvent(event)
-        
+
         # After dragging is complete, do a full wire update
         # This ensures proper collision detection and routing
         QTimer.singleShot(100, self.update_connected_wires_full)
