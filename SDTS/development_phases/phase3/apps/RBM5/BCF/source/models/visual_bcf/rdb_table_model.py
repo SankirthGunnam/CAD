@@ -59,7 +59,6 @@ class TableModel(QAbstractTableModel):
         if role == Qt.DisplayRole or role == Qt.EditRole:
             try:
                 row = index.row()
-                print('table data', self.db[self.table_path][row], self.columns[index.column()])
                 return self.db[self.table_path][row][self.columns[index.column()]]
             except Exception as e:
                 print(f"Error getting data for row {index.row()}: {e}")

@@ -153,6 +153,7 @@ BCF_DB_EXT_IO = lambda rev: BCF_DB / rev / f"bcf_db_ext_io" # type: ignore
 BCF_DEV_MIPI = lambda rev: BCF_CONFIG / rev / f"bcf_dev_mipi" # type: ignore
 BCF_DEV_GPIO = lambda rev: BCF_CONFIG / rev / f"bcf_dev_gpio" # type: ignore
 BCF_DCF_FOR_BCF = lambda rev: BCF_CONFIG / rev / f"dcf_for_bcf" # type: ignore
+COMPONENT_CONFIGS = CONFIG / "component_configs"
 
 
 # DCF Configurations
@@ -164,6 +165,7 @@ DCF_DEVICES = DCF_CONFIG_ROOT / "dcf_devices"
 VISUAL_BCF_CONFIG = CONFIG / "visual_bcf"
 VISUAL_BCF_COMPONENTS = VISUAL_BCF_CONFIG / "components"
 VISUAL_BCF_CONNECTIONS = VISUAL_BCF_CONFIG / "connections"
+VISUAL_PROPERTIES = VISUAL_BCF_CONFIG / "visual_properties"
 
 # Device Configuration Paths (Updated)
 DEVICE_CONFIG = CONFIG / "device"

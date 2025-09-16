@@ -144,9 +144,9 @@ class VisualBCFController(QObject):
 
         self.floating_toolbar.move(x, y)
 
-        # Debug logging
-        logger.info(f"Positioned floating toolbar at ({x}, {y}) "
-                    f"relative to graphics view at {view_global_pos}")
+        # # Debug logging
+        # logger.info(f"Positioned floating toolbar at ({x}, {y}) "
+        #             f"relative to graphics view at {view_global_pos}")
 
     def _set_component_type(self, component_type: str):
         """Set the component type for placement"""
@@ -346,7 +346,7 @@ class VisualBCFController(QObject):
             if success:
                 logger.debug(f"Successfully synced position for component {component_id}: {new_position}")
             else:
-                logger.error(f"Error updating model position for component {component_id}: {e}")
+                logger.error(f"Error updating model position for component {component_id}: {new_position}")
         except Exception as e:
             logger.error("Error syncing graphics position to model: %s", e)
 
@@ -379,7 +379,7 @@ class VisualBCFController(QObject):
             # Just track the component in our graphics items mapping
             # Don't call data_model.add_component to avoid infinite loops
             self._component_graphics_items[component_id] = component
-            logger.info(f"Tracking loaded component: {component.name} with ID: {component_id}")
+            # logger.info(f"Tracking loaded component: {component.name} with ID: {component_id}")
         except Exception as e:
             logger.error("Error tracking loaded component: %s", e)
 
@@ -514,8 +514,8 @@ class VisualBCFController(QObject):
     def get_statistics(self) -> Dict[str, Any]:
         """Get current scene statistics"""
         try:
-            components = self.data_model.get_all_components()
-            connections = self.data_model.get_all_connections()
+            components = self.data_model.components
+            connections = self.data_model.connections
 
             return {
                 'component_count': len(components),
@@ -535,8 +535,14 @@ class VisualBCFController(QObject):
             }
 
     # Private helper methods
-    def _get_component_id(self, component: ComponentWithPins) -> Optional[str]:
+    def _get_component_id(self, component: ComponentWithPins| str) -> Optional[str]:
         """Get component ID by name"""
+        if isinstance(component, str):
+            for component_id, component_item in self._component_graphics_items.items():
+                if component_item.name == component:
+                    return component_id
+            return None
+
         for component_id, component_item in self._component_graphics_items.items():
             if component_item == component:
                 return component_id
@@ -562,11 +568,18 @@ class VisualBCFController(QObject):
                     logger.warning("Component missing ID: %s", component_name)
                     continue
 
-                # Create the component graphics item directly (like the scene does)
-                component = ComponentWithPins(component_name, component_type)
+                # Get component configuration for pin information
+                component_config = self.data_model.component_dcf(component_name)
+                
+                # Create the component graphics item with configuration
+                component = ComponentWithPins(
+                    component_name, 
+                    component_type,
+                    component_config=component_config
+                )
 
                 # Set position
-                pos = comp_data.get("visual_properties", {}).get("position", {"x": 0, "y": 0})
+                pos = self.data_model.visual_properties(component_id).get("position")
                 component.setPos(pos.get("x", 0), pos.get("y", 0))
 
                 # Add to scene
@@ -582,7 +595,7 @@ class VisualBCFController(QObject):
                 # Use track_loaded_component instead of add_component to avoid infinite loops
                 self.track_loaded_component(component, component_id)
 
-                logger.info("Component %s (%s) added to scene", component_id, component_name)
+                # logger.info("Component %s (%s) added to scene", component_id, component_name)
 
             except Exception as e:
                 logger.error("Error loading component %s: %s", comp_data.get('name', 'Unknown'), e)
@@ -599,18 +612,22 @@ class VisualBCFController(QObject):
                     continue
 
                 # Get component IDs and pin IDs
-                from_component_id = conn_data.get("from_component_id")
-                to_component_id = conn_data.get("to_component_id")
-                from_pin_id = conn_data.get("from_pin_id")
-                to_pin_id = conn_data.get("to_pin_id")
+                from_component_id = conn_data.get("source_device")
+                to_component_id = conn_data.get("dest_device")
+                from_pin_id = conn_data.get("source_pin")
+                to_pin_id = conn_data.get("dest_pin")
 
                 if not all([from_component_id, to_component_id, from_pin_id, to_pin_id]):
                     logger.warning("Connection missing required data: %s", conn_data)
                     continue
+                
+                from_component_id = self._get_component_id(from_component_id)
+                to_component_id = self._get_component_id(to_component_id)
 
                 # Find the component graphics items
                 from_comp = self._component_graphics_items.get(from_component_id)
                 to_comp = self._component_graphics_items.get(to_component_id)
+
 
                 if not from_comp or not to_comp:
                     logger.warning("Could not find component graphics for connection %s", connection_id)
@@ -622,14 +639,15 @@ class VisualBCFController(QObject):
 
                 # Match pins by ID since we're now saving pin IDs consistently
                 for pin in from_comp.pins:
-                    if hasattr(pin, 'pin_id') and pin.pin_id == from_pin_id:
+                    if hasattr(pin, 'pin_id') and pin.pin_name == from_pin_id:
                         from_pin = pin
                         break
 
                 for pin in to_comp.pins:
-                    if hasattr(pin, 'pin_id') and pin.pin_id == to_pin_id:
+                    if hasattr(pin, 'pin_id') and pin.pin_name == to_pin_id:
                         to_pin = pin
                         break
+
 
                 if not from_pin or not to_pin:
                     logger.warning("Could not find pins for connection %s (from_pin: %s, to_pin: %s)",

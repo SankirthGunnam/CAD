@@ -7,7 +7,6 @@ Enhanced component with visible pins for connections.
 from PySide6.QtCore import QPointF, Qt, QTimer
 from PySide6.QtGui import QPen, QBrush, QColor, QFont
 from PySide6.QtWidgets import (
-
     QGraphicsRectItem, QGraphicsTextItem, QMenu, QMessageBox, QGraphicsItem)
 
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
@@ -21,12 +20,15 @@ class ComponentWithPins(QGraphicsRectItem):
             name: str,
             component_type: str,
             width: float = 100,
-            height: float = 60):
+            height: float = 60,
+            component_config: dict = None):
+        height = len(component_config.get('pins', [])) * 10 + 20 if component_config else 60
         super().__init__(0, 0, width, height)
 
         # Component properties
         self.name = name
         self.component_type = component_type
+        self.component_config = component_config or {}
         self.is_selected = False
         self.pins = []  # List of ComponentPin objects
         self.connected_wires = []  # List of wires connected to this component
@@ -36,7 +38,7 @@ class ComponentWithPins(QGraphicsRectItem):
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable, True)
         self.setFlag(self.GraphicsItemFlag.ItemSendsScenePositionChanges, True)
 
-        # Set appearance and create pins based on type
+        # Set appearance and create pins based on type or configuration
         self._setup_appearance()
         self._create_pins()
 
@@ -51,11 +53,17 @@ class ComponentWithPins(QGraphicsRectItem):
         )
 
     def _create_pins(self):
-        """Create pins based on component type with comprehensive layouts"""
+        """Create pins based on component configuration or fallback to type-based creation"""
         width = self.rect().width()
         height = self.rect().height()
         pin_radius = 4  # Pin radius for centering calculations
 
+        # Try to create pins from component configuration first
+        if self.component_config and 'pins' in self.component_config:
+            self._create_pins_from_config()
+            return
+
+        # Fallback to type-based pin creation
         if self.component_type == "chip":
             # Comprehensive chip: 6 pins on each side (24 total)
             side_pins = 6
@@ -144,20 +152,80 @@ class ComponentWithPins(QGraphicsRectItem):
             pin2.setPos(width, height / 2 - pin_radius)
             self.pins.append(pin2)
 
+    def _get_pin_type(self, pin_name: str):
+        for pin in self.component_config.get('pins', []):
+            if pin.get('id', '') == pin_name:
+                return pin.get('type', 'io')
+        return 'io'
+
+    def _create_pins_from_config(self):
+        """Create pins from component configuration"""
+        width = self.rect().width()
+        height = self.rect().height()
+        pin_radius = 4  # Pin radius for centering calculations
+
+        try:
+            # Comprehensive chip: 6 pins on each side (24 total)
+            output_names = [pin.get('id', '') for pin in self.component_config.get('pins', [])]
+            # Vertical spacing for left/right pins
+            pin_spacing_vertical = height / (len(output_names) + 1)
+            # Right side pins (outputs) - perfectly centered on right edge
+            for i, pin_name in enumerate(output_names):
+                pin = ComponentPin(
+                    f"R{i + 1}",
+                    pin_name,
+                    self._get_pin_type(pin_name),
+                    self,
+                    "right"
+                )
+
+                pin.setParentItem(self)
+                # Position pin so half extends outside right edge (x=width)
+                pin.setPos(width,
+                           pin_spacing_vertical * (i + 1) - pin_radius)
+                self.pins.append(pin)
+        except Exception as e:
+            print(f"Error creating pins from configuration: {e}")
+            # Fallback to creating a basic pin
+            pin = ComponentPin("PIN1", "PIN", "io", self, "right")
+            pin.setParentItem(self)
+            pin.setPos(self.rect().width(), self.rect().height() / 2)
+            self.pins.append(pin)
+
     def _setup_appearance(self):
-        """Set visual appearance based on component type"""
-        if self.component_type == "chip":
-            self.setBrush(QBrush(QColor(100, 150, 200)))  # Blue
-            self.setPen(QPen(QColor(50, 100, 150), 2))
-        elif self.component_type == "resistor":
-            self.setBrush(QBrush(QColor(200, 150, 100)))  # Brown
-            self.setPen(QPen(QColor(150, 100, 50), 2))
-        elif self.component_type == "capacitor":
-            self.setBrush(QBrush(QColor(150, 200, 100)))  # Green
-            self.setPen(QPen(QColor(100, 150, 50), 2))
+        """Set visual appearance based on component configuration or type"""
+        # Try to use visual properties from configuration first
+        if self.component_config and 'visual_properties' in self.component_config:
+            visual_props = self.component_config['visual_properties']
+            color = visual_props.get('color', '#4CAF50')
+            
+            # Convert hex color to QColor
+            try:
+                if color.startswith('#'):
+                    color = color[1:]  # Remove #
+                qcolor = QColor(f"#{color}")
+                self.setBrush(QBrush(qcolor))
+                # Create a darker version for the border
+                border_color = qcolor.darker(120)
+                self.setPen(QPen(border_color, 2))
+            except:
+                # Fallback to default colors
+                self.setBrush(QBrush(QColor(100, 150, 200)))
+                self.setPen(QPen(QColor(50, 100, 150), 2))
         else:
-            self.setBrush(QBrush(QColor(180, 180, 180)))  # Gray
-            self.setPen(QPen(QColor(120, 120, 120), 2))
+            # Fallback to type-based appearance
+            if self.component_type == "chip":
+                self.setBrush(QBrush(QColor(100, 150, 200)))  # Blue
+                self.setPen(QPen(QColor(50, 100, 150), 2))
+            elif self.component_type == "resistor":
+                self.setBrush(QBrush(QColor(200, 150, 100)))  # Brown
+                self.setPen(QPen(QColor(150, 100, 50), 2))
+            elif self.component_type == "capacitor":
+                self.setBrush(QBrush(QColor(150, 200, 100)))  # Green
+                self.setPen(QPen(QColor(100, 150, 50), 2))
+            else:
+                self.setBrush(QBrush(QColor(180, 180, 180)))  # Gray
+                self.setPen(QPen(QColor(120, 120, 120), 2))
 
     def contextMenuEvent(self, event):
         """Show context menu on right click"""

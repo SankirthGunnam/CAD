@@ -70,6 +70,12 @@ class VisualSerializationTestWindow(QMainWindow):
         # Initialize RDB manager
         self.rdb_manager = RDBManager(self.temp_db_path)
         self.add_visual_data()
+        self._load_component_configurations()
+        if not bool(self.rdb_manager[paths.VISUAL_PROPERTIES]):
+            print('Visual properties not found, initializing')
+            self.rdb_manager[paths.VISUAL_PROPERTIES] = {}
+        
+        print('Visual properties', self.rdb_manager[paths.VISUAL_PROPERTIES])
 
         # Create manager with proper MVC architecture
         self.bcf_manager = VisualBCFManager(parent=self, rdb_manager=self.rdb_manager)
@@ -101,6 +107,29 @@ class VisualSerializationTestWindow(QMainWindow):
 
         # Don't auto-add test components - let user add them manually
         # self.add_test_components()
+
+    def _load_component_configurations(self):
+        """Load component configurations from JSON file"""
+        self.component_configs = {}
+        try:
+            import json
+            from pathlib import Path
+            
+            # Load from the component configurations JSON file
+            config_file = Path('/home/sankirthgunnam/Projects/CAD/SDTS/development_phases/phase3/component_configurations.json')
+            
+            if config_file.exists():
+                with open(config_file, 'r') as f:
+                    data = json.load(f)
+                    self.component_configs = data.get('components', {})
+                    print(f"Loaded {len(self.component_configs)} component configurations")
+            else:
+                print(f"Component configurations file not found: {config_file}")
+
+        except Exception as e:
+            print(f"Error loading component configurations: {e}")
+        self.rdb_manager[paths.COMPONENT_CONFIGS] = self.component_configs
+
 
     def add_visual_data(self):
         """Setup test data in RDBManager from JSON file"""
