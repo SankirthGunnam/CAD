@@ -58,6 +58,7 @@ class VisualBCFController(QObject):
         # Component placement state
         self.placement_mode = False
         self.selected_component_type = "chip"
+        self.selected_component_data = None
 
         # Create floating toolbar
         self.floating_toolbar = None
@@ -75,7 +76,7 @@ class VisualBCFController(QObject):
 
     def _setup_toolbar(self):
         """Create floating toolbar with component placement functionality"""
-        self.floating_toolbar = FloatingToolbar(parent=self.parent_widget)
+        self.floating_toolbar = FloatingToolbar(parent=self.parent_widget, device_data_provider=self)
         # Connect toolbar signals immediately
         self.floating_toolbar.add_chip_requested.connect(
             lambda: self._set_component_type("chip"))
@@ -83,6 +84,8 @@ class VisualBCFController(QObject):
             lambda: self._set_component_type("resistor"))
         self.floating_toolbar.add_capacitor_requested.connect(
             lambda: self._set_component_type("capacitor"))
+        self.floating_toolbar.add_component_requested.connect(
+            self._on_component_selected)
         self.floating_toolbar.select_mode_requested.connect(
             self._set_select_mode)
         self.floating_toolbar.connection_mode_requested.connect(
@@ -153,9 +156,29 @@ class VisualBCFController(QObject):
         self.selected_component_type = component_type
         self.placement_mode = True
 
+    def _on_component_selected(self, component_data: Dict[str, Any]):
+        """Handle component selection from dialog"""
+        print(f"BCF Controller: Component selected: {component_data}")
+        self.selected_component_data = component_data
+        self.selected_component_type = component_data.get('Component Type', 'chip')
+        self.placement_mode = True
+        
+        # Update cursor to indicate placement mode
+        if self.view:
+            self.view.setCursor(Qt.CrossCursor)
+
     def _set_select_mode(self):
         """Set to select mode"""
         self.placement_mode = False
+        self.selected_component_data = None
+        
+        # Clear preview component if it exists
+        if hasattr(self.scene, '_clear_preview_component'):
+            self.scene._clear_preview_component()
+        
+        # Reset cursor
+        if self.view:
+            self.view.setCursor(Qt.ArrowCursor)
 
     def _on_delete_selected(self):
         """Handle delete selected request from toolbar"""

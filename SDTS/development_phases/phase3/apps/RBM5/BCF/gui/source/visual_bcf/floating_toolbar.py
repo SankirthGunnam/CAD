@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal, QSize, QPoint
 from PySide6.QtGui import QMouseEvent
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 
 class FloatingToolbar(QWidget):
@@ -23,6 +23,7 @@ class FloatingToolbar(QWidget):
     add_chip_requested = Signal()
     add_resistor_requested = Signal()
     add_capacitor_requested = Signal()
+    add_component_requested = Signal(dict)  # component_data
     delete_selected_requested = Signal()
     clear_scene_requested = Signal()
     copy_chip_requested = Signal()
@@ -33,8 +34,11 @@ class FloatingToolbar(QWidget):
     save_scene_requested = Signal()
     load_scene_requested = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, device_data_provider=None):
         super().__init__(parent)
+        
+        # Store reference to device data provider (VisualBCFController)
+        self.device_data_provider = device_data_provider
 
         # Set object name for CSS targeting
         self.setObjectName("FloatingToolbar")
@@ -320,12 +324,12 @@ class FloatingToolbar(QWidget):
         self.connection_mode_requested.emit()
 
     def _on_add_chip_clicked(self):
-        """Handle add chip button click"""
-        self.current_mode = "add_chip"
+        """Handle add chip button click - show component selection dialog"""
+        self.current_mode = "add_component"
         self._clear_mode_selection()
         self._clear_component_selection()
         self.add_chip_btn.setChecked(True)
-        self.add_chip_requested.emit()
+        self._show_component_selection_dialog()
 
     def _on_add_resistor_clicked(self):
         """Handle add resistor button click"""
@@ -406,3 +410,32 @@ class FloatingToolbar(QWidget):
     def paintEvent(self, event):
         """Custom paint event for rounded corners"""
         super().paintEvent(event)
+
+    def _show_component_selection_dialog(self):
+        """Show the component selection dialog"""
+        if not self.device_data_provider:
+            print("No device data provider available")
+            return
+            
+        try:
+            # Import here to avoid circular imports
+            from apps.RBM5.BCF.gui.source.visual_bcf.chip_selection_dialog import ChipSelectionDialog
+            import apps.RBM5.BCF.source.RDB.paths as paths
+            
+            # Get all devices data from the provider
+            all_devices = self.device_data_provider.data_model.rdb_manager[paths.DCF_DEVICES]
+            
+            # Create and show dialog
+            dialog = ChipSelectionDialog(all_devices, self)
+            dialog.component_selected.connect(self._on_component_selected)
+            dialog.exec()
+            
+        except Exception as e:
+            print(f"Error showing component selection dialog: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _on_component_selected(self, component_data: Dict[str, Any]):
+        """Handle component selection from dialog"""
+        print(f"Component selected: {component_data}")
+        self.add_component_requested.emit(component_data)

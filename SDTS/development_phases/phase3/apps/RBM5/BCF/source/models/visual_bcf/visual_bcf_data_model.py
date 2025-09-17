@@ -167,12 +167,10 @@ class VisualBCFDataModel(QObject):
     def add_component(self,
                       name: str,
                       component_type: str,
-                      position: Tuple[float,
-                                      float],
-                      properties: Dict[str,
-                                       Any] = None,
+                      position: Tuple[float, float],
+                      properties: Dict[str, Any] = None,
                       component_id: str = None) -> str:
-        """Add a new component to the scene with external configuration"""
+        """Add a new component directly to BCF_DEV_MIPI or BCF_DEV_GPIO tables"""
         print('BCF Data Model: In Add Component BCF Data Model')
         logger.info("BCF Data Model: Adding component: %s (%s) at %s", name, component_type, position)
         try:
@@ -180,41 +178,52 @@ class VisualBCFDataModel(QObject):
             if component_id is None:
                 component_id = str(uuid.uuid4())
 
-            # Create component data compatible with both Visual BCF and Legacy BCF
-            component_data = {
-                'id': component_id,
-                'name': name,
-                'component_type': component_type,
-                'function_type': properties.get('function_type', '') if properties else '',
-                'properties': properties or {},
-                'visual_properties': {
-                    'position': {'x': position[0], 'y': position[1]},
-                    'size': {'width': 100, 'height': 80},
-                    'rotation': 0
-                },
-                'pins': [],  # Will be populated based on component type
-                # Legacy BCF compatibility fields
-                'interface_type': properties.get('interface_type', '') if properties else '',
-                'interface': properties.get('interface', {}) if properties else {},
-                'config': properties.get('config', {}) if properties else {},
-                'usid': component_id[:8],  # First 8 chars for Legacy BCF compatibility
-                'mid_msb': '00',
-                'mid_lsb': '01',
-                'pid': '0000',
-                'ext_pid': '0000',
-                'rev_id': '1.0',
-                'dcf_type': 'Standard'
-            }
+            # Determine which table to add to based on component type
+            if component_type.lower() == 'mipi':
+                table_path = paths.BCF_DEV_MIPI(self.revision)
+                component_data = {
+                    'ID': component_id,
+                    'Name': name,
+                    'DCF': f'DCF_{component_id[:3].upper()}',
+                    'USID': f'USID_{component_id[:8]}',
+                    'Module': properties.get('Module', 'Unknown') if properties else 'Unknown',
+                    'MIPI Type': properties.get('MIPI Type', 'CSI-2') if properties else 'CSI-2',
+                    'MIPI Channel': properties.get('MIPI Channel', 'Channel_0') if properties else 'Channel_0',
+                    'Default USID': f'0x{component_id[:2]}',
+                    'User USID': f'0x{component_id[:2]}',
+                    'PID': f'PID_{component_id[:8]}',
+                    'EXT PID': f'EXT_{component_id[:8]}',
+                    'Properties': properties or {}
+                }
+            else:  # GPIO or other types
+                table_path = paths.BCF_DEV_GPIO(self.revision)
+                component_data = {
+                    'ID': component_id,
+                    'Name': name,
+                    'DCF': f'DCF_{component_id[:3].upper()}',
+                    'Control Type': properties.get('Control Type', 'GPIO') if properties else 'GPIO',
+                    'Board': properties.get('Board', 'Main Board') if properties else 'Main Board',
+                    'Properties': properties or {}
+                }
 
-            # Add directly to RDB
-            components_table = self.rdb_manager.get_table(self.components_table_path)
-            components_table.append(component_data)
-            self.rdb_manager.set_table(self.components_table_path, components_table)
+            # Add to the appropriate table
+            table_data = self.rdb_manager.get_table(table_path)
+            table_data.append(component_data)
+            self.rdb_manager.set_table(table_path, table_data)
+
+            # Update visual properties
+            if component_id not in self.rdb_manager[paths.VISUAL_PROPERTIES]:
+                self.rdb_manager[paths.VISUAL_PROPERTIES][component_id] = {}
+            
+            self.rdb_manager[paths.VISUAL_PROPERTIES][component_id]['position'] = {
+                'x': position[0], 
+                'y': position[1]
+            }
 
             # Emit signal
             self.component_added.emit(component_id)
 
-            logger.info("Added component: %s (%s)", name, component_id)
+            logger.info("Added component: %s (%s) to %s table", name, component_id, table_path)
             return component_id
 
         except Exception as e:

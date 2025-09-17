@@ -29,6 +29,7 @@ class ComponentScene(QGraphicsScene):
         self.current_wire = None  # Wire being drawn
         self.mouse_position = QPointF(0, 0)
         self.controller = controller  # Controller reference for all operations
+        self.preview_component = None  # Preview component that follows mouse
 
     def mousePressEvent(self, event):
         """Handle mouse press for component placement mode"""
@@ -44,17 +45,112 @@ class ComponentScene(QGraphicsScene):
 
         super().mousePressEvent(event)
 
+    def mouseMoveEvent(self, event):
+        """Handle mouse move for component preview and wire drawing"""
+        self.mouse_position = event.scenePos()
+        
+        # Check placement mode from controller
+        placement_mode = False
+        if self.controller and hasattr(self.controller, 'placement_mode'):
+            placement_mode = self.controller.placement_mode
+        elif hasattr(self.parent(), 'placement_mode'):
+            placement_mode = self.parent().placement_mode
+
+        if placement_mode and self.controller and self.controller.selected_component_data:
+            self._update_preview_component(event.scenePos())
+        
+        # Update temporary wire if drawing
+        if self.current_wire and self.current_wire.is_temporary:
+            self.current_wire.update_path(self.mouse_position)
+        
+        super().mouseMoveEvent(event)
+
+    def _update_preview_component(self, position: QPointF):
+        """Update or create preview component that follows mouse"""
+        if not self.controller or not self.controller.selected_component_data:
+            return
+            
+        component_data = self.controller.selected_component_data
+        component_type = component_data.get('Component Type', 'chip')
+        name = component_data.get('Name', f"{component_type.title()}_preview")
+        
+        # Remove existing preview component
+        if self.preview_component:
+            self.removeItem(self.preview_component)
+            self.preview_component = None
+        
+        # Create new preview component
+        try:
+            # Get component configuration using the actual component name
+            component_config = self.controller.data_model.component_dcf(name)
+            
+            # Create component with configuration
+            preview = ComponentWithPins(name, component_type, component_config=component_config)
+            preview.setPos(position.x() - preview.rect().width() / 2,
+                          position.y() - preview.rect().height() / 2)
+            
+            # Make it semi-transparent
+            preview.setOpacity(0.5)
+            
+            # Add to scene
+            self.addItem(preview)
+            self.preview_component = preview
+            
+        except Exception as e:
+            logger.warning("Could not create preview component: %s", e)
+
+    def _clear_preview_component(self):
+        """Clear the preview component"""
+        if self.preview_component:
+            self.removeItem(self.preview_component)
+            self.preview_component = None
+
     def add_component_at_position(self, position: QPointF):
         """Add component at the specified position"""
         logger.info("Component Scene: In Add Component At Position")
-        component_type = self.controller.selected_component_type
-        name = f"{component_type.title()}_temp"
-        component = ComponentWithPins(name, component_type)
-        component.setPos(position.x() - component.rect().width() / 2,
-                         position.y() - component.rect().height() / 2)
-        self.addItem(component)
-        self.controller.add_component(component, component_type, (position.x(), position.y()))
-        logger.info("Component added to scene: %s (%s)", name, component_type)
+        
+        # Clear preview component first
+        self._clear_preview_component()
+        
+        # Check if we have selected component data from dialog
+        if self.controller.selected_component_data:
+            component_data = self.controller.selected_component_data
+            component_type = component_data.get('Component Type', 'chip')
+            name = component_data.get('Name', f"{component_type.title()}_temp")
+            component_id = component_data.get('ID', '')
+            
+            # Get component configuration
+            component_config = self.controller.data_model.component_dcf(name)
+            
+            # Create component with configuration
+            component = ComponentWithPins(name, component_type, component_config=component_config)
+            component.setPos(position.x() - component.rect().width() / 2,
+                             position.y() - component.rect().height() / 2)
+            component.component_id = component_id
+            component.properties = component_data.get('Properties', {})
+            
+            self.addItem(component)
+            
+            # Add to data model with the selected component data
+            self.controller.add_component(component, component_type, (position.x(), position.y()))
+            
+            # Reset placement mode
+            self.controller.placement_mode = False
+            self.controller.selected_component_data = None
+            if self.controller.view:
+                self.controller.view.setCursor(Qt.ArrowCursor)
+            
+            logger.info("Component added to scene: %s (%s) with ID: %s", name, component_type, component_id)
+        else:
+            # Fallback to old behavior for backward compatibility
+            component_type = self.controller.selected_component_type
+            name = f"{component_type.title()}_temp"
+            component = ComponentWithPins(name, component_type)
+            component.setPos(position.x() - component.rect().width() / 2,
+                             position.y() - component.rect().height() / 2)
+            self.addItem(component)
+            self.controller.add_component(component, component_type, (position.x(), position.y()))
+            logger.info("Component added to scene: %s (%s)", name, component_type)
 
     def remove_component(self, component: ComponentWithPins):
         """Remove component from scene"""
@@ -77,15 +173,6 @@ class ComponentScene(QGraphicsScene):
             parent.status_updated.emit(
                 f"Drawing wire from {pin.parent_component.name}.{pin.pin_id} - Click destination pin")
 
-    def mouseMoveEvent(self, event):
-        """Handle mouse move events"""
-        self.mouse_position = event.scenePos()
-
-        # Update temporary wire if drawing
-        if self.current_wire and self.current_wire.is_temporary:
-            self.current_wire.update_path(self.mouse_position)
-
-        super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         """Handle mouse release events"""
