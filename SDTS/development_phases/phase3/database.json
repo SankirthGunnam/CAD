@@ -243,8 +243,8 @@
       "visual_properties": {
         "1": {
           "position": {
-            "x": -1302.1495166278883,
-            "y": 117.24379789042115
+            "x": -1491.2665206903882,
+            "y": 128.87088726542112
           }
         },
         "18": {
@@ -279,8 +279,8 @@
         },
         "8": {
           "position": {
-            "x": -1569.1652499999998,
-            "y": -99.60037500000001
+            "x": -1557.097106875,
+            "y": -198.15687718749996
           }
         },
         "14": {
@@ -346,7 +346,7 @@
         "3": {
           "position": {
             "x": -564.71975,
-            "y": 44.04175000000001
+            "y": 42.89175
           }
         }
       }
@@ -689,32 +689,6 @@
                 "EXT PID": "EXT_002"
               },
               {
-                "ID": "3",
-                "DCF": "DCF_003",
-                "Name": "Display Controller",
-                "USID": "USID_003",
-                "Module": "Display_Module",
-                "MIPI Type": "DSI",
-                "MIPI Channel": "Channel_2",
-                "Default USID": "0x30",
-                "User USID": "0x30",
-                "PID": "PID_003",
-                "EXT PID": "EXT_003"
-              },
-              {
-                "ID": "4",
-                "DCF": "DCF_004",
-                "Name": "Secondary Camera",
-                "USID": "USID_004",
-                "Module": "Camera_Module",
-                "MIPI Type": "CSI-2",
-                "MIPI Channel": "Channel_3",
-                "Default USID": "0x40",
-                "User USID": "0x40",
-                "PID": "PID_004",
-                "EXT PID": "EXT_004"
-              },
-              {
                 "ID": "5",
                 "DCF": "DCF_005",
                 "Name": "Depth Sensor",
@@ -742,13 +716,6 @@
               }
             ],
             "bcf_dev_gpio": [
-              {
-                "ID": "7",
-                "DCF": "DCF_GPIO_001",
-                "Name": "GPIO Bank 0",
-                "Control Type": "GPIO",
-                "Board": "Main_Board"
-              },
               {
                 "ID": "8",
                 "DCF": "DCF_GPIO_002",
@@ -804,15 +771,6 @@
       },
       "bcf_db_io_connect": [
         {
-          "Connection ID": "1",
-          "Source Device": "Main Processor",
-          "Source Pin": "MIPI_CSI_TX_1",
-          "Source Sub Block": "CSI_TX",
-          "Dest Device": "Camera Sensor",
-          "Dest Pin": "MIPI_CSI_RX_0",
-          "Dest Sub Block": "CSI_RX"
-        },
-        {
           "Connection ID": "2",
           "Source Device": "Main Processor",
           "Source Pin": "MIPI_CSI_TX_2",
@@ -849,24 +807,6 @@
           "Dest Sub Block": "CSI_RX"
         },
         {
-          "Connection ID": "6",
-          "Source Device": "Main Processor",
-          "Source Pin": "GPIO_0",
-          "Source Sub Block": "GPIO_BANK",
-          "Dest Device": "GPIO Bank 0",
-          "Dest Pin": "GPIO_IN_0",
-          "Dest Sub Block": "GPIO_INPUT"
-        },
-        {
-          "Connection ID": "7",
-          "Source Device": "Main Processor",
-          "Source Pin": "GPIO_1",
-          "Source Sub Block": "GPIO_BANK",
-          "Dest Device": "GPIO Bank 0",
-          "Dest Pin": "GPIO_IN_1",
-          "Dest Sub Block": "GPIO_INPUT"
-        },
-        {
           "Connection ID": "8",
           "Source Device": "Main Processor",
           "Source Pin": "GPIO_2",
@@ -882,15 +822,6 @@
           "Source Sub Block": "GPIO_BANK",
           "Dest Device": "GPIO Bank 1",
           "Dest Pin": "GPIO_IN_1",
-          "Dest Sub Block": "GPIO_INPUT"
-        },
-        {
-          "Connection ID": "10",
-          "Source Device": "Main Processor",
-          "Source Pin": "GPIO_4",
-          "Source Sub Block": "GPIO_BANK",
-          "Dest Device": "Power Control GPIO",
-          "Dest Pin": "GPIO_IN",
           "Dest Sub Block": "GPIO_INPUT"
         },
         {

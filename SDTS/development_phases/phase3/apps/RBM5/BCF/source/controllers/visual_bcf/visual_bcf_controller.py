@@ -214,6 +214,18 @@ class VisualBCFController(QObject):
         self.data_model.connection_added.connect(self._on_model_connection_added)
         self.data_model.connection_removed.connect(self._on_model_connection_removed)
 
+    def connect_table_controllers(self, device_settings_controller, io_connect_controller):
+        """Connect table controllers to handle table changes"""
+        if device_settings_controller:
+            device_settings_controller.device_added.connect(self._on_table_device_added)
+            device_settings_controller.device_removed.connect(self._on_table_device_removed)
+            device_settings_controller.device_updated.connect(self._on_table_device_updated)
+
+        if io_connect_controller:
+            io_connect_controller.connection_added.connect(self._on_table_connection_added)
+            io_connect_controller.connection_removed.connect(self._on_table_connection_removed)
+            io_connect_controller.connection_updated.connect(self._on_table_connection_updated)
+
     def _on_model_component_added(self, component_id: str):
         """Handle component added to model"""
         try:
@@ -275,6 +287,254 @@ class VisualBCFController(QObject):
                 del self._connection_graphics_items[connection_id]
         except Exception as e:
             logger.error("Error handling model connection removed: %s", e)
+
+    def _on_table_device_added(self, device_data: dict):
+        """Handle device added to table - add to graphics scene"""
+        try:
+            device_name = device_data.get('Name', device_data.get('name', 'Unknown'))
+            device_id = device_data.get('ID', device_data.get('id', ''))
+            device_type = device_data.get('Component Type', device_data.get('component_type', 'chip'))
+            
+            if not device_id:
+                logger.warning("Device added to table without ID: %s", device_name)
+                return
+
+            # Check if component already exists in scene
+            if device_id in self._component_graphics_items:
+                logger.info("Component %s already exists in scene", device_name)
+                return
+
+            # Get component configuration
+            component_config = self.data_model.component_dcf(device_name)
+            
+            # Create component graphics item
+            component = ComponentWithPins(
+                device_name,
+                device_type,
+                component_config=component_config
+            )
+
+            # Set position (default to center)
+            component.setPos(0, 0)
+
+            # Add to scene
+            self.scene.addItem(component)
+
+            # Track the graphics item
+            self._component_graphics_items[device_id] = component
+            component.component_id = device_id
+            component.properties = device_data.get('Properties', device_data.get('properties', {}))
+
+            # Track in data model without triggering signals
+            self.track_loaded_component(component, device_id)
+
+            logger.info("Component %s (%s) added to scene from table", device_id, device_name)
+
+        except Exception as e:
+            logger.error("Error adding device from table to scene: %s", e)
+
+    def _on_table_device_removed(self, device_data: dict):
+        """Handle device removed from table - remove from graphics scene"""
+        try:
+            device_id = device_data.get('ID', device_data.get('id', ''))
+            device_name = device_data.get('Name', device_data.get('name', 'Unknown'))
+            
+            if not device_id:
+                logger.warning("Device removed from table without ID: %s", device_name)
+                return
+
+            # Find and remove component from scene
+            if device_id in self._component_graphics_items:
+                component = self._component_graphics_items[device_id]
+                
+                # Clean up any wires connected to this component
+                if hasattr(component, 'connected_wires'):
+                    for wire in list(component.connected_wires):
+                        try:
+                            self.scene.removeItem(wire)
+                            # Remove wire from other connected component
+                            if hasattr(wire, 'start_pin') and wire.start_pin and \
+                                hasattr(wire.start_pin, 'parent_component'):
+                                other_component = wire.start_pin.parent_component
+                                if other_component != component and hasattr(other_component, 'remove_wire'):
+                                    other_component.remove_wire(wire)
+                            if hasattr(wire, 'end_pin') and wire.end_pin and \
+                                hasattr(wire.end_pin, 'parent_component'):
+                                other_component = wire.end_pin.parent_component
+                                if other_component != component and hasattr(other_component, 'remove_wire'):
+                                    other_component.remove_wire(wire)
+                        except Exception as e:
+                            logger.warning(f"Error cleaning up wire during component removal: {e}")
+
+                # Remove from scene
+                self.scene.removeItem(component)
+                del self._component_graphics_items[device_id]
+
+                logger.info("Component %s (%s) removed from scene via table", device_id, device_name)
+            else:
+                logger.warning("Component %s not found in scene for removal", device_name)
+
+        except Exception as e:
+            logger.error("Error removing device from scene via table: %s", e)
+
+    def _on_table_device_updated(self, device_data: dict):
+        """Handle device updated in table - update graphics scene"""
+        try:
+            device_id = device_data.get('ID', device_data.get('id', ''))
+            device_name = device_data.get('Name', device_data.get('name', 'Unknown'))
+            
+            if not device_id:
+                logger.warning("Device updated in table without ID: %s", device_name)
+                return
+
+            # Find component in scene and update properties
+            if device_id in self._component_graphics_items:
+                component = self._component_graphics_items[device_id]
+                
+                # Update component properties
+                component.properties = device_data.get('Properties', device_data.get('properties', {}))
+                
+                # Update component name if changed
+                if device_name != component.name:
+                    component.name = device_name
+                    component.update()  # Force visual update
+
+                logger.info("Component %s (%s) updated in scene via table", device_id, device_name)
+            else:
+                logger.warning("Component %s not found in scene for update", device_name)
+
+        except Exception as e:
+            logger.error("Error updating device in scene via table: %s", e)
+
+    def _on_table_connection_added(self, connection_data: dict):
+        """Handle connection added to table - add to graphics scene"""
+        try:
+            connection_id = connection_data.get('Connection ID', connection_data.get('id', ''))
+            from_device = connection_data.get('Source Device', connection_data.get('source_device', ''))
+            to_device = connection_data.get('Dest Device', connection_data.get('dest_device', ''))
+            from_pin = connection_data.get('Source Pin', connection_data.get('source_pin', ''))
+            to_pin = connection_data.get('Dest Pin', connection_data.get('dest_pin', ''))
+            
+            if not all([connection_id, from_device, to_device, from_pin, to_pin]):
+                logger.warning("Incomplete connection data from table: %s", connection_data)
+                return
+
+            # Check if connection already exists
+            if connection_id in self._connection_graphics_items:
+                logger.info("Connection %s already exists in scene", connection_id)
+                return
+
+            # Find component graphics items
+            from_component_id = self._get_component_id(from_device)
+            to_component_id = self._get_component_id(to_device)
+
+            from_comp = self._component_graphics_items.get(from_component_id)
+            to_comp = self._component_graphics_items.get(to_component_id)
+
+            if not from_comp or not to_comp:
+                logger.warning("Could not find component graphics for connection %s", connection_id)
+                return
+
+            # Find the pins on the components
+            from_pin_obj = None
+            to_pin_obj = None
+
+            # Match pins by name
+            for pin in from_comp.pins:
+                pin_name = getattr(pin, 'pin_name', None) or getattr(pin, 'pin_id', None)
+                if pin_name == from_pin:
+                    from_pin_obj = pin
+                    break
+
+            for pin in to_comp.pins:
+                pin_name = getattr(pin, 'pin_name', None) or getattr(pin, 'pin_id', None)
+                if pin_name == to_pin:
+                    to_pin_obj = pin
+                    break
+
+            if not from_pin_obj or not to_pin_obj:
+                logger.warning("Could not find pins for connection %s", connection_id)
+                return
+
+            # Create the wire
+            wire = Wire(from_pin_obj, scene=self.scene)
+            if wire.complete_wire(to_pin_obj):
+                # Add wire to scene
+                self.scene.addItem(wire)
+
+                # Register wire with both connected components
+                from_comp.add_wire(wire)
+                to_comp.add_wire(wire)
+
+                # Track the graphics item
+                self._connection_graphics_items[connection_id] = wire
+                wire.connection_id = connection_id
+                wire.properties = connection_data.get("Properties", {})
+
+                logger.info("Connection %s added to scene from table", connection_id)
+            else:
+                logger.warning("Failed to complete wire for connection %s", connection_id)
+
+        except Exception as e:
+            logger.error("Error adding connection from table to scene: %s", e)
+
+    def _on_table_connection_removed(self, connection_data: dict):
+        """Handle connection removed from table - remove from graphics scene"""
+        try:
+            connection_id = connection_data.get('Connection ID', connection_data.get('id', ''))
+            
+            if not connection_id:
+                logger.warning("Connection removed from table without ID")
+                return
+
+            # Find and remove connection from scene
+            if connection_id in self._connection_graphics_items:
+                wire = self._connection_graphics_items[connection_id]
+                
+                # Remove from connected components
+                if hasattr(wire, 'start_pin') and wire.start_pin and hasattr(wire.start_pin, 'parent_component'):
+                    wire.start_pin.parent_component.remove_wire(wire)
+                if hasattr(wire, 'end_pin') and wire.end_pin and hasattr(wire.end_pin, 'parent_component'):
+                    wire.end_pin.parent_component.remove_wire(wire)
+
+                # Remove from scene
+                self.scene.removeItem(wire)
+                del self._connection_graphics_items[connection_id]
+
+                logger.info("Connection %s removed from scene via table", connection_id)
+            else:
+                logger.warning("Connection %s not found in scene for removal", connection_id)
+
+        except Exception as e:
+            logger.error("Error removing connection from scene via table: %s", e)
+
+    def _on_table_connection_updated(self, connection_data: dict):
+        """Handle connection updated in table - update graphics scene"""
+        try:
+            connection_id = connection_data.get('Connection ID', connection_data.get('id', ''))
+            
+            if not connection_id:
+                logger.warning("Connection updated in table without ID")
+                return
+
+            # Find connection in scene and update properties
+            if connection_id in self._connection_graphics_items:
+                wire = self._connection_graphics_items[connection_id]
+                
+                # Update wire properties
+                wire.properties = connection_data.get("Properties", {})
+                
+                # Force wire to recalculate its path
+                wire.update_path()
+                wire.force_intersection_recalculation()
+                wire.update()
+
+                logger.info("Connection %s updated in scene via table", connection_id)
+            else:
+                logger.warning("Connection %s not found in scene for update", connection_id)
+
+        except Exception as e:
+            logger.error("Error updating connection in scene via table: %s", e)
 
     def cleanup(self):
         """Clean up resources and stop timers"""

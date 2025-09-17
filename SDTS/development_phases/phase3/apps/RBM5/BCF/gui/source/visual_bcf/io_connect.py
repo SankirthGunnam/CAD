@@ -10,7 +10,11 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QTableView,
     QScrollArea,
+    QMenu,
+    QMessageBox,
 )
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
 
 from apps.RBM5.BCF.config.constants.tabs import IOConnect
 
@@ -30,7 +34,64 @@ class IOConnectTable(QTableView):
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
         self.setMinimumHeight(400)
+        
+        # Enable context menu and keyboard shortcuts
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+        
         self.setModel(model)
+
+    def _show_context_menu(self, position):
+        """Show context menu for table row operations"""
+        if not self.selectionModel().hasSelection():
+            return
+            
+        menu = QMenu(self)
+        
+        # Add delete action
+        delete_action = QAction("Delete Row", self)
+        delete_action.triggered.connect(self._delete_selected_row)
+        menu.addAction(delete_action)
+        
+        # Show menu at cursor position
+        menu.exec(self.mapToGlobal(position))
+
+    def _delete_selected_row(self):
+        """Delete the selected row after confirmation"""
+        if not self.selectionModel().hasSelection():
+            return
+            
+        current_row = self.currentIndex().row()
+        if current_row < 0:
+            return
+            
+        # Get row data for confirmation
+        model = self.model()
+        if not model:
+            return
+            
+        source_device = model.data(model.index(current_row, 0))  # Source Device column
+        dest_device = model.data(model.index(current_row, 2))    # Dest Device column
+        
+        # Show confirmation dialog
+        reply = QMessageBox.question(
+            self,
+            "Delete Connection",
+            f"Are you sure you want to delete connection from '{source_device}' to '{dest_device}'?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            # Remove the row
+            model.removeRow(current_row)
+
+    def keyPressEvent(self, event):
+        """Handle keyboard shortcuts"""
+        if event.key() == Qt.Key_Delete:
+            self._delete_selected_row()
+        else:
+            super().keyPressEvent(event)
 
     def column_headers(self):
         return [

@@ -3,12 +3,18 @@ from typing import Any, Dict, List, Optional
 # Use centralized path setup from BCF package
 import apps.RBM5.BCF  # This automatically sets up the path
 
-from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex
+from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex, Signal
 from apps.RBM5.BCF.source.RDB.rdb_manager import RDBManager
 
 
 class TableModel(QAbstractTableModel):
     """Qt model for displaying and editing database tables with nested structures"""
+
+    # Signals for table changes
+    row_added = Signal(int, dict)  # row_index, row_data
+    row_removed = Signal(int, dict)  # row_index, row_data
+    row_updated = Signal(int, dict)  # row_index, row_data
+    table_changed = Signal(str)  # table_path
 
     def __init__(
         self,
@@ -90,7 +96,12 @@ class TableModel(QAbstractTableModel):
                 else:
                     row[column_key] = value
 
-                return self.db.set_row(self.table_path, index.row(), row)
+                success = self.db.set_row(self.table_path, index.row(), row)
+                if success:
+                    # Emit signal for row update
+                    self.row_updated.emit(index.row(), row)
+                    self.table_changed.emit(self.table_path)
+                return success
         except Exception as e:
             print(f"Error setting data: {e}")
             return False
@@ -130,9 +141,13 @@ class TableModel(QAbstractTableModel):
                 for col in self.columns
                 if "." not in col["key"]
             }
-            self.db.add_row(self.table_path, new_row)
+            success = self.db.add_row(self.table_path, new_row)
             self.endInsertRows()
-            return True
+            if success:
+                # Emit signal for row addition
+                self.row_added.emit(row, new_row)
+                self.table_changed.emit(self.table_path)
+            return success
         except Exception as e:
             print(f"Error inserting row: {e}")
             return False
@@ -142,10 +157,18 @@ class TableModel(QAbstractTableModel):
         if self.db is None:
             return False
         try:
+            # Get row data before deletion for signal
+            row_data = self.db.get_row(self.table_path, row)
+            
             self.beginRemoveRows(parent, row, row)
-            self.db.delete_row(self.table_path, row)
+            success = self.db.delete_row(self.table_path, row)
             self.endRemoveRows()
-            return True
+            
+            if success and row_data:
+                # Emit signal for row removal
+                self.row_removed.emit(row, row_data)
+                self.table_changed.emit(self.table_path)
+            return success
         except Exception as e:
             print(f"Error removing row: {e}")
             return False

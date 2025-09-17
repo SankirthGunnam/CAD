@@ -79,3 +79,15 @@ class DeviceSettingsModel(AbstractModel):
             ],
         )
         print(f"✓ Device Settings model initialized with gpio_devices_model: {self.gpio_devices_model}")
+
+    def refresh_from_data_model(self) -> bool:
+        """Refresh all table models from the data model"""
+        try:
+            # Force refresh of all table models
+            self.mipi_devices_model.layoutChanged.emit()
+            self.gpio_devices_model.layoutChanged.emit()
+            print("✓ Device Settings tables refreshed from data model")
+            return True
+        except Exception as e:
+            print(f"✗ Error refreshing device settings tables: {e}")
+            return False

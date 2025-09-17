@@ -9,7 +9,11 @@ import typing
 from PySide6.QtWidgets import (
     QVBoxLayout,
     QTableView,
+    QMenu,
+    QMessageBox,
 )
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
 from apps.RBM5.BCF.config.constants.tabs import DeviceSettings
 
 from apps.RBM5.BCF.gui.source.legacy_bcf.views.base_view import BaseView
@@ -28,6 +32,11 @@ class AllDevicesTable(QTableView):
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
         self.setMinimumHeight(200)
+        
+        # Enable context menu and keyboard shortcuts
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+        
         print(f"✓ All Devices table initialized with parent: {parent}")
         print(f"✓ All Devices table model before setting: {model}")
         print('model type', type(model), model)
@@ -36,6 +45,58 @@ class AllDevicesTable(QTableView):
             print(f"✓ All Devices table initialized with model: {model}")
         else:
             print("❌ All Devices table model is None - not setting model")
+
+    def _show_context_menu(self, position):
+        """Show context menu for table row operations"""
+        if not self.selectionModel().hasSelection():
+            return
+            
+        menu = QMenu(self)
+        
+        # Add delete action
+        delete_action = QAction("Delete Row", self)
+        delete_action.triggered.connect(self._delete_selected_row)
+        menu.addAction(delete_action)
+        
+        # Show menu at cursor position
+        menu.exec(self.mapToGlobal(position))
+
+    def _delete_selected_row(self):
+        """Delete the selected row after confirmation"""
+        if not self.selectionModel().hasSelection():
+            return
+            
+        current_row = self.currentIndex().row()
+        if current_row < 0:
+            return
+            
+        # Get row data for confirmation
+        model = self.model()
+        if not model:
+            return
+            
+        device_name = model.data(model.index(current_row, 1))  # Device Name column
+        device_id = model.data(model.index(current_row, 0))    # Device ID column
+        
+        # Show confirmation dialog
+        reply = QMessageBox.question(
+            self,
+            "Delete Device",
+            f"Are you sure you want to delete device '{device_name}' (ID: {device_id})?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            # Remove the row
+            model.removeRow(current_row)
+
+    def keyPressEvent(self, event):
+        """Handle keyboard shortcuts"""
+        if event.key() == Qt.Key_Delete:
+            self._delete_selected_row()
+        else:
+            super().keyPressEvent(event)
 
     def column_headers(self):
         return [
@@ -55,7 +116,64 @@ class MipiDevicesTable(QTableView):
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
         self.setMinimumHeight(200)
+        
+        # Enable context menu and keyboard shortcuts
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+        
         self.setModel(model)
+
+    def _show_context_menu(self, position):
+        """Show context menu for table row operations"""
+        if not self.selectionModel().hasSelection():
+            return
+            
+        menu = QMenu(self)
+        
+        # Add delete action
+        delete_action = QAction("Delete Row", self)
+        delete_action.triggered.connect(self._delete_selected_row)
+        menu.addAction(delete_action)
+        
+        # Show menu at cursor position
+        menu.exec(self.mapToGlobal(position))
+
+    def _delete_selected_row(self):
+        """Delete the selected row after confirmation"""
+        if not self.selectionModel().hasSelection():
+            return
+            
+        current_row = self.currentIndex().row()
+        if current_row < 0:
+            return
+            
+        # Get row data for confirmation
+        model = self.model()
+        if not model:
+            return
+            
+        device_name = model.data(model.index(current_row, 2))  # Name column
+        device_id = model.data(model.index(current_row, 0))    # ID column
+        
+        # Show confirmation dialog
+        reply = QMessageBox.question(
+            self,
+            "Delete MIPI Device",
+            f"Are you sure you want to delete MIPI device '{device_name}' (ID: {device_id})?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            # Remove the row
+            model.removeRow(current_row)
+
+    def keyPressEvent(self, event):
+        """Handle keyboard shortcuts"""
+        if event.key() == Qt.Key_Delete:
+            self._delete_selected_row()
+        else:
+            super().keyPressEvent(event)
 
     def column_headers(self):
         return [
@@ -76,7 +194,64 @@ class GpioDevicesTable(QTableView):
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
         self.setMinimumHeight(200)
+        
+        # Enable context menu and keyboard shortcuts
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+        
         self.setModel(model)
+
+    def _show_context_menu(self, position):
+        """Show context menu for table row operations"""
+        if not self.selectionModel().hasSelection():
+            return
+            
+        menu = QMenu(self)
+        
+        # Add delete action
+        delete_action = QAction("Delete Row", self)
+        delete_action.triggered.connect(self._delete_selected_row)
+        menu.addAction(delete_action)
+        
+        # Show menu at cursor position
+        menu.exec(self.mapToGlobal(position))
+
+    def _delete_selected_row(self):
+        """Delete the selected row after confirmation"""
+        if not self.selectionModel().hasSelection():
+            return
+            
+        current_row = self.currentIndex().row()
+        if current_row < 0:
+            return
+            
+        # Get row data for confirmation
+        model = self.model()
+        if not model:
+            return
+            
+        device_name = model.data(model.index(current_row, 2))  # Name column
+        device_id = model.data(model.index(current_row, 0))    # ID column
+        
+        # Show confirmation dialog
+        reply = QMessageBox.question(
+            self,
+            "Delete GPIO Device",
+            f"Are you sure you want to delete GPIO device '{device_name}' (ID: {device_id})?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            # Remove the row
+            model.removeRow(current_row)
+
+    def keyPressEvent(self, event):
+        """Handle keyboard shortcuts"""
+        if event.key() == Qt.Key_Delete:
+            self._delete_selected_row()
+        else:
+            super().keyPressEvent(event)
 
     def column_headers(self):
         return [

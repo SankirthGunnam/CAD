@@ -66,3 +66,14 @@ class IOConnectModel:
                 IOConnect.IOConnectTable.DEST_PIN(),
             ],
         )
+
+    def refresh_from_data_model(self) -> bool:
+        """Refresh table model from the data model"""
+        try:
+            # Force refresh of table model
+            self.table.layoutChanged.emit()
+            print("✓ IO Connect table refreshed from data model")
+            return True
+        except Exception as e:
+            print(f"✗ Error refreshing IO connect table: {e}")
+            return False

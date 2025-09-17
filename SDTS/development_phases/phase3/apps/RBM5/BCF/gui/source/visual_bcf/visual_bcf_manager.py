@@ -176,6 +176,13 @@ class VisualBCFManager(QMainWindow):
             parent_widget=self, data_model=self.data_model)
         print("✓ VisualBCFController created successfully with own view/scene")
 
+        # Connect table controllers to visual BCF controller for bidirectional sync
+        self.visual_bcf_controller.connect_table_controllers(
+            self.device_settings_controller,
+            self.io_connect_controller
+        )
+        print("✓ Table controllers connected to visual BCF controller for bidirectional sync")
+
         # Set minimum size for tab widget
         self.vbcf_info_tab_widget.setMinimumWidth(350)
 
