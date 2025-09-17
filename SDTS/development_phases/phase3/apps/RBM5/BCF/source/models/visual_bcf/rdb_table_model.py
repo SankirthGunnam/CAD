@@ -61,7 +61,7 @@ class TableModel(QAbstractTableModel):
                 row = index.row()
                 return self.db[self.table_path][row][self.columns[index.column()]]
             except Exception as e:
-                print(f"Error getting data for row {index.row()}: {e}")
+                # print(f"Error getting data for row {index.row()}: {e}")
                 return None
         return None
 

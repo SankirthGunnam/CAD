@@ -133,6 +133,7 @@ class VisualSerializationTestWindow(QMainWindow):
 
     def add_visual_data(self):
         """Setup test data in RDBManager from JSON file"""
+        return
         import json
         
         self.rdb_manager[paths.CURRENT_REVISION] = "1.0.0"

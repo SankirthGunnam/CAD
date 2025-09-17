@@ -243,14 +243,14 @@
       "visual_properties": {
         "1": {
           "position": {
-            "x": -688.7,
-            "y": 28.00000000000003
+            "x": -1072.292451413044,
+            "y": -67.35042271739133
           }
         },
         "18": {
           "position": {
-            "x": 180.0,
-            "y": -174.0
+            "x": 148.0,
+            "y": -251.0
           }
         },
         "2": {
@@ -279,8 +279,8 @@
         },
         "8": {
           "position": {
-            "x": 67.0,
-            "y": -255.0
+            "x": -100.0,
+            "y": -238.0
           }
         },
         "14": {
@@ -339,8 +339,8 @@
         },
         "4": {
           "position": {
-            "x": 19.0,
-            "y": 515.0
+            "x": -892.0041249999999,
+            "y": 521.0834999999998
           }
         },
         "3": {
@@ -743,56 +743,56 @@
             ],
             "bcf_dev_gpio": [
               {
-                "ID": "1",
+                "ID": "7",
                 "DCF": "DCF_GPIO_001",
                 "Name": "GPIO Bank 0",
                 "Control Type": "GPIO",
                 "Board": "Main_Board"
               },
               {
-                "ID": "2",
+                "ID": "8",
                 "DCF": "DCF_GPIO_002",
                 "Name": "GPIO Bank 1",
                 "Control Type": "GPIO",
                 "Board": "Main_Board"
               },
               {
-                "ID": "3",
+                "ID": "9",
                 "DCF": "DCF_GPIO_003",
                 "Name": "Power Control GPIO",
                 "Control Type": "GPIO",
                 "Board": "Power_Board"
               },
               {
-                "ID": "4",
+                "ID": "10",
                 "DCF": "DCF_GPIO_004",
                 "Name": "Sensor Enable GPIO",
                 "Control Type": "GPIO",
                 "Board": "Sensor_Board"
               },
               {
-                "ID": "5",
+                "ID": "11",
                 "DCF": "DCF_GPIO_005",
                 "Name": "LED Control GPIO",
                 "Control Type": "GPIO",
                 "Board": "Output_Board"
               },
               {
-                "ID": "6",
+                "ID": "12",
                 "DCF": "DCF_GPIO_006",
                 "Name": "Reset GPIO",
                 "Control Type": "GPIO",
                 "Board": "Main_Board"
               },
               {
-                "ID": "7",
+                "ID": "13",
                 "DCF": "DCF_GPIO_007",
                 "Name": "Interrupt GPIO",
                 "Control Type": "GPIO",
                 "Board": "Main_Board"
               },
               {
-                "ID": "8",
+                "ID": "14",
                 "DCF": "DCF_GPIO_008",
                 "Name": "Status GPIO",
                 "Control Type": "GPIO",

@@ -224,39 +224,41 @@ class VisualBCFDataModel(QObject):
 
     def remove_component(self, component_id: str, emit_signal=False) -> bool:
         """Remove a component from the scene directly from RDB"""
+        component_found = False
+        components_table = []
         try:
-            components_table = self.rdb_manager.get_table(self.components_table_path)
-
-            # Find the component to get its name for logging
-            component_name = ""
-            component_found = False
-            for component in components_table:
-                if component.get('id') == component_id:
-                    component_name = component.get('name', 'Unknown')
+            # Remove the component
+            for component in self.rdb_manager[paths.BCF_DEV_MIPI(self.revision)]:
+                if component.get('ID') == component_id:
+                    component_name = component.get('Name', 'Unknown')
+                    components_table = self.rdb_manager[paths.BCF_DEV_MIPI(self.revision)]
+                    components_table.remove(component)
+                    component_found = True
+                    break
+            for component in self.rdb_manager[paths.BCF_DEV_GPIO(self.revision)]:
+                if component.get('ID') == component_id:
+                    component_name = component.get('Name', 'Unknown')
+                    components_table = self.rdb_manager[paths.BCF_DEV_GPIO(self.revision)]
+                    components_table.remove(component)
                     component_found = True
                     break
 
-            if component_found:
-                # Remove the component
-                components_table = [c for c in components_table if c.get('id') != component_id]
-                self.rdb_manager.set_table(self.components_table_path, components_table)
+            # Find the component to get its name for logging
+            if not component_found:
+                logger.warning("Component not found: %s", component_id)
+                return False
 
-                # Also remove any connections involving this component
-                connections_table = self.rdb_manager.get_table(self.connections_table_path)
-                connections_table = [conn for conn in connections_table
-                                  if conn.get('from_component_id') != component_id
-                                  and conn.get('to_component_id') != component_id]
-                self.rdb_manager.set_table(self.connections_table_path, connections_table)
+            # Also remove any connections involving this component
+            # connections_table = [conn for conn in self.rdb_manager[paths.BCF_DB_IO_CONNECT] if
+            #                      conn.get('Source Device') != component_name and
+            #                      conn.get('Dest Device') != component_name]
+            # self.rdb_manager[paths.BCF_DB_IO_CONNECT] = connections_table
+            # Emit signal
+            if emit_signal:
+                self.component_removed.emit(component_id)
 
-                # Emit signal
-                if emit_signal:
-                    self.component_removed.emit(component_id)
-
-                logger.info("Removed component: %s (%s)", component_name, component_id)
-                return True
-
-            logger.warning("Component not found: %s", component_id)
-            return False
+            logger.info("Removed component: %s (%s)", component_name, component_id)
+            return True
 
         except Exception as e:
             logger.error("Error removing component: %s", e)
@@ -339,10 +341,15 @@ class VisualBCFDataModel(QObject):
     def get_component(self, component_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific component directly from RDB"""
         try:
-            components_table = self.rdb_manager.get_table(self.components_table_path) or []
-            for component in components_table:
-                if component.get('id') == component_id:
+            print(f"BCF Data Model: Getting component: {component_id}")
+            for component in self.rdb_manager[paths.BCF_DEV_MIPI(self.revision)]:
+                if component.get('ID') == component_id:
                     return component
+            print(f"BCF Data Model: Component not found in MIPI: {component_id}")
+            for component in self.rdb_manager[paths.BCF_DEV_GPIO(self.revision)]:
+                if component.get('ID') == component_id:
+                    return component
+            print(f"BCF Data Model: Component not found in GPIO: {component_id}")
             return None
         except Exception as e:
             logger.error("Error getting component: %s", e)
@@ -496,14 +503,12 @@ class VisualBCFDataModel(QObject):
     def remove_connection(self, connection_id: str, emit_signal=False) -> bool:
         """Remove a connection directly from RDB"""
         try:
-            connections_table = self.rdb_manager.get_table(self.connections_table_path)
-
+            # connections_table = self.rdb_manager[paths.BCF_DB_IO_CONNECT]
+            connections_table = self.rdb_manager.get_value(self.io_connections_path) or []
             # Find and remove the connection
             for i, connection in enumerate(connections_table):
-                if connection.get('id') == connection_id:
-                    removed_connection = connections_table.pop(i)
-                    self.rdb_manager.set_table(self.connections_table_path, connections_table)
-
+                if connection.get('Connection ID') == connection_id:
+                    connections_table.pop(i)
                     # Emit signal
                     if emit_signal:
                         self.connection_removed.emit(connection_id)

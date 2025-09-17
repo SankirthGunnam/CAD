@@ -386,6 +386,7 @@ class VisualBCFController(QObject):
     def remove_component(self, component: ComponentWithPins, emit_user_signal: bool = False) -> bool:
         """Remove a component that was deleted from the scene"""
         try:
+            print(f"BCF Controller: Removing component: {component.name}")
             component_id = self._get_component_id(component)
             if not component_id:
                 logger.warning("Could not find component ID for deleted component: %s", component.name)
@@ -393,9 +394,10 @@ class VisualBCFController(QObject):
 
             component_data = self.data_model.get_component(component_id)
             if not component_data:
+                print(f"BCF Controller: Component data not found for component: {component.name}")
                 return False
 
-            component_name = component_data.get('name', 'Unknown')
+            component_name = component_data.get('Name', 'Unknown')
             success = self.data_model.remove_component(component_id)
             if success:
                 # Remove from graphics tracking
@@ -421,14 +423,12 @@ class VisualBCFController(QObject):
 
                 # Remove connections
                 for conn_id in connections_to_remove:
-                    self.remove_connection(wire)
-                    if conn_id in self._connection_graphics_items:
-                        del self._connection_graphics_items[conn_id]
+                    self.remove_connection(conn_id)
 
                 self.operation_completed.emit(
                     "remove_component", f"Removed component: {component_name}")
-                logger.info(
-                    f"Successfully removed component: {component_name}")
+                logger.info(f"Successfully removed component: {component_name}")
+
             return success
         except Exception as e:
             logger.error("Error removing component: %s", e)
@@ -462,17 +462,22 @@ class VisualBCFController(QObject):
             self.error_occurred.emit(f"Failed to add connection: {str(e)}")
             return ""
 
-    def remove_connection(self, wire: Wire) -> bool:
+    def remove_connection(self, wire: Wire|str) -> bool:
         """Remove a connection that was deleted from the scene"""
         try:
-            connection_id = self._get_connection_id(wire)
+            if isinstance(wire, str):
+                connection_id = wire
+            else:
+                connection_id = self._get_connection_id(wire)
             if not connection_id:
                 logger.warning("Could not find connection ID for deleted wire")
                 return False
 
             success = self.data_model.remove_connection(connection_id)
             if success:
-                self._connection_graphics_items.pop(connection_id)
+                connection = self._connection_graphics_items.pop(connection_id)
+                if connection:
+                    self.scene.removeItem(connection)
                 self.operation_completed.emit("remove_connection", f"Removed connection")
                 logger.info(f"Successfully removed connection: {connection_id}")
 
@@ -573,7 +578,7 @@ class VisualBCFController(QObject):
                 
                 # Create the component graphics item with configuration
                 component = ComponentWithPins(
-                    component_name, 
+                    component_name,
                     component_type,
                     component_config=component_config
                 )

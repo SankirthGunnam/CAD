@@ -58,7 +58,7 @@ class ComponentScene(QGraphicsScene):
 
     def remove_component(self, component: ComponentWithPins):
         """Remove component from scene"""
-        self.removeItem(component)
+        # self.removeItem(component)
         self.controller.remove_component(component)
 
     def start_wire_from_pin(self, pin: ComponentPin):
@@ -145,7 +145,7 @@ class ComponentScene(QGraphicsScene):
         try:
             if hasattr(wire, 'start_pin') and wire.start_pin and hasattr(wire, 'end_pin') and wire.end_pin:
                 # Remove from scene graphics
-                self.removeItem(wire)
+                # self.removeItem(wire)
                 wire.start_pin.parent_component.remove_wire(wire)
                 wire.end_pin.parent_component.remove_wire(wire)
 
