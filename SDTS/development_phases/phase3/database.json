@@ -243,8 +243,8 @@
       "visual_properties": {
         "1": {
           "position": {
-            "x": -1072.292451413044,
-            "y": -67.35042271739133
+            "x": -1302.1495166278883,
+            "y": 117.24379789042115
           }
         },
         "18": {
@@ -261,8 +261,8 @@
         },
         "17": {
           "position": {
-            "x": 314.0,
-            "y": -161.0
+            "x": 297.0,
+            "y": -173.0
           }
         },
         "16": {
@@ -279,38 +279,38 @@
         },
         "8": {
           "position": {
-            "x": -100.0,
-            "y": -238.0
+            "x": -1569.1652499999998,
+            "y": -99.60037500000001
           }
         },
         "14": {
           "position": {
-            "x": 715.0,
-            "y": 92.0
+            "x": 402.0,
+            "y": 136.0
           }
         },
         "13": {
           "position": {
-            "x": 745.0,
-            "y": -224.0
+            "x": 296.0,
+            "y": -186.0
           }
         },
         "12": {
           "position": {
-            "x": 764.0,
-            "y": -124.0
+            "x": 365.0,
+            "y": -14.0
           }
         },
         "11": {
           "position": {
-            "x": 544.0,
-            "y": -25.0
+            "x": 201.0,
+            "y": -44.0
           }
         },
         "7": {
           "position": {
-            "x": 556.0,
-            "y": 351.0
+            "x": -870.0484437499995,
+            "y": -61.689431249999814
           }
         },
         "10": {
@@ -321,8 +321,8 @@
         },
         "9": {
           "position": {
-            "x": 635.0,
-            "y": 280.0
+            "x": -377.29824999999994,
+            "y": 430.9602500000001
           }
         },
         "6": {
@@ -339,14 +339,14 @@
         },
         "4": {
           "position": {
-            "x": -892.0041249999999,
-            "y": 521.0834999999998
+            "x": -729.2705,
+            "y": 560.6262499999999
           }
         },
         "3": {
           "position": {
-            "x": -148.0,
-            "y": 41.0
+            "x": -564.71975,
+            "y": 44.04175000000001
           }
         }
       }
@@ -824,344 +824,164 @@
         {
           "Connection ID": "3",
           "Source Device": "Main Processor",
-          "Source Pin": "GPIO_0",
-          "Source Sub Block": "GPIO_BANK",
-          "Dest Device": "Power Management IC",
-          "Dest Pin": "ENABLE_PIN",
-          "Dest Sub Block": "POWER_CTRL"
-        },
-        {
-          "Connection ID": "4",
-          "Source Device": "Audio Codec",
-          "Source Pin": "I2S_TX",
-          "Source Sub Block": "I2S_TX_BLOCK",
-          "Dest Device": "Main Processor",
-          "Dest Pin": "I2S_RX",
-          "Dest Sub Block": "I2S_RX_BLOCK"
-        },
-        {
-          "Connection ID": "5",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SCL",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Accelerometer",
-          "Dest Pin": "I2C_SCL",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "6",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SDA",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Accelerometer",
-          "Dest Pin": "I2C_SDA",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "7",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SCL",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Gyroscope",
-          "Dest Pin": "I2C_SCL",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "8",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SDA",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Gyroscope",
-          "Dest Pin": "I2C_SDA",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "9",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SCL",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Magnetometer",
-          "Dest Pin": "I2C_SCL",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "10",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SDA",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Magnetometer",
-          "Dest Pin": "I2C_SDA",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "11",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SCL",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Temperature Sensor",
-          "Dest Pin": "I2C_SCL",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "12",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SDA",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Temperature Sensor",
-          "Dest Pin": "I2C_SDA",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "13",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SCL",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Touch Controller",
-          "Dest Pin": "I2C_SCL",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "14",
-          "Source Device": "Main Processor",
-          "Source Pin": "I2C_SDA",
-          "Source Sub Block": "I2C_MASTER",
-          "Dest Device": "Touch Controller",
-          "Dest Pin": "I2C_SDA",
-          "Dest Sub Block": "I2C_SLAVE"
-        },
-        {
-          "Connection ID": "15",
-          "Source Device": "Main Processor",
-          "Source Pin": "SPI_CLK",
-          "Source Sub Block": "SPI_MASTER",
-          "Dest Device": "WiFi Module",
-          "Dest Pin": "SPI_CLK",
-          "Dest Sub Block": "SPI_SLAVE"
-        },
-        {
-          "Connection ID": "16",
-          "Source Device": "Main Processor",
-          "Source Pin": "SPI_MOSI",
-          "Source Sub Block": "SPI_MASTER",
-          "Dest Device": "WiFi Module",
-          "Dest Pin": "SPI_MOSI",
-          "Dest Sub Block": "SPI_SLAVE"
-        },
-        {
-          "Connection ID": "17",
-          "Source Device": "WiFi Module",
-          "Source Pin": "SPI_MISO",
-          "Source Sub Block": "SPI_SLAVE",
-          "Dest Device": "Main Processor",
-          "Dest Pin": "SPI_MISO",
-          "Dest Sub Block": "SPI_MASTER"
-        },
-        {
-          "Connection ID": "18",
-          "Source Device": "Main Processor",
-          "Source Pin": "SPI_CS",
-          "Source Sub Block": "SPI_MASTER",
-          "Dest Device": "WiFi Module",
-          "Dest Pin": "SPI_CS",
-          "Dest Sub Block": "SPI_SLAVE"
-        },
-        {
-          "Connection ID": "19",
-          "Source Device": "Main Processor",
-          "Source Pin": "SPI_CLK",
-          "Source Sub Block": "SPI_MASTER",
-          "Dest Device": "Flash Memory",
-          "Dest Pin": "SPI_CLK",
-          "Dest Sub Block": "SPI_SLAVE"
-        },
-        {
-          "Connection ID": "20",
-          "Source Device": "Main Processor",
-          "Source Pin": "SPI_MOSI",
-          "Source Sub Block": "SPI_MASTER",
-          "Dest Device": "Flash Memory",
-          "Dest Pin": "SPI_MOSI",
-          "Dest Sub Block": "SPI_SLAVE"
-        },
-        {
-          "Connection ID": "21",
-          "Source Device": "Flash Memory",
-          "Source Pin": "SPI_MISO",
-          "Source Sub Block": "SPI_SLAVE",
-          "Dest Device": "Main Processor",
-          "Dest Pin": "SPI_MISO",
-          "Dest Sub Block": "SPI_MASTER"
-        },
-        {
-          "Connection ID": "22",
-          "Source Device": "Main Processor",
-          "Source Pin": "SPI_CS",
-          "Source Sub Block": "SPI_MASTER",
-          "Dest Device": "Flash Memory",
-          "Dest Pin": "SPI_CS",
-          "Dest Sub Block": "SPI_SLAVE"
-        },
-        {
-          "Connection ID": "23",
-          "Source Device": "Main Processor",
-          "Source Pin": "UART_TX",
-          "Source Sub Block": "UART_MASTER",
-          "Dest Device": "Bluetooth Module",
-          "Dest Pin": "UART_RX",
-          "Dest Sub Block": "UART_SLAVE"
-        },
-        {
-          "Connection ID": "24",
-          "Source Device": "Bluetooth Module",
-          "Source Pin": "UART_TX",
-          "Source Sub Block": "UART_SLAVE",
-          "Dest Device": "Main Processor",
-          "Dest Pin": "UART_RX",
-          "Dest Sub Block": "UART_MASTER"
-        },
-        {
-          "Connection ID": "25",
-          "Source Device": "Main Processor",
-          "Source Pin": "UART_TX",
-          "Source Sub Block": "UART_MASTER",
-          "Dest Device": "GPS Module",
-          "Dest Pin": "UART_RX",
-          "Dest Sub Block": "UART_SLAVE"
-        },
-        {
-          "Connection ID": "26",
-          "Source Device": "GPS Module",
-          "Source Pin": "UART_TX",
-          "Source Sub Block": "UART_SLAVE",
-          "Dest Device": "Main Processor",
-          "Dest Pin": "UART_RX",
-          "Dest Sub Block": "UART_MASTER"
-        },
-        {
-          "Connection ID": "27",
-          "Source Device": "Main Processor",
-          "Source Pin": "GPIO_1",
-          "Source Sub Block": "GPIO_BANK",
-          "Dest Device": "Accelerometer",
-          "Dest Pin": "INT_PIN",
-          "Dest Sub Block": "INTERRUPT"
-        },
-        {
-          "Connection ID": "28",
-          "Source Device": "Main Processor",
-          "Source Pin": "GPIO_2",
-          "Source Sub Block": "GPIO_BANK",
-          "Dest Device": "Gyroscope",
-          "Dest Pin": "INT_PIN",
-          "Dest Sub Block": "INTERRUPT"
-        },
-        {
-          "Connection ID": "29",
-          "Source Device": "Main Processor",
-          "Source Pin": "GPIO_3",
-          "Source Sub Block": "GPIO_BANK",
-          "Dest Device": "Magnetometer",
-          "Dest Pin": "INT_PIN",
-          "Dest Sub Block": "INTERRUPT"
-        },
-        {
-          "Connection ID": "30",
-          "Source Device": "Main Processor",
-          "Source Pin": "GPIO_4",
-          "Source Sub Block": "GPIO_BANK",
-          "Dest Device": "Touch Controller",
-          "Dest Pin": "INT_PIN",
-          "Dest Sub Block": "INTERRUPT"
-        },
-        {
-          "Connection ID": "31",
-          "Source Device": "Main Processor",
-          "Source Pin": "PWM_0",
-          "Source Sub Block": "PWM_BANK",
-          "Dest Device": "LED Driver",
-          "Dest Pin": "PWM_IN",
-          "Dest Sub Block": "PWM_INPUT"
-        },
-        {
-          "Connection ID": "32",
-          "Source Device": "Main Processor",
-          "Source Pin": "MIPI_CSI_TX_1",
+          "Source Pin": "MIPI_CSI_TX_3",
           "Source Sub Block": "CSI_TX",
           "Dest Device": "Secondary Camera",
           "Dest Pin": "MIPI_CSI_RX_0",
           "Dest Sub Block": "CSI_RX"
         },
         {
-          "Connection ID": "33",
+          "Connection ID": "4",
           "Source Device": "Main Processor",
-          "Source Pin": "MIPI_CSI_TX_2",
+          "Source Pin": "MIPI_CSI_TX_4",
           "Source Sub Block": "CSI_TX",
           "Dest Device": "Depth Sensor",
           "Dest Pin": "MIPI_CSI_RX_0",
           "Dest Sub Block": "CSI_RX"
         },
         {
-          "Connection ID": "34",
+          "Connection ID": "5",
           "Source Device": "Main Processor",
-          "Source Pin": "MIPI_CSI_TX_3",
+          "Source Pin": "MIPI_CSI_TX_5",
           "Source Sub Block": "CSI_TX",
           "Dest Device": "Thermal Camera",
           "Dest Pin": "MIPI_CSI_RX_0",
           "Dest Sub Block": "CSI_RX"
         },
         {
-          "Connection ID": "35",
+          "Connection ID": "6",
           "Source Device": "Main Processor",
-          "Source Pin": "RGMII_TXC",
-          "Source Sub Block": "RGMII_TX",
-          "Dest Device": "Ethernet Controller",
-          "Dest Pin": "RGMII_RXC",
-          "Dest Sub Block": "RGMII_RX"
+          "Source Pin": "GPIO_0",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "GPIO Bank 0",
+          "Dest Pin": "GPIO_IN_0",
+          "Dest Sub Block": "GPIO_INPUT"
         },
         {
-          "Connection ID": "36",
+          "Connection ID": "7",
           "Source Device": "Main Processor",
-          "Source Pin": "RGMII_TXD_0",
-          "Source Sub Block": "RGMII_TX",
-          "Dest Device": "Ethernet Controller",
-          "Dest Pin": "RGMII_RXD_0",
-          "Dest Sub Block": "RGMII_RX"
+          "Source Pin": "GPIO_1",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "GPIO Bank 0",
+          "Dest Pin": "GPIO_IN_1",
+          "Dest Sub Block": "GPIO_INPUT"
         },
         {
-          "Connection ID": "37",
-          "Source Device": "Ethernet Controller",
-          "Source Pin": "RGMII_TXD_0",
-          "Source Sub Block": "RGMII_TX",
-          "Dest Device": "Main Processor",
-          "Dest Pin": "RGMII_RXD_0",
-          "Dest Sub Block": "RGMII_RX"
+          "Connection ID": "8",
+          "Source Device": "Main Processor",
+          "Source Pin": "GPIO_2",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "GPIO Bank 1",
+          "Dest Pin": "GPIO_IN_0",
+          "Dest Sub Block": "GPIO_INPUT"
         },
         {
-          "Connection ID": "38",
+          "Connection ID": "9",
           "Source Device": "Main Processor",
-          "Source Pin": "USB_DM",
-          "Source Sub Block": "USB_HOST",
-          "Dest Device": "USB Hub Controller",
-          "Dest Pin": "USB_DM",
-          "Dest Sub Block": "USB_DEVICE"
+          "Source Pin": "GPIO_3",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "GPIO Bank 1",
+          "Dest Pin": "GPIO_IN_1",
+          "Dest Sub Block": "GPIO_INPUT"
         },
         {
-          "Connection ID": "39",
+          "Connection ID": "10",
           "Source Device": "Main Processor",
-          "Source Pin": "USB_DP",
-          "Source Sub Block": "USB_HOST",
-          "Dest Device": "USB Hub Controller",
-          "Dest Pin": "USB_DP",
-          "Dest Sub Block": "USB_DEVICE"
+          "Source Pin": "GPIO_4",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "Power Control GPIO",
+          "Dest Pin": "GPIO_IN",
+          "Dest Sub Block": "GPIO_INPUT"
         },
         {
-          "Connection ID": "40",
+          "Connection ID": "11",
           "Source Device": "Main Processor",
-          "Source Pin": "DDR_DQ_0",
-          "Source Sub Block": "DDR_CONTROLLER",
-          "Dest Device": "Memory Controller",
-          "Dest Pin": "DDR_DQ_0",
-          "Dest Sub Block": "DDR_MEMORY"
+          "Source Pin": "GPIO_5",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "Sensor Enable GPIO",
+          "Dest Pin": "GPIO_IN",
+          "Dest Sub Block": "GPIO_INPUT"
+        },
+        {
+          "Connection ID": "12",
+          "Source Device": "Main Processor",
+          "Source Pin": "GPIO_6",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "LED Control GPIO",
+          "Dest Pin": "GPIO_IN",
+          "Dest Sub Block": "GPIO_INPUT"
+        },
+        {
+          "Connection ID": "13",
+          "Source Device": "Main Processor",
+          "Source Pin": "GPIO_7",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "Reset GPIO",
+          "Dest Pin": "GPIO_IN",
+          "Dest Sub Block": "GPIO_INPUT"
+        },
+        {
+          "Connection ID": "14",
+          "Source Device": "Main Processor",
+          "Source Pin": "GPIO_8",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "Interrupt GPIO",
+          "Dest Pin": "GPIO_IN",
+          "Dest Sub Block": "GPIO_INPUT"
+        },
+        {
+          "Connection ID": "15",
+          "Source Device": "Main Processor",
+          "Source Pin": "GPIO_9",
+          "Source Sub Block": "GPIO_BANK",
+          "Dest Device": "Status GPIO",
+          "Dest Pin": "GPIO_IN",
+          "Dest Sub Block": "GPIO_INPUT"
+        },
+        {
+          "Connection ID": "16",
+          "Source Device": "GPIO Bank 0",
+          "Source Pin": "GPIO_OUT_0",
+          "Source Sub Block": "GPIO_OUTPUT",
+          "Dest Device": "Camera Sensor",
+          "Dest Pin": "ENABLE_PIN",
+          "Dest Sub Block": "POWER_CTRL"
+        },
+        {
+          "Connection ID": "17",
+          "Source Device": "GPIO Bank 0",
+          "Source Pin": "GPIO_OUT_1",
+          "Source Sub Block": "GPIO_OUTPUT",
+          "Dest Device": "Display Controller",
+          "Dest Pin": "ENABLE_PIN",
+          "Dest Sub Block": "POWER_CTRL"
+        },
+        {
+          "Connection ID": "18",
+          "Source Device": "GPIO Bank 1",
+          "Source Pin": "GPIO_OUT_0",
+          "Source Sub Block": "GPIO_OUTPUT",
+          "Dest Device": "Secondary Camera",
+          "Dest Pin": "ENABLE_PIN",
+          "Dest Sub Block": "POWER_CTRL"
+        },
+        {
+          "Connection ID": "19",
+          "Source Device": "GPIO Bank 1",
+          "Source Pin": "GPIO_OUT_1",
+          "Source Sub Block": "GPIO_OUTPUT",
+          "Dest Device": "Depth Sensor",
+          "Dest Pin": "ENABLE_PIN",
+          "Dest Sub Block": "POWER_CTRL"
+        },
+        {
+          "Connection ID": "20",
+          "Source Device": "Power Control GPIO",
+          "Source Pin": "GPIO_OUT",
+          "Source Sub Block": "GPIO_OUTPUT",
+          "Dest Device": "Thermal Camera",
+          "Dest Pin": "ENABLE_PIN",
+          "Dest Sub Block": "POWER_CTRL"
         }
       ]
     },
@@ -2741,22 +2561,32 @@
       "GPIO Bank 0": {
         "type": "gpio_bank",
         "category": "gpio",
-        "description": "GPIO bank 0 controller",
+        "description": "GPIO Bank 0 - 8 GPIO pins",
         "pins": [
           {
-            "id": "GPIO0",
-            "name": "GPIO 0",
-            "type": "bidirectional",
+            "id": "GPIO_IN_0",
+            "name": "GPIO Input 0",
+            "type": "input",
             "position": {
-              "x": 80,
-              "y": 10
+              "x": 0,
+              "y": 20
             },
             "electrical_type": "digital"
           },
           {
-            "id": "GPIO1",
-            "name": "GPIO 1",
-            "type": "bidirectional",
+            "id": "GPIO_IN_1",
+            "name": "GPIO Input 1",
+            "type": "input",
+            "position": {
+              "x": 0,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_OUT_0",
+            "name": "GPIO Output 0",
+            "type": "output",
             "position": {
               "x": 80,
               "y": 20
@@ -2764,9 +2594,9 @@
             "electrical_type": "digital"
           },
           {
-            "id": "GPIO2",
-            "name": "GPIO 2",
-            "type": "bidirectional",
+            "id": "GPIO_OUT_1",
+            "name": "GPIO Output 1",
+            "type": "output",
             "position": {
               "x": 80,
               "y": 30
@@ -2774,40 +2604,414 @@
             "electrical_type": "digital"
           },
           {
-            "id": "GPIO3",
-            "name": "GPIO 3",
-            "type": "bidirectional",
+            "id": "VCC",
+            "name": "Power Supply",
+            "type": "power",
             "position": {
-              "x": 80,
-              "y": 40
+              "x": 40,
+              "y": 0
             },
-            "electrical_type": "digital"
+            "electrical_type": "power"
           },
           {
-            "id": "GPIO4",
-            "name": "GPIO 4",
-            "type": "bidirectional",
+            "id": "GND",
+            "name": "Ground",
+            "type": "ground",
             "position": {
-              "x": 80,
-              "y": 50
-            },
-            "electrical_type": "digital"
-          },
-          {
-            "id": "GPIO5",
-            "name": "GPIO 5",
-            "type": "bidirectional",
-            "position": {
-              "x": 80,
+              "x": 40,
               "y": 60
             },
-            "electrical_type": "digital"
+            "electrical_type": "ground"
           }
         ],
         "visual_properties": {
           "width": 80,
           "height": 60,
-          "color": "#009688"
+          "color": "#4CAF50"
+        }
+      },
+      "GPIO Bank 1": {
+        "type": "gpio_bank",
+        "category": "gpio",
+        "description": "GPIO Bank 1 - 8 GPIO pins",
+        "pins": [
+          {
+            "id": "GPIO_IN_0",
+            "name": "GPIO Input 0",
+            "type": "input",
+            "position": {
+              "x": 0,
+              "y": 20
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_IN_1",
+            "name": "GPIO Input 1",
+            "type": "input",
+            "position": {
+              "x": 0,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_OUT_0",
+            "name": "GPIO Output 0",
+            "type": "output",
+            "position": {
+              "x": 80,
+              "y": 20
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_OUT_1",
+            "name": "GPIO Output 1",
+            "type": "output",
+            "position": {
+              "x": 80,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "VCC",
+            "name": "Power Supply",
+            "type": "power",
+            "position": {
+              "x": 40,
+              "y": 0
+            },
+            "electrical_type": "power"
+          },
+          {
+            "id": "GND",
+            "name": "Ground",
+            "type": "ground",
+            "position": {
+              "x": 40,
+              "y": 60
+            },
+            "electrical_type": "ground"
+          }
+        ],
+        "visual_properties": {
+          "width": 80,
+          "height": 60,
+          "color": "#9E9E9E"
+        }
+      },
+      "Power Control GPIO": {
+        "type": "gpio_single",
+        "category": "gpio",
+        "description": "Power Control GPIO pin",
+        "pins": [
+          {
+            "id": "GPIO_IN",
+            "name": "GPIO Input",
+            "type": "input",
+            "position": {
+              "x": 0,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_OUT",
+            "name": "GPIO Output",
+            "type": "output",
+            "position": {
+              "x": 60,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "VCC",
+            "name": "Power Supply",
+            "type": "power",
+            "position": {
+              "x": 30,
+              "y": 0
+            },
+            "electrical_type": "power"
+          },
+          {
+            "id": "GND",
+            "name": "Ground",
+            "type": "ground",
+            "position": {
+              "x": 30,
+              "y": 60
+            },
+            "electrical_type": "ground"
+          }
+        ],
+        "visual_properties": {
+          "width": 60,
+          "height": 60,
+          "color": "#FF9800"
+        }
+      },
+      "Sensor Enable GPIO": {
+        "type": "gpio_single",
+        "category": "gpio",
+        "description": "Sensor Enable GPIO pin",
+        "pins": [
+          {
+            "id": "GPIO_IN",
+            "name": "GPIO Input",
+            "type": "input",
+            "position": {
+              "x": 0,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_OUT",
+            "name": "GPIO Output",
+            "type": "output",
+            "position": {
+              "x": 60,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "VCC",
+            "name": "Power Supply",
+            "type": "power",
+            "position": {
+              "x": 30,
+              "y": 0
+            },
+            "electrical_type": "power"
+          },
+          {
+            "id": "GND",
+            "name": "Ground",
+            "type": "ground",
+            "position": {
+              "x": 30,
+              "y": 60
+            },
+            "electrical_type": "ground"
+          }
+        ],
+        "visual_properties": {
+          "width": 60,
+          "height": 60,
+          "color": "#4CAF50"
+        }
+      },
+      "LED Control GPIO": {
+        "type": "gpio_single",
+        "category": "gpio",
+        "description": "LED Control GPIO pin",
+        "pins": [
+          {
+            "id": "GPIO_IN",
+            "name": "GPIO Input",
+            "type": "input",
+            "position": {
+              "x": 0,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_OUT",
+            "name": "GPIO Output",
+            "type": "output",
+            "position": {
+              "x": 60,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "VCC",
+            "name": "Power Supply",
+            "type": "power",
+            "position": {
+              "x": 30,
+              "y": 0
+            },
+            "electrical_type": "power"
+          },
+          {
+            "id": "GND",
+            "name": "Ground",
+            "type": "ground",
+            "position": {
+              "x": 30,
+              "y": 60
+            },
+            "electrical_type": "ground"
+          }
+        ],
+        "visual_properties": {
+          "width": 60,
+          "height": 60,
+          "color": "#FFEB3B"
+        }
+      },
+      "Reset GPIO": {
+        "type": "gpio_single",
+        "category": "gpio",
+        "description": "Reset GPIO pin",
+        "pins": [
+          {
+            "id": "GPIO_IN",
+            "name": "GPIO Input",
+            "type": "input",
+            "position": {
+              "x": 0,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_OUT",
+            "name": "GPIO Output",
+            "type": "output",
+            "position": {
+              "x": 60,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "VCC",
+            "name": "Power Supply",
+            "type": "power",
+            "position": {
+              "x": 30,
+              "y": 0
+            },
+            "electrical_type": "power"
+          },
+          {
+            "id": "GND",
+            "name": "Ground",
+            "type": "ground",
+            "position": {
+              "x": 30,
+              "y": 60
+            },
+            "electrical_type": "ground"
+          }
+        ],
+        "visual_properties": {
+          "width": 60,
+          "height": 60,
+          "color": "#F44336"
+        }
+      },
+      "Interrupt GPIO": {
+        "type": "gpio_single",
+        "category": "gpio",
+        "description": "Interrupt GPIO pin",
+        "pins": [
+          {
+            "id": "GPIO_IN",
+            "name": "GPIO Input",
+            "type": "input",
+            "position": {
+              "x": 0,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_OUT",
+            "name": "GPIO Output",
+            "type": "output",
+            "position": {
+              "x": 60,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "VCC",
+            "name": "Power Supply",
+            "type": "power",
+            "position": {
+              "x": 30,
+              "y": 0
+            },
+            "electrical_type": "power"
+          },
+          {
+            "id": "GND",
+            "name": "Ground",
+            "type": "ground",
+            "position": {
+              "x": 30,
+              "y": 60
+            },
+            "electrical_type": "ground"
+          }
+        ],
+        "visual_properties": {
+          "width": 60,
+          "height": 60,
+          "color": "#9C27B0"
+        }
+      },
+      "Status GPIO": {
+        "type": "gpio_single",
+        "category": "gpio",
+        "description": "Status GPIO pin",
+        "pins": [
+          {
+            "id": "GPIO_IN",
+            "name": "GPIO Input",
+            "type": "input",
+            "position": {
+              "x": 0,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "GPIO_OUT",
+            "name": "GPIO Output",
+            "type": "output",
+            "position": {
+              "x": 60,
+              "y": 30
+            },
+            "electrical_type": "digital"
+          },
+          {
+            "id": "VCC",
+            "name": "Power Supply",
+            "type": "power",
+            "position": {
+              "x": 30,
+              "y": 0
+            },
+            "electrical_type": "power"
+          },
+          {
+            "id": "GND",
+            "name": "Ground",
+            "type": "ground",
+            "position": {
+              "x": 30,
+              "y": 60
+            },
+            "electrical_type": "ground"
+          }
+        ],
+        "visual_properties": {
+          "width": 60,
+          "height": 60,
+          "color": "#607D8B"
         }
       }
     }

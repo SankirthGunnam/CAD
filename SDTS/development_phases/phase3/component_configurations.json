@@ -1229,6 +1229,354 @@
         "height": 60,
         "color": "#009688"
       }
+    },
+    "GPIO Bank 0": {
+      "type": "gpio_bank",
+      "category": "gpio",
+      "description": "GPIO Bank 0 - 8 GPIO pins",
+      "pins": [
+        {
+          "id": "GPIO_IN_0",
+          "name": "GPIO Input 0",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_IN_1",
+          "name": "GPIO Input 1",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT_0",
+          "name": "GPIO Output 0",
+          "type": "output",
+          "position": {"x": 80, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT_1",
+          "name": "GPIO Output 1",
+          "type": "output",
+          "position": {"x": 80, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 40, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 40, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 80,
+        "height": 60,
+        "color": "#4CAF50"
+      }
+    },
+    "GPIO Bank 1": {
+      "type": "gpio_bank",
+      "category": "gpio",
+      "description": "GPIO Bank 1 - 8 GPIO pins",
+      "pins": [
+        {
+          "id": "GPIO_IN_0",
+          "name": "GPIO Input 0",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_IN_1",
+          "name": "GPIO Input 1",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT_0",
+          "name": "GPIO Output 0",
+          "type": "output",
+          "position": {"x": 80, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT_1",
+          "name": "GPIO Output 1",
+          "type": "output",
+          "position": {"x": 80, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 40, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 40, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 80,
+        "height": 60,
+        "color": "#9E9E9E"
+      }
+    },
+    "Power Control GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Power Control GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#FF9800"
+      }
+    },
+    "Sensor Enable GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Sensor Enable GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#4CAF50"
+      }
+    },
+    "LED Control GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "LED Control GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#FFEB3B"
+      }
+    },
+    "Reset GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Reset GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#F44336"
+      }
+    },
+    "Interrupt GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Interrupt GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#9C27B0"
+      }
+    },
+    "Status GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Status GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#607D8B"
+      }
     }
   }
 }

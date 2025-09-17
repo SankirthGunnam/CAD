@@ -174,7 +174,7 @@ class VisualBCFDataModel(QObject):
                       component_id: str = None) -> str:
         """Add a new component to the scene with external configuration"""
         print('BCF Data Model: In Add Component BCF Data Model')
-        logger.info(f"BCF Data Model: Adding component: {name} ({component_type}) at {position}")
+        logger.info("BCF Data Model: Adding component: %s (%s) at %s", name, component_type, position)
         try:
             # Use provided component_id if available, otherwise generate new one
             if component_id is None:
@@ -677,9 +677,6 @@ class VisualBCFDataModel(QObject):
             logger.error("Error getting GPIO devices for table: %s", e)
             return []
 
-
-
-
     # Utility methods
 
     def clear_all_data(self):
@@ -777,68 +774,41 @@ class VisualBCFDataModel(QObject):
 
     @property
     def components(self) -> List[Dict[str, Any]]:
-        """Get all components from device tables (MIPI + GPIO + DCF devices)"""
+        """Get all components from device tables (MIPI + GPIO devices only)"""
         try:
             # Update paths with current revision
             self._update_device_table_paths()
             
-            # Get all device types
-            mipi_devices = self.rdb_manager.get_value(self.mipi_devices_path) or []
-            gpio_devices = self.rdb_manager.get_value(self.gpio_devices_path) or []
-            dcf_devices = self.rdb_manager.get_value(self.dcf_devices_path) or []
+            # Get only devices that are actually used in the BCF
+            mipi_devices = self.rdb_manager[paths.BCF_DEV_MIPI(self.revision)]
+            gpio_devices = self.rdb_manager[paths.BCF_DEV_GPIO(self.revision)]
             
-            # Combine all devices into a single list
-            all_components = []
-            
-            # Add MIPI devices
+            # Convert MIPI devices to component format
+            converted_mipi_devices = []
             for device in mipi_devices:
-                component = {
-                    'id': device.get('ID', ''),
-                    'name': device.get('Name', ''),
-                    'component_type': 'mipi_device',
-                    'device_type': 'MIPI',
-                    'dcf': device.get('DCF', ''),
-                    'usid': device.get('USID', ''),
-                    'module': device.get('Module', ''),
-                    'mipi_type': device.get('MIPI Type', ''),
-                    'mipi_channel': device.get('MIPI Channel', ''),
-                    'default_usid': device.get('Default USID', ''),
-                    'user_usid': device.get('User USID', ''),
-                    'pid': device.get('PID', ''),
-                    'ext_pid': device.get('EXT PID', ''),
-                    'source_table': 'BCF_DEV_MIPI'
+                converted_device = {
+                    "ID": device.get("ID"),
+                    "Name": device.get("Name"),
+                    "Component Type": "mipi",
+                    "Module": device.get("Module"),
+                    "Properties": {}
                 }
-                all_components.append(component)
+                converted_mipi_devices.append(converted_device)
             
-            # Add GPIO devices
+            # Convert GPIO devices to component format
+            converted_gpio_devices = []
             for device in gpio_devices:
-                component = {
-                    'id': device.get('ID', ''),
-                    'name': device.get('Name', ''),
-                    'component_type': 'gpio_device',
-                    'device_type': 'GPIO',
-                    'dcf': device.get('DCF', ''),
-                    'ctrl_type': device.get('Ctrl Type', ''),
-                    'board': device.get('Board', ''),
-                    'source_table': 'BCF_DEV_GPIO'
+                converted_device = {
+                    "ID": device.get("ID"),
+                    "Name": device.get("Name"),
+                    "Component Type": "gpio",
+                    "Module": device.get("Module"),
+                    "Properties": {}
                 }
-                all_components.append(component)
+                converted_gpio_devices.append(converted_device)
             
-            # Add DCF devices (All Devices table - read-only)
-            for device in dcf_devices:
-                component = {
-                    'id': device.get('ID', ''),
-                    'name': device.get('Device Name', ''),
-                    'component_type': 'dcf_device',
-                    'device_type': 'DCF',
-                    'control_type': device.get('Control Type', ''),
-                    'module': device.get('Module', ''),
-                    'source_table': 'DCF_DEVICES'
-                }
-                all_components.append(component)
-            
-            return all_components
-            
+            return converted_mipi_devices + converted_gpio_devices
+           
         except Exception as e:
             logger.error("Error getting components from device tables: %s", e)
             return []
@@ -848,26 +818,9 @@ class VisualBCFDataModel(QObject):
         """Get all connections from IO connections table"""
         try:
             # Get IO connections from RDB
-            io_connections = self.rdb_manager.get_value(self.io_connections_path) or []
-            
-            # Convert IO connections to a standardized format
-            formatted_connections = []
-            for connection in io_connections:
-                formatted_connection = {
-                    'id': connection.get('Connection ID', ''),
-                    'source_device': connection.get('Source Device', ''),
-                    'source_pin': connection.get('Source Pin', ''),
-                    'source_sub_block': connection.get('Source Sub Block', ''),
-                    'dest_device': connection.get('Dest Device', ''),
-                    'dest_pin': connection.get('Dest Pin', ''),
-                    'dest_sub_block': connection.get('Dest Sub Block', ''),
-                    'connection_type': 'io_connection',
-                    'source_table': 'BCF_DB_IO_CONNECT'
-                }
-                formatted_connections.append(formatted_connection)
-            
-            return formatted_connections
-            
+            io_connections = self.rdb_manager[paths.BCF_DB_IO_CONNECT]
+            return io_connections
+
         except Exception as e:
             logger.error("Error getting connections from IO connections table: %s", e)
             return []

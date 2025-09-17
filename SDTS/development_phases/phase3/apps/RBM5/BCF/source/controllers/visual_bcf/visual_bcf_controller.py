@@ -338,7 +338,7 @@ class VisualBCFController(QObject):
             pos = component.pos()
             component_id = self._get_component_id(component)
             if not component_id:
-                logger.warning("Could not find component ID for moved component: %s", component.name)
+                logger.warning("Could not find component ID for moved component: %s, %s", component.name, component_id)
                 return
 
             new_position = (pos.x(), pos.y())
@@ -541,13 +541,27 @@ class VisualBCFController(QObject):
 
     # Private helper methods
     def _get_component_id(self, component: ComponentWithPins| str) -> Optional[str]:
-        """Get component ID by name"""
+        """Get component ID by name or component object"""
         if isinstance(component, str):
+            # Try exact match first
             for component_id, component_item in self._component_graphics_items.items():
                 if component_item.name == component:
                     return component_id
+            
+            # Try case-insensitive match
+            for component_id, component_item in self._component_graphics_items.items():
+                if component_item.name.lower() == component.lower():
+                    return component_id
+            
+            # Try partial match
+            for component_id, component_item in self._component_graphics_items.items():
+                if component in component_item.name or component_item.name in component:
+                    return component_id
+            
+            logger.warning(f"Could not find component ID for name: {component}")
             return None
 
+        # Direct component object match
         for component_id, component_item in self._component_graphics_items.items():
             if component_item == component:
                 return component_id
@@ -564,10 +578,10 @@ class VisualBCFController(QObject):
         """Load components from the data model"""
         for comp_data in self.data_model.components:
             try:
-                # Get component ID from the loaded data
-                component_id = comp_data.get("id")
-                component_name = comp_data.get("name", "Unknown")
-                component_type = comp_data.get("component_type", "chip")
+                # Get component ID from the loaded data - handle both "ID" and "id" fields
+                component_id = comp_data.get("ID") or comp_data.get("id")
+                component_name = comp_data.get("Name", comp_data.get("name", "Unknown"))
+                component_type = comp_data.get("Component Type", comp_data.get("component_type", "chip"))
 
                 if not component_id:
                     logger.warning("Component missing ID: %s", component_name)
@@ -583,9 +597,12 @@ class VisualBCFController(QObject):
                     component_config=component_config
                 )
 
-                # Set position
-                pos = self.data_model.visual_properties(component_id).get("position")
-                component.setPos(pos.get("x", 0), pos.get("y", 0))
+                # Set position - handle both possible position formats
+                pos = self.data_model.visual_properties(component_id).get("position", {})
+                if isinstance(pos, dict):
+                    component.setPos(pos.get("x", 0), pos.get("y", 0))
+                else:
+                    component.setPos(0, 0)
 
                 # Add to scene
                 self.scene.addItem(component)
@@ -595,73 +612,73 @@ class VisualBCFController(QObject):
 
                 # Set component properties - DON'T re-add to data model to avoid infinite loop
                 component.component_id = component_id
-                component.properties = comp_data.get("properties", {})
+                component.properties = comp_data.get("Properties", comp_data.get("properties", {}))
 
                 # Use track_loaded_component instead of add_component to avoid infinite loops
                 self.track_loaded_component(component, component_id)
 
-                # logger.info("Component %s (%s) added to scene", component_id, component_name)
+                logger.info("Component %s (%s) added to scene", component_id, component_name)
 
             except Exception as e:
-                logger.error("Error loading component %s: %s", comp_data.get('name', 'Unknown'), e)
+                logger.error("Error loading component %s: %s", comp_data.get('Name', comp_data.get('name', 'Unknown')), e)
 
     def _load_connections(self):
         """Load connections from the data model"""
         for conn_data in self.data_model.connections:
             try:
                 # Get connection ID from the loaded data
-                connection_id = conn_data.get("id")
+                connection_id = conn_data.get("Connection ID")
 
                 if not connection_id:
                     logger.warning("Connection missing ID: %s", conn_data)
                     continue
 
                 # Get component IDs and pin IDs
-                from_component_id = conn_data.get("source_device")
-                to_component_id = conn_data.get("dest_device")
-                from_pin_id = conn_data.get("source_pin")
-                to_pin_id = conn_data.get("dest_pin")
+                from_component = conn_data.get("Source Device")
+                to_component = conn_data.get("Dest Device")
+                from_pin_name = conn_data.get("Source Pin")
+                to_pin_name = conn_data.get("Dest Pin")
 
-                if not all([from_component_id, to_component_id, from_pin_id, to_pin_id]):
+                if not all([from_component, to_component, from_pin_name, to_pin_name]):
                     logger.warning("Connection missing required data: %s", conn_data)
                     continue
-                
-                from_component_id = self._get_component_id(from_component_id)
-                to_component_id = self._get_component_id(to_component_id)
+
+                from_component_id = self._get_component_id(from_component)
+                to_component_id = self._get_component_id(to_component)
 
                 # Find the component graphics items
                 from_comp = self._component_graphics_items.get(from_component_id)
                 to_comp = self._component_graphics_items.get(to_component_id)
-
 
                 if not from_comp or not to_comp:
                     logger.warning("Could not find component graphics for connection %s", connection_id)
                     continue
 
                 # Find the pins on the components
-                from_pin = None
-                to_pin = None
+                from_pin_obj = None
+                to_pin_obj = None
 
-                # Match pins by ID since we're now saving pin IDs consistently
+                # Match pins by name - check both pin_name and pin_id attributes
                 for pin in from_comp.pins:
-                    if hasattr(pin, 'pin_id') and pin.pin_name == from_pin_id:
-                        from_pin = pin
+                    pin_name = getattr(pin, 'pin_name', None) or getattr(pin, 'pin_id', None)
+                    if pin_name == from_pin_name:
+                        from_pin_obj = pin
                         break
 
                 for pin in to_comp.pins:
-                    if hasattr(pin, 'pin_id') and pin.pin_name == to_pin_id:
-                        to_pin = pin
+                    pin_name = getattr(pin, 'pin_name', None) or getattr(pin, 'pin_id', None)
+                    if pin_name == to_pin_name:
+                        to_pin_obj = pin
                         break
 
-
-                if not from_pin or not to_pin:
+                if not from_pin_obj or not to_pin_obj:
                     logger.warning("Could not find pins for connection %s (from_pin: %s, to_pin: %s)",
-                                    connection_id, from_pin_id, to_pin_id)
+                                    connection_id, from_pin_name, to_pin_name)
                     continue
 
                 # Create the wire using the scene's wire creation logic
-                wire = Wire(from_pin, scene=self.scene)
-                if wire.complete_wire(to_pin):
+                wire = Wire(from_pin_obj, scene=self.scene)
+                if wire.complete_wire(to_pin_obj):
                     # Force wire to recalculate its path and update graphics
                     wire.update_path()
                     wire.force_intersection_recalculation()
@@ -681,7 +698,7 @@ class VisualBCFController(QObject):
 
                     # Set wire properties
                     wire.connection_id = connection_id
-                    wire.properties = conn_data.get("properties", {})
+                    wire.properties = conn_data.get("Properties", {})
 
                     # Force scene update for this wire and ensure it's visible
                     self.scene.update(wire.sceneBoundingRect())

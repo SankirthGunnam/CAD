@@ -269,344 +269,164 @@
     {
       "Connection ID": "3",
       "Source Device": "Main Processor",
-      "Source Pin": "GPIO_0",
-      "Source Sub Block": "GPIO_BANK",
-      "Dest Device": "Power Management IC",
-      "Dest Pin": "ENABLE_PIN",
-      "Dest Sub Block": "POWER_CTRL"
-    },
-    {
-      "Connection ID": "4",
-      "Source Device": "Audio Codec",
-      "Source Pin": "I2S_TX",
-      "Source Sub Block": "I2S_TX_BLOCK",
-      "Dest Device": "Main Processor",
-      "Dest Pin": "I2S_RX",
-      "Dest Sub Block": "I2S_RX_BLOCK"
-    },
-    {
-      "Connection ID": "5",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SCL",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Accelerometer",
-      "Dest Pin": "I2C_SCL",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "6",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SDA",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Accelerometer",
-      "Dest Pin": "I2C_SDA",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "7",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SCL",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Gyroscope",
-      "Dest Pin": "I2C_SCL",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "8",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SDA",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Gyroscope",
-      "Dest Pin": "I2C_SDA",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "9",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SCL",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Magnetometer",
-      "Dest Pin": "I2C_SCL",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "10",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SDA",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Magnetometer",
-      "Dest Pin": "I2C_SDA",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "11",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SCL",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Temperature Sensor",
-      "Dest Pin": "I2C_SCL",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "12",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SDA",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Temperature Sensor",
-      "Dest Pin": "I2C_SDA",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "13",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SCL",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Touch Controller",
-      "Dest Pin": "I2C_SCL",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "14",
-      "Source Device": "Main Processor",
-      "Source Pin": "I2C_SDA",
-      "Source Sub Block": "I2C_MASTER",
-      "Dest Device": "Touch Controller",
-      "Dest Pin": "I2C_SDA",
-      "Dest Sub Block": "I2C_SLAVE"
-    },
-    {
-      "Connection ID": "15",
-      "Source Device": "Main Processor",
-      "Source Pin": "SPI_CLK",
-      "Source Sub Block": "SPI_MASTER",
-      "Dest Device": "WiFi Module",
-      "Dest Pin": "SPI_CLK",
-      "Dest Sub Block": "SPI_SLAVE"
-    },
-    {
-      "Connection ID": "16",
-      "Source Device": "Main Processor",
-      "Source Pin": "SPI_MOSI",
-      "Source Sub Block": "SPI_MASTER",
-      "Dest Device": "WiFi Module",
-      "Dest Pin": "SPI_MOSI",
-      "Dest Sub Block": "SPI_SLAVE"
-    },
-    {
-      "Connection ID": "17",
-      "Source Device": "WiFi Module",
-      "Source Pin": "SPI_MISO",
-      "Source Sub Block": "SPI_SLAVE",
-      "Dest Device": "Main Processor",
-      "Dest Pin": "SPI_MISO",
-      "Dest Sub Block": "SPI_MASTER"
-    },
-    {
-      "Connection ID": "18",
-      "Source Device": "Main Processor",
-      "Source Pin": "SPI_CS",
-      "Source Sub Block": "SPI_MASTER",
-      "Dest Device": "WiFi Module",
-      "Dest Pin": "SPI_CS",
-      "Dest Sub Block": "SPI_SLAVE"
-    },
-    {
-      "Connection ID": "19",
-      "Source Device": "Main Processor",
-      "Source Pin": "SPI_CLK",
-      "Source Sub Block": "SPI_MASTER",
-      "Dest Device": "Flash Memory",
-      "Dest Pin": "SPI_CLK",
-      "Dest Sub Block": "SPI_SLAVE"
-    },
-    {
-      "Connection ID": "20",
-      "Source Device": "Main Processor",
-      "Source Pin": "SPI_MOSI",
-      "Source Sub Block": "SPI_MASTER",
-      "Dest Device": "Flash Memory",
-      "Dest Pin": "SPI_MOSI",
-      "Dest Sub Block": "SPI_SLAVE"
-    },
-    {
-      "Connection ID": "21",
-      "Source Device": "Flash Memory",
-      "Source Pin": "SPI_MISO",
-      "Source Sub Block": "SPI_SLAVE",
-      "Dest Device": "Main Processor",
-      "Dest Pin": "SPI_MISO",
-      "Dest Sub Block": "SPI_MASTER"
-    },
-    {
-      "Connection ID": "22",
-      "Source Device": "Main Processor",
-      "Source Pin": "SPI_CS",
-      "Source Sub Block": "SPI_MASTER",
-      "Dest Device": "Flash Memory",
-      "Dest Pin": "SPI_CS",
-      "Dest Sub Block": "SPI_SLAVE"
-    },
-    {
-      "Connection ID": "23",
-      "Source Device": "Main Processor",
-      "Source Pin": "UART_TX",
-      "Source Sub Block": "UART_MASTER",
-      "Dest Device": "Bluetooth Module",
-      "Dest Pin": "UART_RX",
-      "Dest Sub Block": "UART_SLAVE"
-    },
-    {
-      "Connection ID": "24",
-      "Source Device": "Bluetooth Module",
-      "Source Pin": "UART_TX",
-      "Source Sub Block": "UART_SLAVE",
-      "Dest Device": "Main Processor",
-      "Dest Pin": "UART_RX",
-      "Dest Sub Block": "UART_MASTER"
-    },
-    {
-      "Connection ID": "25",
-      "Source Device": "Main Processor",
-      "Source Pin": "UART_TX",
-      "Source Sub Block": "UART_MASTER",
-      "Dest Device": "GPS Module",
-      "Dest Pin": "UART_RX",
-      "Dest Sub Block": "UART_SLAVE"
-    },
-    {
-      "Connection ID": "26",
-      "Source Device": "GPS Module",
-      "Source Pin": "UART_TX",
-      "Source Sub Block": "UART_SLAVE",
-      "Dest Device": "Main Processor",
-      "Dest Pin": "UART_RX",
-      "Dest Sub Block": "UART_MASTER"
-    },
-    {
-      "Connection ID": "27",
-      "Source Device": "Main Processor",
-      "Source Pin": "GPIO_1",
-      "Source Sub Block": "GPIO_BANK",
-      "Dest Device": "Accelerometer",
-      "Dest Pin": "INT_PIN",
-      "Dest Sub Block": "INTERRUPT"
-    },
-    {
-      "Connection ID": "28",
-      "Source Device": "Main Processor",
-      "Source Pin": "GPIO_2",
-      "Source Sub Block": "GPIO_BANK",
-      "Dest Device": "Gyroscope",
-      "Dest Pin": "INT_PIN",
-      "Dest Sub Block": "INTERRUPT"
-    },
-    {
-      "Connection ID": "29",
-      "Source Device": "Main Processor",
-      "Source Pin": "GPIO_3",
-      "Source Sub Block": "GPIO_BANK",
-      "Dest Device": "Magnetometer",
-      "Dest Pin": "INT_PIN",
-      "Dest Sub Block": "INTERRUPT"
-    },
-    {
-      "Connection ID": "30",
-      "Source Device": "Main Processor",
-      "Source Pin": "GPIO_4",
-      "Source Sub Block": "GPIO_BANK",
-      "Dest Device": "Touch Controller",
-      "Dest Pin": "INT_PIN",
-      "Dest Sub Block": "INTERRUPT"
-    },
-    {
-      "Connection ID": "31",
-      "Source Device": "Main Processor",
-      "Source Pin": "PWM_0",
-      "Source Sub Block": "PWM_BANK",
-      "Dest Device": "LED Driver",
-      "Dest Pin": "PWM_IN",
-      "Dest Sub Block": "PWM_INPUT"
-    },
-    {
-      "Connection ID": "32",
-      "Source Device": "Main Processor",
-      "Source Pin": "MIPI_CSI_TX_1",
+      "Source Pin": "MIPI_CSI_TX_3",
       "Source Sub Block": "CSI_TX",
       "Dest Device": "Secondary Camera",
       "Dest Pin": "MIPI_CSI_RX_0",
       "Dest Sub Block": "CSI_RX"
     },
     {
-      "Connection ID": "33",
+      "Connection ID": "4",
       "Source Device": "Main Processor",
-      "Source Pin": "MIPI_CSI_TX_2",
+      "Source Pin": "MIPI_CSI_TX_4",
       "Source Sub Block": "CSI_TX",
       "Dest Device": "Depth Sensor",
       "Dest Pin": "MIPI_CSI_RX_0",
       "Dest Sub Block": "CSI_RX"
     },
     {
-      "Connection ID": "34",
+      "Connection ID": "5",
       "Source Device": "Main Processor",
-      "Source Pin": "MIPI_CSI_TX_3",
+      "Source Pin": "MIPI_CSI_TX_5",
       "Source Sub Block": "CSI_TX",
       "Dest Device": "Thermal Camera",
       "Dest Pin": "MIPI_CSI_RX_0",
       "Dest Sub Block": "CSI_RX"
     },
     {
-      "Connection ID": "35",
+      "Connection ID": "6",
       "Source Device": "Main Processor",
-      "Source Pin": "RGMII_TXC",
-      "Source Sub Block": "RGMII_TX",
-      "Dest Device": "Ethernet Controller",
-      "Dest Pin": "RGMII_RXC",
-      "Dest Sub Block": "RGMII_RX"
+      "Source Pin": "GPIO_0",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "GPIO Bank 0",
+      "Dest Pin": "GPIO_IN_0",
+      "Dest Sub Block": "GPIO_INPUT"
     },
     {
-      "Connection ID": "36",
+      "Connection ID": "7",
       "Source Device": "Main Processor",
-      "Source Pin": "RGMII_TXD_0",
-      "Source Sub Block": "RGMII_TX",
-      "Dest Device": "Ethernet Controller",
-      "Dest Pin": "RGMII_RXD_0",
-      "Dest Sub Block": "RGMII_RX"
+      "Source Pin": "GPIO_1",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "GPIO Bank 0",
+      "Dest Pin": "GPIO_IN_1",
+      "Dest Sub Block": "GPIO_INPUT"
     },
     {
-      "Connection ID": "37",
-      "Source Device": "Ethernet Controller",
-      "Source Pin": "RGMII_TXD_0",
-      "Source Sub Block": "RGMII_TX",
-      "Dest Device": "Main Processor",
-      "Dest Pin": "RGMII_RXD_0",
-      "Dest Sub Block": "RGMII_RX"
+      "Connection ID": "8",
+      "Source Device": "Main Processor",
+      "Source Pin": "GPIO_2",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "GPIO Bank 1",
+      "Dest Pin": "GPIO_IN_0",
+      "Dest Sub Block": "GPIO_INPUT"
     },
     {
-      "Connection ID": "38",
+      "Connection ID": "9",
       "Source Device": "Main Processor",
-      "Source Pin": "USB_DM",
-      "Source Sub Block": "USB_HOST",
-      "Dest Device": "USB Hub Controller",
-      "Dest Pin": "USB_DM",
-      "Dest Sub Block": "USB_DEVICE"
+      "Source Pin": "GPIO_3",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "GPIO Bank 1",
+      "Dest Pin": "GPIO_IN_1",
+      "Dest Sub Block": "GPIO_INPUT"
     },
     {
-      "Connection ID": "39",
+      "Connection ID": "10",
       "Source Device": "Main Processor",
-      "Source Pin": "USB_DP",
-      "Source Sub Block": "USB_HOST",
-      "Dest Device": "USB Hub Controller",
-      "Dest Pin": "USB_DP",
-      "Dest Sub Block": "USB_DEVICE"
+      "Source Pin": "GPIO_4",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "Power Control GPIO",
+      "Dest Pin": "GPIO_IN",
+      "Dest Sub Block": "GPIO_INPUT"
     },
     {
-      "Connection ID": "40",
+      "Connection ID": "11",
       "Source Device": "Main Processor",
-      "Source Pin": "DDR_DQ_0",
-      "Source Sub Block": "DDR_CONTROLLER",
-      "Dest Device": "Memory Controller",
-      "Dest Pin": "DDR_DQ_0",
-      "Dest Sub Block": "DDR_MEMORY"
+      "Source Pin": "GPIO_5",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "Sensor Enable GPIO",
+      "Dest Pin": "GPIO_IN",
+      "Dest Sub Block": "GPIO_INPUT"
+    },
+    {
+      "Connection ID": "12",
+      "Source Device": "Main Processor",
+      "Source Pin": "GPIO_6",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "LED Control GPIO",
+      "Dest Pin": "GPIO_IN",
+      "Dest Sub Block": "GPIO_INPUT"
+    },
+    {
+      "Connection ID": "13",
+      "Source Device": "Main Processor",
+      "Source Pin": "GPIO_7",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "Reset GPIO",
+      "Dest Pin": "GPIO_IN",
+      "Dest Sub Block": "GPIO_INPUT"
+    },
+    {
+      "Connection ID": "14",
+      "Source Device": "Main Processor",
+      "Source Pin": "GPIO_8",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "Interrupt GPIO",
+      "Dest Pin": "GPIO_IN",
+      "Dest Sub Block": "GPIO_INPUT"
+    },
+    {
+      "Connection ID": "15",
+      "Source Device": "Main Processor",
+      "Source Pin": "GPIO_9",
+      "Source Sub Block": "GPIO_BANK",
+      "Dest Device": "Status GPIO",
+      "Dest Pin": "GPIO_IN",
+      "Dest Sub Block": "GPIO_INPUT"
+    },
+    {
+      "Connection ID": "16",
+      "Source Device": "GPIO Bank 0",
+      "Source Pin": "GPIO_OUT_0",
+      "Source Sub Block": "GPIO_OUTPUT",
+      "Dest Device": "Camera Sensor",
+      "Dest Pin": "ENABLE_PIN",
+      "Dest Sub Block": "POWER_CTRL"
+    },
+    {
+      "Connection ID": "17",
+      "Source Device": "GPIO Bank 0",
+      "Source Pin": "GPIO_OUT_1",
+      "Source Sub Block": "GPIO_OUTPUT",
+      "Dest Device": "Display Controller",
+      "Dest Pin": "ENABLE_PIN",
+      "Dest Sub Block": "POWER_CTRL"
+    },
+    {
+      "Connection ID": "18",
+      "Source Device": "GPIO Bank 1",
+      "Source Pin": "GPIO_OUT_0",
+      "Source Sub Block": "GPIO_OUTPUT",
+      "Dest Device": "Secondary Camera",
+      "Dest Pin": "ENABLE_PIN",
+      "Dest Sub Block": "POWER_CTRL"
+    },
+    {
+      "Connection ID": "19",
+      "Source Device": "GPIO Bank 1",
+      "Source Pin": "GPIO_OUT_1",
+      "Source Sub Block": "GPIO_OUTPUT",
+      "Dest Device": "Depth Sensor",
+      "Dest Pin": "ENABLE_PIN",
+      "Dest Sub Block": "POWER_CTRL"
+    },
+    {
+      "Connection ID": "20",
+      "Source Device": "Power Control GPIO",
+      "Source Pin": "GPIO_OUT",
+      "Source Sub Block": "GPIO_OUTPUT",
+      "Dest Device": "Thermal Camera",
+      "Dest Pin": "ENABLE_PIN",
+      "Dest Sub Block": "POWER_CTRL"
     }
   ]
 }
