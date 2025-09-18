@@ -20,25 +20,317 @@ from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
 class WirePath:
     """Represents a wire path with multiple segments and routing logic"""
 
-    def __init__(self, start_point: QPointF, end_point: QPointF):
+    def __init__(self, start_point: QPointF, end_point: QPointF, start_pin=None, end_pin=None, scene=None):
         self.start_point = start_point
         self.end_point = end_point
+        self.start_pin = start_pin
+        self.end_pin = end_pin
+        self.scene = scene
         self.segments = []
         self.intersection_bumps = []
         self._calculate_path()
 
     def _calculate_path(self):
-        """Calculate the optimal perpendicular path between two points"""
-        dx = abs(self.end_point.x() - self.start_point.x())
-        dy = abs(self.end_point.y() - self.start_point.y())
+        """Calculate the optimal perpendicular path avoiding components and overlapping"""
+        # Get perpendicular approach directions for both pins
+        start_approach = self._get_perpendicular_approach(self.start_pin, self.start_point)
+        end_approach = self._get_perpendicular_approach(self.end_pin, self.end_point)
 
-        # Determine routing strategy based on distance
-        if dx > dy:
-            # Horizontal first, then vertical
-            self._route_horizontal_first()
+        # Calculate path with component avoidance and parallel line spacing
+        self._calculate_smart_path(start_approach, end_approach)
+
+    def _get_perpendicular_approach(self, pin, point):
+        """Get the perpendicular approach direction for a pin"""
+        if not pin:
+            return None
+            
+        # Get pin side from pin attributes (ComponentPin uses 'edge' not 'side')
+        pin_side = getattr(pin, 'edge', None)
+        
+        if not pin_side:
+            return None
+            
+        # Map pin side to approach direction
+        approach_map = {
+            'left': 'horizontal',    # Pin on left, approach from left (right to left)
+            'right': 'horizontal',   # Pin on right, approach from right (left to right)
+            'top': 'vertical',       # Pin on top, approach from top (bottom to top)
+            'bottom': 'vertical'     # Pin on bottom, approach from bottom (top to bottom)
+        }
+        
+        return approach_map.get(pin_side.lower(), None)
+
+    def _get_perpendicular_approach_point(self, pin, pin_point):
+        """Get the perpendicular approach point for a pin based on its edge"""
+        if not pin or not pin.edge:
+            return pin_point
+            
+        clearance = 20  # 20px clearance from pin
+        
+        if pin.edge == 'left':
+            # Pin on left edge, approach from left (right to left)
+            return QPointF(pin_point.x() - clearance, pin_point.y())
+        elif pin.edge == 'right':
+            # Pin on right edge, approach from right (left to right)
+            return QPointF(pin_point.x() + clearance, pin_point.y())
+        elif pin.edge == 'top':
+            # Pin on top edge, approach from top (bottom to top)
+            return QPointF(pin_point.x(), pin_point.y() - clearance)
+        elif pin.edge == 'bottom':
+            # Pin on bottom edge, approach from bottom (top to bottom)
+            return QPointF(pin_point.x(), pin_point.y() + clearance)
         else:
-            # Vertical first, then horizontal
-            self._route_vertical_first()
+            return pin_point
+
+    def _calculate_smart_path(self, start_approach, end_approach):
+        """Calculate path with component avoidance and parallel line spacing"""
+        # Start with basic perpendicular routing
+        if start_approach == 'horizontal' and end_approach == 'horizontal':
+            self._route_horizontal_to_horizontal()
+        elif start_approach == 'vertical' and end_approach == 'vertical':
+            self._route_vertical_to_vertical()
+        elif start_approach == 'horizontal' and end_approach == 'vertical':
+            self._route_horizontal_to_vertical()
+        elif start_approach == 'vertical' and end_approach == 'horizontal':
+            self._route_vertical_to_horizontal()
+        else:
+            # Fallback to distance-based routing
+            dx = abs(self.end_point.x() - self.start_point.x())
+            dy = abs(self.end_point.y() - self.start_point.y())
+            if dx > dy:
+                self._route_horizontal_first()
+            else:
+                self._route_vertical_first()
+        
+        # Apply component avoidance
+        self._avoid_components()
+        
+        # Apply parallel line spacing
+        self._add_parallel_spacing()
+
+    def _route_horizontal_to_horizontal(self):
+        """Route from horizontal approach to horizontal approach with perpendicular pin approach"""
+        # Calculate perpendicular approach points based on pin edges
+        start_approach = self._get_perpendicular_approach_point(self.start_pin, self.start_point)
+        end_approach = self._get_perpendicular_approach_point(self.end_pin, self.end_point)
+        
+        # Find a clear horizontal level between the approach points
+        clear_y = self._find_clear_horizontal_level(start_approach.y(), end_approach.y())
+        
+        # Create multi-bend path: start -> approach -> horizontal -> approach -> end
+        self.segments.append((self.start_point, start_approach))
+        self.segments.append((start_approach, QPointF(start_approach.x(), clear_y)))
+        self.segments.append((QPointF(start_approach.x(), clear_y), QPointF(end_approach.x(), clear_y)))
+        self.segments.append((QPointF(end_approach.x(), clear_y), end_approach))
+        self.segments.append((end_approach, self.end_point))
+
+    def _route_vertical_to_vertical(self):
+        """Route from vertical approach to vertical approach with perpendicular pin approach"""
+        # Calculate perpendicular approach points based on pin edges
+        start_approach = self._get_perpendicular_approach_point(self.start_pin, self.start_point)
+        end_approach = self._get_perpendicular_approach_point(self.end_pin, self.end_point)
+        
+        # Find a clear vertical level between the approach points
+        clear_x = self._find_clear_vertical_level(start_approach.x(), end_approach.x())
+        
+        # Create multi-bend path: start -> approach -> vertical -> approach -> end
+        self.segments.append((self.start_point, start_approach))
+        self.segments.append((start_approach, QPointF(clear_x, start_approach.y())))
+        self.segments.append((QPointF(clear_x, start_approach.y()), QPointF(clear_x, end_approach.y())))
+        self.segments.append((QPointF(clear_x, end_approach.y()), end_approach))
+        self.segments.append((end_approach, self.end_point))
+
+    def _route_horizontal_to_vertical(self):
+        """Route from horizontal approach to vertical approach with perpendicular pin approach"""
+        # Calculate perpendicular approach points based on pin edges
+        start_approach = self._get_perpendicular_approach_point(self.start_pin, self.start_point)
+        end_approach = self._get_perpendicular_approach_point(self.end_pin, self.end_point)
+        
+        # Find intersection point
+        mid_x = start_approach.x()
+        mid_y = end_approach.y()
+        
+        # Create multi-bend path: start -> approach -> horizontal -> vertical -> approach -> end
+        self.segments.append((self.start_point, start_approach))
+        self.segments.append((start_approach, QPointF(mid_x, start_approach.y())))
+        self.segments.append((QPointF(mid_x, start_approach.y()), QPointF(mid_x, mid_y)))
+        self.segments.append((QPointF(mid_x, mid_y), end_approach))
+        self.segments.append((end_approach, self.end_point))
+
+    def _route_vertical_to_horizontal(self):
+        """Route from vertical approach to horizontal approach with perpendicular pin approach"""
+        # Calculate perpendicular approach points based on pin edges
+        start_approach = self._get_perpendicular_approach_point(self.start_pin, self.start_point)
+        end_approach = self._get_perpendicular_approach_point(self.end_pin, self.end_point)
+        
+        # Find intersection point
+        mid_x = end_approach.x()
+        mid_y = start_approach.y()
+        
+        # Create multi-bend path: start -> approach -> vertical -> horizontal -> approach -> end
+        self.segments.append((self.start_point, start_approach))
+        self.segments.append((start_approach, QPointF(start_approach.x(), mid_y)))
+        self.segments.append((QPointF(start_approach.x(), mid_y), QPointF(mid_x, mid_y)))
+        self.segments.append((QPointF(mid_x, mid_y), end_approach))
+        self.segments.append((end_approach, self.end_point))
+
+    def _find_clear_horizontal_level(self, start_y, end_y):
+        """Find a clear horizontal level for routing"""
+        # Start with midpoint
+        target_y = (start_y + end_y) / 2
+        
+        # Try different levels with spacing to avoid parallel lines
+        spacing = 20  # Gap between parallel lines
+        for offset in [0, spacing, -spacing, 2*spacing, -2*spacing, 3*spacing, -3*spacing]:
+            test_y = target_y + offset
+            if self._is_clear_horizontal_path(test_y):
+                return test_y
+        
+        # Fallback to midpoint
+        return target_y
+
+    def _find_clear_vertical_level(self, start_x, end_x):
+        """Find a clear vertical level for routing"""
+        # Start with midpoint
+        target_x = (start_x + end_x) / 2
+        
+        # Try different levels with spacing to avoid parallel lines
+        spacing = 20  # Gap between parallel lines
+        for offset in [0, spacing, -spacing, 2*spacing, -2*spacing, 3*spacing, -3*spacing]:
+            test_x = target_x + offset
+            if self._is_clear_vertical_path(test_x):
+                return test_x
+        
+        # Fallback to midpoint
+        return target_x
+
+    def _is_clear_horizontal_path(self, y):
+        """Check if horizontal path at y is clear of components"""
+        if not self.scene:
+            return True
+            
+        # Check for components along the horizontal line
+        start_x = min(self.start_point.x(), self.end_point.x())
+        end_x = max(self.start_point.x(), self.end_point.x())
+        
+        return self._is_path_clear(QPointF(start_x, y), QPointF(end_x, y))
+
+    def _is_clear_vertical_path(self, x):
+        """Check if vertical path at x is clear of components"""
+        if not self.scene:
+            return True
+            
+        # Check for components along the vertical line
+        start_y = min(self.start_point.y(), self.end_point.y())
+        end_y = max(self.start_point.y(), self.end_point.y())
+        
+        return self._is_path_clear(QPointF(x, start_y), QPointF(x, end_y))
+
+    def _is_path_clear(self, start, end):
+        """Check if a path is clear of components"""
+        if not self.scene:
+            return True
+            
+        # Sample points along the path and check for component collisions
+        steps = max(int(abs(end.x() - start.x()) + abs(end.y() - start.y())) // 10, 1)
+        
+        for i in range(steps + 1):
+            t = i / steps
+            x = start.x() + t * (end.x() - start.x())
+            y = start.y() + t * (end.y() - start.y())
+            
+            if self._point_intersects_component(QPointF(x, y)):
+                return False
+        
+        return True
+
+    def _point_intersects_component(self, point):
+        """Check if a point intersects with any component"""
+        if not self.scene:
+            return False
+            
+        # Check all items in the scene, but only ComponentWithPins (not wires)
+        for item in self.scene.items():
+            # Only check ComponentWithPins, not wires or other items
+            if hasattr(item, 'boundingRect') and hasattr(item, 'pins'):
+                rect = item.mapRectToScene(item.boundingRect())
+                if rect.contains(point):
+                    return True
+        
+        return False
+
+    def _avoid_components(self):
+        """Modify path to avoid components"""
+        if not self.scene:
+            return
+            
+        # For each segment, check if it intersects components and reroute if needed
+        new_segments = []
+        
+        for segment_start, segment_end in self.segments:
+            if self._is_path_clear(segment_start, segment_end):
+                new_segments.append((segment_start, segment_end))
+            else:
+                # Reroute this segment around components
+                rerouted = self._reroute_around_components(segment_start, segment_end)
+                new_segments.extend(rerouted)
+        
+        self.segments = new_segments
+
+    def _reroute_around_components(self, start, end):
+        """Reroute a segment around components"""
+        # Simple rerouting: try different intermediate points
+        mid_x = (start.x() + end.x()) / 2
+        mid_y = (start.y() + end.y()) / 2
+        
+        # Try different routing strategies
+        strategies = [
+            # Strategy 1: Go around horizontally
+            [start, QPointF(start.x(), mid_y), QPointF(end.x(), mid_y), end],
+            # Strategy 2: Go around vertically  
+            [start, QPointF(mid_x, start.y()), QPointF(mid_x, end.y()), end],
+            # Strategy 3: Offset routing
+            [start, QPointF(start.x() + 20, start.y()), QPointF(start.x() + 20, end.y()), QPointF(end.x(), end.y()), end],
+            [start, QPointF(start.x(), start.y() + 20), QPointF(end.x(), start.y() + 20), QPointF(end.x(), end.y()), end]
+        ]
+        
+        for strategy in strategies:
+            if self._is_clear_path(strategy):
+                # Convert to segments
+                segments = []
+                for i in range(len(strategy) - 1):
+                    segments.append((strategy[i], strategy[i + 1]))
+                return segments
+        
+        # Fallback: return original segment
+        return [(start, end)]
+
+    def _is_clear_path(self, points):
+        """Check if a path of points is clear"""
+        for i in range(len(points) - 1):
+            if not self._is_path_clear(points[i], points[i + 1]):
+                return False
+        return True
+
+    def _add_parallel_spacing(self):
+        """Add spacing between parallel lines to prevent overlapping"""
+        if not self.scene:
+            return
+            
+        # This is a simplified approach - in a real implementation,
+        # you'd track all existing wires and calculate proper spacing
+        # For now, we'll add small random offsets to avoid exact overlaps
+        import random
+        
+        for i, (segment_start, segment_end) in enumerate(self.segments):
+            # Add small random offset to break exact overlaps
+            offset_x = random.uniform(-2, 2)
+            offset_y = random.uniform(-2, 2)
+            
+            if offset_x != 0 or offset_y != 0:
+                new_start = QPointF(segment_start.x() + offset_x, segment_start.y() + offset_y)
+                new_end = QPointF(segment_end.x() + offset_x, segment_end.y() + offset_y)
+                self.segments[i] = (new_start, new_end)
 
     def _route_horizontal_first(self):
         """Route wire horizontally first, then vertically"""
@@ -292,8 +584,8 @@ class Wire(QGraphicsPathItem):
 
     def _calculate_optimal_path(self, start_pos: QPointF, end_pos: QPointF):
         """Calculate optimal wire path avoiding components and other wires"""
-        # Start with basic perpendicular routing
-        self.wire_path = WirePath(start_pos, end_pos)
+        # Start with smart perpendicular routing
+        self.wire_path = WirePath(start_pos, end_pos, self.start_pin, self.end_pin, self.scene)
 
         # Clear old intersection bumps before recalculating
         if self.wire_path:
@@ -651,7 +943,7 @@ class Wire(QGraphicsPathItem):
         # For complex routed wires, use the full update_path method
         if len(self.wire_path.segments) <= 3:  # Simple wire
             # Recalculate basic path without collision detection
-            self.wire_path = WirePath(start_pos, end_pos)
+            self.wire_path = WirePath(start_pos, end_pos, self.start_pin, self.end_pin, self.scene)
             self.setPath(self.wire_path.get_path())
         else:
             # Complex wire - use full update

@@ -480,7 +480,7 @@ class VisualBCFController(QObject):
                 return
 
             # Create the wire
-            wire = Wire(from_pin_obj, scene=self.scene)
+            wire = Wire(from_pin_obj, end_pin=to_pin_obj, scene=self.scene)
             if wire.complete_wire(to_pin_obj):
                 # Add wire to scene
                 self.scene.addItem(wire)
@@ -964,7 +964,7 @@ class VisualBCFController(QObject):
                     continue
 
                 # Create the wire using the scene's wire creation logic
-                wire = Wire(from_pin_obj, scene=self.scene)
+                wire = Wire(from_pin_obj, end_pin=to_pin_obj, scene=self.scene)
                 if wire.complete_wire(to_pin_obj):
                     # Force wire to recalculate its path and update graphics
                     wire.update_path()
