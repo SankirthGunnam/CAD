@@ -145,7 +145,7 @@
   ],
   "gpio_devices": [
     {
-      "ID": "1",
+      "ID": "6",
       "Name": "LNA_2G4",
       "DCF": "DCF_004",
       "Control Type": "LNA",
@@ -156,10 +156,10 @@
       }
     },
     {
-      "ID": "2",
+      "ID": "7",
       "Name": "PAM_5G",
       "DCF": "DCF_005",
-      "Control Type": "PAM", 
+      "Control Type": "PAM",
       "Board": "Main_Board",
       "Properties": {
         "Frequency_Range": "5.1-5.9 GHz",
@@ -167,18 +167,18 @@
       }
     },
     {
-      "ID": "3",
+      "ID": "8",
       "Name": "Coupler_2G4",
       "DCF": "DCF_006",
       "Control Type": "Coupler",
-      "Board": "Main_Board", 
+      "Board": "Main_Board",
       "Properties": {
         "Frequency_Range": "2.4-2.5 GHz",
         "Coupling": "10 dB"
       }
     },
     {
-      "ID": "4",
+      "ID": "9",
       "Name": "Antenna_2G4",
       "DCF": "DCF_007",
       "Control Type": "Antenna",
@@ -189,13 +189,13 @@
       }
     },
     {
-      "ID": "5",
+      "ID": "10",
       "Name": "Antenna_5G",
       "DCF": "DCF_008",
       "Control Type": "Antenna",
       "Board": "Main_Board",
       "Properties": {
-        "Frequency_Range": "5.1-5.9 GHz", 
+        "Frequency_Range": "5.1-5.9 GHz",
         "Gain": "3 dBi"
       }
     }

@@ -243,8 +243,8 @@
       "visual_properties": {
         "1": {
           "position": {
-            "x": -1491.2665206903882,
-            "y": 128.87088726542112
+            "x": -643.6123091883089,
+            "y": 73.27270111828827
           }
         },
         "18": {
@@ -255,8 +255,8 @@
         },
         "2": {
           "position": {
-            "x": 343.0,
-            "y": -93.0
+            "x": 28.19737084239128,
+            "y": -67.24934060665747
           }
         },
         "17": {
@@ -279,8 +279,8 @@
         },
         "8": {
           "position": {
-            "x": -1557.097106875,
-            "y": -198.15687718749996
+            "x": -223.84601728257326,
+            "y": 245.15093224081622
           }
         },
         "14": {
@@ -309,44 +309,44 @@
         },
         "7": {
           "position": {
-            "x": -870.0484437499995,
-            "y": -61.689431249999814
+            "x": -325.07978021874976,
+            "y": -169.07412729687482
           }
         },
         "10": {
           "position": {
-            "x": 784.0,
-            "y": 221.0
+            "x": 260.7780794062504,
+            "y": 146.56411100000008
           }
         },
         "9": {
           "position": {
-            "x": -377.29824999999994,
-            "y": 430.9602500000001
+            "x": 262.5843457031248,
+            "y": -73.1576944999997
           }
         },
         "6": {
           "position": {
-            "x": 438.0,
-            "y": 440.0
+            "x": -223.1144671093747,
+            "y": 47.29356064062516
           }
         },
         "5": {
           "position": {
-            "x": 288.0,
-            "y": 515.0
+            "x": 765.4224999999999,
+            "y": 82.54250000000002
           }
         },
         "4": {
           "position": {
-            "x": -729.2705,
-            "y": 560.6262499999999
+            "x": 114.08774999999991,
+            "y": -12.280749999999955
           }
         },
         "3": {
           "position": {
-            "x": -564.71975,
-            "y": 42.89175
+            "x": 20.95237979008155,
+            "y": 243.67526053124982
           }
         }
       }
@@ -696,7 +696,7 @@
             ],
             "bcf_dev_gpio": [
               {
-                "ID": "1",
+                "ID": "6",
                 "Name": "LNA_2G4",
                 "DCF": "DCF_004",
                 "Control Type": "LNA",
@@ -707,7 +707,7 @@
                 }
               },
               {
-                "ID": "2",
+                "ID": "7",
                 "Name": "PAM_5G",
                 "DCF": "DCF_005",
                 "Control Type": "PAM",
@@ -718,7 +718,7 @@
                 }
               },
               {
-                "ID": "3",
+                "ID": "8",
                 "Name": "Coupler_2G4",
                 "DCF": "DCF_006",
                 "Control Type": "Coupler",
@@ -729,7 +729,7 @@
                 }
               },
               {
-                "ID": "4",
+                "ID": "9",
                 "Name": "Antenna_2G4",
                 "DCF": "DCF_007",
                 "Control Type": "Antenna",
@@ -740,7 +740,7 @@
                 }
               },
               {
-                "ID": "5",
+                "ID": "10",
                 "Name": "Antenna_5G",
                 "DCF": "DCF_008",
                 "Control Type": "Antenna",
@@ -865,7 +865,346 @@
         }
       ]
     },
-    "component_configs": {}
+    "component_configs": {
+      "RFIC": {
+        "name": "RFIC",
+        "type": "rfic",
+        "width": 80,
+        "height": 60,
+        "color": "#4A90E2",
+        "pins": [
+          {
+            "pin_id": "RFFE_CLK",
+            "pin_name": "RFFE_CLK",
+            "side": "left",
+            "position": 0.2,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RFFE_DATA",
+            "pin_name": "RFFE_DATA",
+            "side": "left",
+            "position": 0.4,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RF_TX_2G4",
+            "pin_name": "RF_TX_2G4",
+            "side": "right",
+            "position": 0.2,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_TX_5G",
+            "pin_name": "RF_TX_5G",
+            "side": "right",
+            "position": 0.4,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_RX_2G4",
+            "pin_name": "RF_RX_2G4",
+            "side": "right",
+            "position": 0.6,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_FB_2G4",
+            "pin_name": "RF_FB_2G4",
+            "side": "left",
+            "position": 0.6,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "FEM_2G4": {
+        "name": "FEM_2G4",
+        "type": "fem",
+        "width": 70,
+        "height": 50,
+        "color": "#7ED321",
+        "pins": [
+          {
+            "pin_id": "RFFE_CLK",
+            "pin_name": "RFFE_CLK",
+            "side": "left",
+            "position": 0.2,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RFFE_DATA",
+            "pin_name": "RFFE_DATA",
+            "side": "left",
+            "position": 0.4,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.6,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "FEM_5G": {
+        "name": "FEM_5G",
+        "type": "fem",
+        "width": 70,
+        "height": 50,
+        "color": "#7ED321",
+        "pins": [
+          {
+            "pin_id": "RFFE_CLK",
+            "pin_name": "RFFE_CLK",
+            "side": "left",
+            "position": 0.2,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RFFE_DATA",
+            "pin_name": "RFFE_DATA",
+            "side": "left",
+            "position": 0.4,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.6,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "LNA_2G4": {
+        "name": "LNA_2G4",
+        "type": "lna",
+        "width": 60,
+        "height": 40,
+        "color": "#F5A623",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "PAM_5G": {
+        "name": "PAM_5G",
+        "type": "pam",
+        "width": 60,
+        "height": 40,
+        "color": "#D0021B",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "Coupler_2G4": {
+        "name": "Coupler_2G4",
+        "type": "coupler",
+        "width": 50,
+        "height": 30,
+        "color": "#9013FE",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.3,
+            "type": "rf"
+          },
+          {
+            "pin_id": "COUPLED_OUT",
+            "pin_name": "COUPLED_OUT",
+            "side": "right",
+            "position": 0.7,
+            "type": "rf"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "Antenna_2G4": {
+        "name": "Antenna_2G4",
+        "type": "antenna",
+        "width": 40,
+        "height": 60,
+        "color": "#50E3C2",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "top",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "left",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "Antenna_5G": {
+        "name": "Antenna_5G",
+        "type": "antenna",
+        "width": 40,
+        "height": 60,
+        "color": "#50E3C2",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "top",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "left",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      }
+    }
   },
   "model": {
     "current_revision": "1.0.0"

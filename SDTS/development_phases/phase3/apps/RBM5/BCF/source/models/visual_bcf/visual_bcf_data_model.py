@@ -792,6 +792,9 @@ class VisualBCFDataModel(QObject):
             mipi_devices = self.rdb_manager[paths.BCF_DEV_MIPI(self.revision)]
             gpio_devices = self.rdb_manager[paths.BCF_DEV_GPIO(self.revision)]
             
+            logger.debug(f"Found {len(mipi_devices)} MIPI devices: {[d.get('Name') for d in mipi_devices]}")
+            logger.debug(f"Found {len(gpio_devices)} GPIO devices: {[d.get('Name') for d in gpio_devices]}")
+            
             # Convert MIPI devices to component format
             converted_mipi_devices = []
             for device in mipi_devices:
@@ -800,7 +803,7 @@ class VisualBCFDataModel(QObject):
                     "Name": device.get("Name"),
                     "Component Type": "mipi",
                     "Module": device.get("Module"),
-                    "Properties": {}
+                    "Properties": device.get("Properties", {})
                 }
                 converted_mipi_devices.append(converted_device)
             
@@ -812,11 +815,13 @@ class VisualBCFDataModel(QObject):
                     "Name": device.get("Name"),
                     "Component Type": "gpio",
                     "Module": device.get("Module"),
-                    "Properties": {}
+                    "Properties": device.get("Properties", {})
                 }
                 converted_gpio_devices.append(converted_device)
             
-            return converted_mipi_devices + converted_gpio_devices
+            all_components = converted_mipi_devices + converted_gpio_devices
+            logger.debug(f"Returning {len(all_components)} total components: {[c.get('Name') for c in all_components]}")
+            return all_components
            
         except Exception as e:
             logger.error("Error getting components from device tables: %s", e)

@@ -165,27 +165,52 @@ class ComponentWithPins(QGraphicsRectItem):
         pin_radius = 4  # Pin radius for centering calculations
 
         try:
-            # Comprehensive chip: 6 pins on each side (24 total)
-            output_names = [pin.get('id', '') for pin in self.component_config.get('pins', [])]
-            # Vertical spacing for left/right pins
-            pin_spacing_vertical = height / (len(output_names) + 1)
-            # Right side pins (outputs) - perfectly centered on right edge
-            for i, pin_name in enumerate(output_names):
+            pins_config = self.component_config.get('pins', [])
+            print(f"Creating pins from config for {self.name}: {len(pins_config)} pins")
+            
+            for pin_config in pins_config:
+                # Get pin information from configuration
+                pin_id = pin_config.get('pin_id', pin_config.get('id', ''))
+                pin_name = pin_config.get('pin_name', pin_config.get('name', pin_id))
+                pin_side = pin_config.get('side', 'right')
+                pin_position = pin_config.get('position', 0.5)  # Position as fraction (0.0 to 1.0)
+                pin_type = pin_config.get('type', 'digital')
+                
+                if not pin_id:
+                    print(f"Warning: Pin missing ID in config: {pin_config}")
+                    continue
+                
+                # Create the pin
                 pin = ComponentPin(
-                    f"R{i + 1}",
+                    pin_id,
                     pin_name,
-                    self._get_pin_type(pin_name),
+                    pin_type,
                     self,
-                    "right"
+                    pin_side
                 )
-
+                
                 pin.setParentItem(self)
-                # Position pin so half extends outside right edge (x=width)
-                pin.setPos(width,
-                           pin_spacing_vertical * (i + 1) - pin_radius)
+                
+                # Position the pin based on side and position
+                if pin_side == 'left':
+                    pin.setPos(0, height * pin_position - pin_radius)
+                elif pin_side == 'right':
+                    pin.setPos(width, height * pin_position - pin_radius)
+                elif pin_side == 'top':
+                    pin.setPos(width * pin_position - pin_radius, 0)
+                elif pin_side == 'bottom':
+                    pin.setPos(width * pin_position - pin_radius, height)
+                else:
+                    # Default to right side
+                    pin.setPos(width, height * pin_position - pin_radius)
+                
                 self.pins.append(pin)
+                print(f"  Created pin: {pin_id} ({pin_name}) on {pin_side} at position {pin_position}")
+                
         except Exception as e:
             print(f"Error creating pins from configuration: {e}")
+            import traceback
+            traceback.print_exc()
             # Fallback to creating a basic pin
             pin = ComponentPin("PIN1", "PIN", "io", self, "right")
             pin.setParentItem(self)

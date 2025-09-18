@@ -826,6 +826,10 @@ class VisualBCFController(QObject):
     def _get_component_id(self, component: ComponentWithPins| str) -> Optional[str]:
         """Get component ID by name or component object"""
         if isinstance(component, str):
+            # Debug: Print available component names
+            available_names = [item.name for item in self._component_graphics_items.values()]
+            logger.debug(f"Looking for component: '{component}', Available names: {available_names}")
+            
             # Try exact match first
             for component_id, component_item in self._component_graphics_items.items():
                 if component_item.name == component:

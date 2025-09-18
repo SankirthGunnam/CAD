@@ -1,5 +1,6 @@
 {
-  "RFIC": {
+  "components": {
+    "RFIC": {
     "name": "RFIC",
     "type": "rfic",
     "width": 80,
@@ -336,5 +337,6 @@
         "type": "ground"
       }
     ]
+  }
   }
 }
