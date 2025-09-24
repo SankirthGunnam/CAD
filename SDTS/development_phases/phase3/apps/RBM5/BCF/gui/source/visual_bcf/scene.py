@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QGraphicsScene
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.chip import ComponentWithPins
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire
+from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.wire_thread_manager import SceneWireThreadManager
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,10 @@ class ComponentScene(QGraphicsScene):
         self.mouse_position = QPointF(0, 0)
         self.controller = controller  # Controller reference for all operations
         self.preview_component = None  # Preview component that follows mouse
+        
+        # Initialize wire thread manager for async calculations
+        self.wire_thread_manager = SceneWireThreadManager(max_threads=10, parent=self)
+        logger.info("Scene initialized with wire thread manager (max 10 threads)")
 
     def mousePressEvent(self, event):
         """Handle mouse press for component placement mode"""
@@ -242,8 +247,13 @@ class ComponentScene(QGraphicsScene):
             else:
                 # Just remove from scene if wire info is incomplete
                 self.removeItem(wire)
-
         except Exception as e:
             print(f"Error removing wire: {e}")
             # Fallback - just remove from scene
             self.removeItem(wire)
+    
+    def cleanup(self):
+        """Clean up scene resources including thread manager"""
+        if hasattr(self, 'wire_thread_manager'):
+            self.wire_thread_manager.cleanup()
+            logger.info("Scene cleanup completed")

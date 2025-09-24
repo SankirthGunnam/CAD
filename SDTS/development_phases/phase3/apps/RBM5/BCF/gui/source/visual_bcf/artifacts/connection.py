@@ -20,7 +20,7 @@ from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
 class WirePath:
     """Represents a wire path with multiple segments and routing logic"""
 
-    def __init__(self, start_point: QPointF, end_point: QPointF, start_pin=None, end_pin=None, scene=None):
+    def __init__(self, start_point: QPointF, end_point: QPointF, start_pin=None, end_pin=None, scene=None, calculate_now=True):
         self.start_point = start_point
         self.end_point = end_point
         self.start_pin = start_pin
@@ -28,7 +28,10 @@ class WirePath:
         self.scene = scene
         self.segments = []
         self.intersection_bumps = []
-        self._calculate_path()
+        
+        # Only calculate path immediately if requested (for sync operations)
+        if calculate_now:
+            self._calculate_path()
 
     def _calculate_path(self):
         """Calculate the optimal perpendicular path avoiding components and overlapping"""
@@ -377,13 +380,12 @@ class WirePath:
         ))
 
     def add_intersection_bump(self, intersection_point: QPointF, direction: str):
-        """Add a bump at wire intersection point"""
-        # Store bump as tuple: (intersection_point, direction)
-        # The actual bump drawing is now integrated into the wire path
-        self.intersection_bumps.append((intersection_point, direction))
+        """Add a bump at wire intersection point - DISABLED"""
+        # Bump logic disabled - no bumps will be drawn
+        pass
 
     def get_path(self) -> QPainterPath:
-        """Get the complete wire path as a QPainterPath with integrated bumps"""
+        """Get the complete wire path as a QPainterPath - bump logic disabled"""
         path = QPainterPath()
 
         if not self.segments:
@@ -392,21 +394,9 @@ class WirePath:
         # Start at the beginning
         path.moveTo(self.segments[0][0])
 
-        # Process segments and integrate bumps
-        current_pos = self.segments[0][0]
-
-        for i, (segment_start, segment_end) in enumerate(self.segments):
-            # Check if this segment has any bumps
-            segment_bumps = self._get_bumps_for_segment(i, segment_start, segment_end)
-
-            if not segment_bumps:
-                # No bumps, just draw the segment normally
-                path.lineTo(segment_end)
-                current_pos = segment_end
-            else:
-                # This segment has bumps, need to break it up
-                self._draw_segment_with_bumps(path, segment_start, segment_end, segment_bumps, current_pos)
-                current_pos = segment_end
+        # Draw all segments without bump processing
+        for segment_start, segment_end in self.segments:
+            path.lineTo(segment_end)
 
         return path
 
@@ -549,7 +539,66 @@ class Wire(QGraphicsPathItem):
         self.avoided_components = []
 
         # Don't set initial path until we have both pins
-        # self.update_path()  # This was causing the issue
+        # Initialize wire path asynchronously to avoid main thread blocking
+        self.wire_path = None
+        self._calculation_in_progress = False
+        
+        # Start async calculation if both pins are available
+        if self.start_pin and self.end_pin:
+            self._start_async_calculation()
+
+    def _start_async_calculation(self):
+        """Start asynchronous wire path calculation using scene thread manager
+        
+        Uses "latest data wins" approach:
+        - No mutex locks for maximum responsiveness
+        - Old calculations are discarded when new ones start
+        - Component positions read at calculation time (latest data)
+        """
+        if not self.scene or not hasattr(self.scene, 'wire_thread_manager'):
+            # Fallback to synchronous calculation if no thread manager
+            self._calculate_path_sync()
+            return
+        
+        if self._calculation_in_progress:
+            return  # Already calculating
+        
+        self._calculation_in_progress = True
+        
+        # Generate unique wire ID
+        wire_id = f"wire_{id(self)}"
+        
+        # Start async calculation (old calculations for this wire will be discarded)
+        self.scene.wire_thread_manager.calculate_wire_async(
+            wire_id, self.start_pin, self.end_pin, self.scene,
+            self._on_calculation_complete
+        )
+    
+    def _on_calculation_complete(self, wire_id: str, wire_path):
+        """Handle completed wire path calculation"""
+        self._calculation_in_progress = False
+        
+        if wire_path:
+            self.wire_path = wire_path
+            # Update graphics
+            self.setPath(wire_path.get_path())
+            self.setPen(QPen(self.wire_color, self.wire_width))
+            print(f"✅ Wire path calculated and updated for {wire_id}")
+        else:
+            print(f"❌ Wire path calculation failed for {wire_id}")
+            # Fallback to simple straight line
+            self._calculate_path_sync()
+    
+    def _calculate_path_sync(self):
+        """Fallback synchronous path calculation"""
+        try:
+            start_pos = self.start_pin.get_connection_point()
+            end_pos = self.end_pin.get_connection_point()
+            self.wire_path = WirePath(start_pos, end_pos, self.start_pin, self.end_pin, self.scene)
+            self.setPath(self.wire_path.get_path())
+            self.setPen(QPen(self.wire_color, self.wire_width))
+        except Exception as e:
+            print(f"Error in sync wire calculation: {e}")
 
     def update_path(self, temp_end_pos: Optional[QPointF] = None):
         """Update wire path position and routing"""
@@ -560,9 +609,13 @@ class Wire(QGraphicsPathItem):
             end_pos = self.end_pin.get_connection_point()
             self.setPen(QPen(self.wire_color, self.wire_width))
         elif temp_end_pos:
-            # Temporary wire being drawn
+            # Temporary wire being drawn - use sync calculation for immediate feedback
             end_pos = temp_end_pos
             self.setPen(QPen(self.temp_color, self.wire_width))
+            self._calculate_optimal_path(start_pos, end_pos)
+            if self.wire_path:
+                self.setPath(self.wire_path.get_path())
+            return
         else:
             return
 
@@ -575,28 +628,26 @@ class Wire(QGraphicsPathItem):
         self._last_start_pos = start_pos
         self._last_end_pos = end_pos
 
-        # Calculate optimal path avoiding components
-        self._calculate_optimal_path(start_pos, end_pos)
-
-        # Update the graphics item
-        if self.wire_path:
-            self.setPath(self.wire_path.get_path())
+        # Use async calculation for permanent wires
+        if not self._calculation_in_progress:
+            self._start_async_calculation()
 
     def _calculate_optimal_path(self, start_pos: QPointF, end_pos: QPointF):
         """Calculate optimal wire path avoiding components and other wires"""
         # Start with smart perpendicular routing
         self.wire_path = WirePath(start_pos, end_pos, self.start_pin, self.end_pin, self.scene)
 
+        # Bump logic disabled - no intersection bumps
         # Clear old intersection bumps before recalculating
-        if self.wire_path:
-            self.wire_path.intersection_bumps.clear()
+        # if self.wire_path:
+        #     self.wire_path.intersection_bumps.clear()
 
         # Apply collision avoidance
         self._avoid_component_collisions()
 
-        # Only handle wire intersections for permanent wires (not temporary ones being drawn)
-        if not self.is_temporary:
-            self._handle_wire_intersections()
+        # Wire intersection handling disabled - no bumps will be drawn
+        # if not self.is_temporary:
+        #     self._handle_wire_intersections()
 
     def _avoid_component_collisions(self):
         """Modify wire path to avoid passing over components"""
@@ -895,10 +946,10 @@ class Wire(QGraphicsPathItem):
         # Now create the wire path since we have both pins
         self.update_path()
 
-        # Now that the wire is permanent, calculate intersections
+        # Wire intersection handling disabled - no bumps will be drawn
         if self.wire_path:
-            self._handle_wire_intersections()
-            # Update the graphics with the final path including bumps
+            # self._handle_wire_intersections()
+            # Update the graphics with the final path (no bumps)
             self.setPath(self.wire_path.get_path())
 
         return True
@@ -907,19 +958,64 @@ class Wire(QGraphicsPathItem):
         """Update wire position when pins move"""
         if self.start_pin and self.end_pin:
             self.update_path()
+    
+    def update_wire_position_dragging(self):
+        """Update wire during component dragging (immediate sync for responsiveness)"""
+        if not self.start_pin or not self.end_pin:
+            return
+        
+        # During dragging, use lightweight sync update for immediate feedback
+        start_pos = self.start_pin.get_connection_point()
+        end_pos = self.end_pin.get_connection_point()
+        
+        # Quick sync calculation for dragging responsiveness
+        self._calculate_optimal_path(start_pos, end_pos)
+        if self.wire_path:
+            self.setPath(self.wire_path.get_path())
+    
+    def update_wire_position_lightweight(self):
+        """Lightweight update that only recalculates wire positions without full routing"""
+        if not self.start_pin or not self.end_pin or not self.wire_path:
+            return
+
+        start_pos = self.start_pin.get_connection_point()
+        end_pos = self.end_pin.get_connection_point()
+
+        # Check if position actually changed
+        if (hasattr(self, '_last_start_pos') and hasattr(self, '_last_end_pos') and
+            self._last_start_pos == start_pos and self._last_end_pos == end_pos):
+            return  # No change, skip update
+
+        # Store current positions
+        self._last_start_pos = start_pos
+        self._last_end_pos = end_pos
+
+        # Use async calculation for lightweight updates
+        if not self._calculation_in_progress:
+            self._start_async_calculation()
+    
+    def update_wire_position_final(self):
+        """Update wire after dragging is complete (full async calculation)"""
+        if not self.start_pin or not self.end_pin:
+            return
+        
+        # Force full recalculation after dragging
+        if not self._calculation_in_progress:
+            self._start_async_calculation()
 
     def force_intersection_recalculation(self):
         """Force recalculation of intersections and bumps"""
         if not self.wire_path:
             return
 
+        # Bump logic disabled - no intersection handling
         # Clear old bumps
-        self.wire_path.intersection_bumps.clear()
+        # self.wire_path.intersection_bumps.clear()
 
         # Recalculate intersections
-        self._handle_wire_intersections()
+        # self._handle_wire_intersections()
 
-        # Update the graphics
+        # Update the graphics (no bumps)
         self.setPath(self.wire_path.get_path())
 
     def update_wire_position_lightweight(self):
