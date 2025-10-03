@@ -243,8 +243,8 @@
       "visual_properties": {
         "1": {
           "position": {
-            "x": -854.6123091883089,
-            "y": 110.2727011182883
+            "x": -1144.5192420008098,
+            "y": -310.85344513171134
           }
         },
         "18": {
@@ -255,8 +255,8 @@
         },
         "2": {
           "position": {
-            "x": 282.19737084239125,
-            "y": -17.24934060665747
+            "x": -951.1751008967394,
+            "y": 384.1571154802989
           }
         },
         "17": {
@@ -279,8 +279,8 @@
         },
         "8": {
           "position": {
-            "x": -199.84601728257326,
-            "y": 320.15093224081625
+            "x": -334.13802994561706,
+            "y": -300.7470105988574
           }
         },
         "14": {
@@ -309,26 +309,26 @@
         },
         "7": {
           "position": {
-            "x": -325.07978021874976,
-            "y": -169.07412729687482
+            "x": 282.42021978125024,
+            "y": -335.32412729687485
           }
         },
         "10": {
           "position": {
-            "x": 583.7780794062505,
-            "y": 138.56411100000008
+            "x": 719.3448594062506,
+            "y": -119.22396399999991
           }
         },
         "9": {
           "position": {
-            "x": 316.5843457031249,
-            "y": -145.1576944999997
+            "x": -1671.062928046874,
+            "y": 112.43385925000032
           }
         },
         "6": {
           "position": {
-            "x": -223.1144671093747,
-            "y": 47.29356064062516
+            "x": -1771.976708169157,
+            "y": -119.87278776970098
           }
         },
         "5": {
@@ -345,8 +345,8 @@
         },
         "3": {
           "position": {
-            "x": 151.95237979008152,
-            "y": 358.6752605312498
+            "x": -33.99762020991848,
+            "y": 23.525260531249828
           }
         }
       }
@@ -756,24 +756,6 @@
       },
       "bcf_db_io_connect": [
         {
-          "Connection ID": "1",
-          "Source Device": "RFIC",
-          "Source Pin": "RFFE_CLK",
-          "Source Sub Block": "RFFE_MASTER",
-          "Dest Device": "FEM_2G4",
-          "Dest Pin": "RFFE_CLK",
-          "Dest Sub Block": "RFFE_SLAVE"
-        },
-        {
-          "Connection ID": "2",
-          "Source Device": "RFIC",
-          "Source Pin": "RFFE_DATA",
-          "Source Sub Block": "RFFE_MASTER",
-          "Dest Device": "FEM_2G4",
-          "Dest Pin": "RFFE_DATA",
-          "Dest Sub Block": "RFFE_SLAVE"
-        },
-        {
           "Connection ID": "3",
           "Source Device": "RFIC",
           "Source Pin": "RFFE_CLK",
@@ -853,15 +835,6 @@
           "Dest Device": "RFIC",
           "Dest Pin": "RF_FB_2G4",
           "Dest Sub Block": "FEEDBACK"
-        },
-        {
-          "Connection ID": "12",
-          "Source Device": "FEM_2G4",
-          "Source Pin": "RF_OUT",
-          "Source Sub Block": "OUTPUT",
-          "Dest Device": "Coupler_2G4",
-          "Dest Pin": "RF_IN",
-          "Dest Sub Block": "INPUT"
         }
       ]
     },
