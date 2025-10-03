@@ -243,8 +243,8 @@
       "visual_properties": {
         "1": {
           "position": {
-            "x": -1144.5192420008098,
-            "y": -310.85344513171134
+            "x": -1193.1872420008099,
+            "y": -405.1476951317113
           }
         },
         "18": {
@@ -255,8 +255,8 @@
         },
         "2": {
           "position": {
-            "x": -951.1751008967394,
-            "y": 384.1571154802989
+            "x": -842.1468040061145,
+            "y": 257.162532105299
           }
         },
         "17": {
@@ -279,8 +279,8 @@
         },
         "8": {
           "position": {
-            "x": -334.13802994561706,
-            "y": -300.7470105988574
+            "x": -291.4900334143672,
+            "y": -142.47620317698244
           }
         },
         "14": {
@@ -327,8 +327,8 @@
         },
         "6": {
           "position": {
-            "x": -1771.976708169157,
-            "y": -119.87278776970098
+            "x": -1817.602958169157,
+            "y": -270.4394127697009
           }
         },
         "5": {
@@ -345,8 +345,8 @@
         },
         "3": {
           "position": {
-            "x": -33.99762020991848,
-            "y": 23.525260531249828
+            "x": -172.39724520991837,
+            "y": -528.5523644687499
           }
         }
       }
@@ -756,6 +756,24 @@
       },
       "bcf_db_io_connect": [
         {
+          "Connection ID": "1",
+          "Source Device": "RFIC",
+          "Source Pin": "RFFE_CLK",
+          "Source Sub Block": "RFFE_MASTER",
+          "Dest Device": "FEM_2G4",
+          "Dest Pin": "RFFE_CLK",
+          "Dest Sub Block": "RFFE_SLAVE"
+        },
+        {
+          "Connection ID": "2",
+          "Source Device": "RFIC",
+          "Source Pin": "RFFE_DATA",
+          "Source Sub Block": "RFFE_MASTER",
+          "Dest Device": "FEM_2G4",
+          "Dest Pin": "RFFE_DATA",
+          "Dest Sub Block": "RFFE_SLAVE"
+        },
+        {
           "Connection ID": "3",
           "Source Device": "RFIC",
           "Source Pin": "RFFE_CLK",
@@ -835,6 +853,15 @@
           "Dest Device": "RFIC",
           "Dest Pin": "RF_FB_2G4",
           "Dest Sub Block": "FEEDBACK"
+        },
+        {
+          "Connection ID": "12",
+          "Source Device": "FEM_2G4",
+          "Source Pin": "RF_OUT",
+          "Source Sub Block": "OUTPUT",
+          "Dest Device": "Coupler_2G4",
+          "Dest Pin": "RF_IN",
+          "Dest Sub Block": "INPUT"
         }
       ]
     },

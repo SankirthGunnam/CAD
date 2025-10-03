@@ -116,7 +116,8 @@ class VisualSerializationTestWindow(QMainWindow):
             from pathlib import Path
             
             # Load from the component configurations JSON file
-            config_file = Path('/home/sankirthgunnam/Projects/CAD/SDTS/development_phases/phase3/component_configurations.json')
+            # config_file = Path('/home/sankirthgunnam/Projects/CAD/SDTS/development_phases/phase3/component_configurations.json')
+            config_file = Path('component_configurations.json')
             
             if config_file.exists():
                 with open(config_file, 'r') as f:
