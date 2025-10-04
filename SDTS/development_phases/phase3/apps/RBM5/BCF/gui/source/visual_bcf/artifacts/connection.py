@@ -58,6 +58,11 @@ class WirePath:
         self.segments = []
         self.intersection_bumps = []
 
+        # Jog bookkeeping for full-wire offsets (per colinear track)
+        self._h_jogs_by_y = {}  # y_value -> vertical offset (dy)
+        self._v_jogs_by_x = {}  # x_value -> horizontal offset (dx)
+        self._lane_spacing = 8.0
+
         # Orthogonal routing properties
         self.clearance = 30  # Minimum clearance from components
         self.grid_size = 10  # Grid alignment for cleaner routing
@@ -101,6 +106,12 @@ class WirePath:
         # Check for component intersections and create detours
         path_points = self._avoid_component_intersections(path_points)
 
+        # Precompute jogs for colinear overlaps and apply uniformly to entire wire
+        self._h_jogs_by_y.clear()
+        self._v_jogs_by_x.clear()
+        self._compute_jogs_for_path(path_points)
+        path_points = self._apply_jogs_to_path(path_points)
+
         # Convert path points to segments
         self.segments = [self.start_point]
         self.segments += path_points
@@ -110,7 +121,10 @@ class WirePath:
         """Calculate basic orthogonal path from start to end based on pin positions"""
         if not self.start_pin or not self.end_pin:
             # Fallback to simple L-shaped path
-            return self._calculate_simple_l_path()
+            points = self._calculate_simple_l_path()
+            # While building, update jog maps for candidate segments
+            self._update_jogs_for_points(points)
+            return points
 
         # Get pin edges (left, right, top, bottom)
         start_edge = getattr(self.start_pin, "edge", "").lower()
@@ -120,9 +134,13 @@ class WirePath:
         needs_u_shape = self._needs_u_shape_routing(start_edge, end_edge)
 
         if needs_u_shape:
-            return self._calculate_u_shaped_path(start_edge, end_edge)
+            points = self._calculate_u_shaped_path(start_edge, end_edge)
         else:
-            return self._calculate_l_shaped_path(start_edge, end_edge)
+            points = self._calculate_l_shaped_path(start_edge, end_edge)
+
+        # While building, update jog maps for candidate segments
+        self._update_jogs_for_points(points)
+        return points
 
     def _needs_u_shape_routing(self, start_edge: str, end_edge: str) -> bool:
         """Determine if U-shaped routing is needed based on pin edges"""
@@ -132,15 +150,9 @@ class WirePath:
         if start_edge == 'left' and end_edge == 'right':
             return True
         if start_edge == 'top' and end_edge == 'bottom':
-            if start_edge.y() < end_edge.y():
-                return True
-            else:
-                return False
+            return self.start_approach_point.y() < self.end_approach_point.y()
         if start_edge == 'bottom' and end_edge == 'top':
-            if start_edge.y() < end_edge.y():
-                return False
-            else:
-                return True
+            return self.start_approach_point.y() > self.end_approach_point.y()
         return False
 
     def _calculate_simple_l_path(self) -> List[QPointF]:
@@ -199,9 +211,8 @@ class WirePath:
 
     def get_closest_side_top_or_bottom(
         self, start_point: QPointF, end_point: QRectF
-    ) -> str:
-        """Get the closest side of the end component to the start point"""
-        print('get closest side top or bottom', end_point.top(), end_point.bottom())
+    ) -> float:
+        """Get the closest side (Y) of the end component to the start point"""
         end_top_distance = abs(start_point.y() - end_point.top())
         end_bottom_distance = abs(start_point.y() - end_point.bottom())
         if end_top_distance <= end_bottom_distance:
@@ -211,9 +222,8 @@ class WirePath:
 
     def get_closest_side_left_or_right(
         self, start_point: QPointF, end_point: QRectF
-    ) -> str:
-        """Get the closest side of the end component to the start point"""
-        print('get closest side left or right', end_point.left(), end_point.right())
+    ) -> float:
+        """Get the closest side (X) of the end component to the start point"""
         end_left_distance = abs(start_point.x() - end_point.left())
         end_right_distance = abs(start_point.x() - end_point.right())
         if end_left_distance <= end_right_distance:
@@ -415,16 +425,219 @@ class WirePath:
             intersecting_components = self._find_intersecting_components(segment_line)
 
             if intersecting_components:
-                # Create detour around intersecting components
+                # Create detour around intersecting components (intermediate points only)
                 detour_points = self._create_orthogonal_detour(
                     start_point, end_point, intersecting_components
                 )
-                new_path_points.extend(detour_points)
+                for p in detour_points:
+                    if new_path_points[-1] != p:
+                        new_path_points.append(p)
+                if new_path_points[-1] != end_point:
+                    new_path_points.append(end_point)
             else:
                 # No intersections - add the end point directly
-                new_path_points.append(end_point)
+                if new_path_points[-1] != end_point:
+                    new_path_points.append(end_point)
 
         return new_path_points
+
+    # ---------------------- Jog calculation helpers ----------------------
+
+    def _compute_jogs_for_path(self, points: List[QPointF]):
+        """Populate jog maps based on overlaps found along the given polyline."""
+        self._update_jogs_for_points(points)
+
+    def _update_jogs_for_points(self, points: List[QPointF]):
+        """Inspect consecutive points and populate jog maps for any colinear overlaps found so far.
+
+        We only collect jog distances here; we do not mutate points yet. Jog distances are
+        keyed by the exact Y (for horizontal segments) or X (for vertical segments). All
+        segments sharing the same coordinate will receive the same offset during apply phase.
+        """
+        if not self.scene or not points or len(points) < 2:
+            return
+
+        for i in range(len(points) - 1):
+            a = points[i]
+            b = points[i + 1]
+            is_horizontal = abs(b.y() - a.y()) < 1.0
+            is_vertical = abs(b.x() - a.x()) < 1.0
+
+            if not (is_horizontal or is_vertical):
+                continue
+
+            rect = self._segment_bounding_rect_points(a, b, 1.0)
+            if rect is None:
+                continue
+
+            candidates = self.scene.items(rect)
+            for item in candidates:
+                if not hasattr(item, 'wire_path') or not getattr(item, 'wire_path'):
+                    continue
+                # Skip if same connection
+                if hasattr(item, 'start_pin') and hasattr(item, 'end_pin'):
+                    if item.start_pin is self.start_pin and item.end_pin is self.end_pin:
+                        continue
+                other_segments = item.wire_path.get_segments() if hasattr(item.wire_path, 'get_segments') else []
+                for (o_s, o_e) in other_segments:
+                    if self._segments_colinear_and_overlapping_points(a, b, o_s, o_e, 1.0):
+                        # Determine lane index relative to same-edge pins to pick a stable jog distance
+                        if is_horizontal:
+                            y = a.y()
+                            if y not in self._h_jogs_by_y:
+                                self._h_jogs_by_y[y] = self._compute_lane_offset_for_edge(axis='y')
+                        else:
+                            x = a.x()
+                            if x not in self._v_jogs_by_x:
+                                self._v_jogs_by_x[x] = self._compute_lane_offset_for_edge(axis='x')
+                        break
+
+    def _compute_lane_offset_for_edge(self, axis: str) -> float:
+        """Compute a stable lane offset based on pin order on the respective edges.
+
+        axis='y' is for horizontal segments (shift in Y). axis='x' for vertical segments (shift in X).
+        """
+        # Determine pin ordering on start/end edges to map to a lane index
+        def lane_index(pin) -> float:
+            try:
+                component = getattr(pin, 'parent_component', None)
+                if not component or not hasattr(component, 'pins'):
+                    return 0.0
+                same = [p for p in component.pins if getattr(p, 'edge', None) == getattr(pin, 'edge', None)]
+                if not same:
+                    return 0.0
+                if pin.edge in ('left', 'right'):
+                    same.sort(key=lambda p: p.scenePos().y())
+                else:
+                    same.sort(key=lambda p: p.scenePos().x())
+                idx = same.index(pin)
+                center = (len(same) - 1) / 2.0
+                return idx - center
+            except Exception:
+                return 0.0
+
+        idx_start = lane_index(self.start_pin)
+        idx_end = lane_index(self.end_pin)
+        lane = idx_start if abs(idx_start) >= abs(idx_end) else idx_end
+        offset = lane * self._lane_spacing
+        # For axis direction, simply return signed offset
+        return offset
+
+    def _apply_jogs_to_path(self, points: List[QPointF]) -> List[QPointF]:
+        """Apply precomputed jogs to all points, keeping approach legs orthogonal to pins.
+
+        - Start and end approach points themselves are NOT shifted.
+        - We insert transitional orthogonal steps right after the start approach, and
+          right before the end approach, to move onto/off the shifted track.
+        - All interior points between approach points are shifted uniformly.
+        """
+        if not points or len(points) < 2:
+            return points
+
+        start_edge = getattr(self.start_pin, 'edge', 'left') or 'left'
+        end_edge = getattr(self.end_pin, 'edge', 'right') or 'right'
+
+        start_p = points[0]
+        end_p = points[-1]
+
+        # Compute offsets for the two approach points (if any)
+        dx_start = self._v_jogs_by_x.get(start_p.x(), 0.0)
+        dy_start = self._h_jogs_by_y.get(start_p.y(), 0.0)
+        dx_end = self._v_jogs_by_x.get(end_p.x(), 0.0)
+        dy_end = self._h_jogs_by_y.get(end_p.y(), 0.0)
+
+        adjusted: List[QPointF] = []
+        # Keep start approach unchanged
+        adjusted.append(start_p)
+
+        # Insert transition right after start approach to reach shifted track
+        if dx_start != 0.0 or dy_start != 0.0:
+            if start_edge in ('left', 'right'):
+                # First segment from pin is horizontal; perform horizontal then vertical
+                if dx_start != 0.0:
+                    adjusted.append(QPointF(start_p.x() + dx_start, start_p.y()))
+                if dy_start != 0.0:
+                    adjusted.append(QPointF(start_p.x() + dx_start, start_p.y() + dy_start))
+            else:
+                # First segment from pin is vertical; perform vertical then horizontal
+                if dy_start != 0.0:
+                    adjusted.append(QPointF(start_p.x(), start_p.y() + dy_start))
+                if dx_start != 0.0:
+                    adjusted.append(QPointF(start_p.x() + dx_start, start_p.y() + dy_start))
+
+        # Shift interior points
+        for i in range(1, len(points) - 1):
+            p = points[i]
+            dx = self._v_jogs_by_x.get(p.x(), 0.0)
+            dy = self._h_jogs_by_y.get(p.y(), 0.0)
+            adjusted.append(QPointF(p.x() + dx, p.y() + dy))
+
+        # Insert transition before end approach to return from shifted track
+        if dx_end != 0.0 or dy_end != 0.0:
+            if end_edge in ('left', 'right'):
+                # Last leg to pin is horizontal; come vertical then horizontal
+                if dy_end != 0.0:
+                    adjusted.append(QPointF(end_p.x() + dx_end, end_p.y() + dy_end))
+                if dx_end != 0.0:
+                    adjusted.append(QPointF(end_p.x() + dx_end, end_p.y()))
+            else:
+                # Last leg to pin is vertical; come horizontal then vertical
+                if dx_end != 0.0:
+                    adjusted.append(QPointF(end_p.x() + dx_end, end_p.y() + dy_end))
+                if dy_end != 0.0:
+                    adjusted.append(QPointF(end_p.x(), end_p.y() + dy_end))
+
+        # Keep end approach unchanged
+        adjusted.append(end_p)
+        return adjusted
+
+    def _segment_bounding_rect_points(self, p1: QPointF, p2: QPointF, tol: float) -> Optional[QRectF]:
+        """Create a thin rectangle around a segment (defined by two points) for spatial querying."""
+        x1, y1 = p1.x(), p1.y()
+        x2, y2 = p2.x(), p2.y()
+        if abs(y1 - y2) < 1e-6:
+            left = min(x1, x2)
+            right = max(x1, x2)
+            top = min(y1, y2) - tol
+            bottom = max(y1, y2) + tol
+            return QRectF(left, top, max(1.0, right - left), max(1.0, bottom - top))
+        if abs(x1 - x2) < 1e-6:
+            left = min(x1, x2) - tol
+            right = max(x1, x2) + tol
+            top = min(y1, y2)
+            bottom = max(y1, y2)
+            return QRectF(left, top, max(1.0, right - left), max(1.0, bottom - top))
+        left = min(x1, x2) - tol
+        right = max(x1, x2) + tol
+        top = min(y1, y2) - tol
+        bottom = max(y1, y2) + tol
+        return QRectF(left, top, max(1.0, right - left), max(1.0, bottom - top))
+
+    def _segments_overlap_1d_vals(self, a1: float, a2: float, b1: float, b2: float, tol: float = 1.0) -> Optional[Tuple[float, float]]:
+        """Return 1D overlap interval [max(mins), min(maxs)] if any, else None."""
+        min_a, max_a = (a1, a2) if a1 <= a2 else (a2, a1)
+        min_b, max_b = (b1, b2) if b1 <= b2 else (b2, b1)
+        start = max(min_a, min_b)
+        end = min(max_a, max_b)
+        if end + tol >= start:
+            return (start, end)
+        return None
+
+    def _segments_colinear_and_overlapping_points(self, a1: QPointF, a2: QPointF, b1: QPointF, b2: QPointF, tol: float = 1.0) -> Optional[Tuple[QPointF, QPointF]]:
+        """If two axis-aligned segments are colinear and overlapping, return the overlap segment endpoints."""
+        # Horizontal?
+        if abs(a1.y() - a2.y()) < tol and abs(b1.y() - b2.y()) < tol and abs(a1.y() - b1.y()) < tol and abs(a2.y() - b2.y()) < tol:
+            ov = self._segments_overlap_1d_vals(a1.x(), a2.x(), b1.x(), b2.x(), tol)
+            if ov:
+                y = (a1.y() + a2.y()) / 2.0
+                return (QPointF(ov[0], y), QPointF(ov[1], y))
+        # Vertical?
+        if abs(a1.x() - a2.x()) < tol and abs(b1.x() - b2.x()) < tol and abs(a1.x() - b1.x()) < tol and abs(a2.x() - b2.x()) < tol:
+            ov = self._segments_overlap_1d_vals(a1.y(), a2.y(), b1.y(), b2.y(), tol)
+            if ov:
+                x = (a1.x() + a2.x()) / 2.0
+                return (QPointF(x, ov[0]), QPointF(x, ov[1]))
+        return None
 
     def _find_intersecting_components(self, line: QLineF) -> List[QGraphicsItem]:
         """Find components that intersect the given line"""
@@ -473,7 +686,8 @@ class WirePath:
             if intersection_point:
                 detour_points += self._get_detour_points(start_point, end_point, component_rect, intersection_point)
 
-        return [start_point] + detour_points + [end_point]
+        # Return only intermediate detour points; caller handles start/end
+        return detour_points
 
     def _get_detour_points(self,
                          start_point: QPointF,
@@ -626,11 +840,12 @@ class WirePath:
 
     def update_endpoints(self, start_point: QPointF, end_point: QPointF):
         """Update start and end points and recalculate path"""
-        self.start_approach_point = start_point
-        self.end_approach_point = end_point
+        self.start_point = start_point
+        self.end_point = end_point
+        self.get_start_and_end_approach_points()
         self.segments.clear()
         self.intersection_bumps.clear()
-        self._calculate_detour_path()
+        self._calculate_orthogonal_path()
 
 
 class Wire(QGraphicsPathItem):
@@ -818,8 +1033,12 @@ class Wire(QGraphicsPathItem):
             return
 
         # Check each segment for collisions
-        new_segments = []
-        for segment_start, segment_end in self.wire_path.segments:
+        segments = self.wire_path.get_segments()
+        if not segments:
+            return
+
+        new_segments: List[Tuple[QPointF, QPointF]] = []
+        for segment_start, segment_end in segments:
             if self._segment_collides_with_components(
                 segment_start, segment_end, components
             ):
@@ -831,8 +1050,20 @@ class Wire(QGraphicsPathItem):
             else:
                 new_segments.append((segment_start, segment_end))
 
-        # Update wire path with new segments
-        self.wire_path.segments = new_segments
+        # Convert rerouted segments back to a list of points
+        rebuilt_points: List[QPointF] = []
+        if new_segments:
+            # Start with the first segment's start
+            rebuilt_points.append(new_segments[0][0])
+            for seg_start, seg_end in new_segments:
+                if not rebuilt_points[-1] == seg_start:
+                    rebuilt_points.append(seg_start)
+                if not rebuilt_points[-1] == seg_end:
+                    rebuilt_points.append(seg_end)
+
+        # Update wire path with rebuilt point list (maintains invariant: points list)
+        if rebuilt_points:
+            self.wire_path.segments = rebuilt_points
 
     def _segment_collides_with_components(
         self, start: QPointF, end: QPointF, components: list
@@ -986,8 +1217,8 @@ class Wire(QGraphicsPathItem):
         other_wire_angle = self._calculate_wire_angle_for_wire(other_wire)
 
         # Check each segment of this wire against each segment of the other wire
-        for i, (seg1_start, seg1_end) in enumerate(self.wire_path.segments):
-            for j, (seg2_start, seg2_end) in enumerate(other_wire.wire_path.segments):
+        for i, (seg1_start, seg1_end) in enumerate(self.wire_path.get_segments()):
+            for j, (seg2_start, seg2_end) in enumerate(other_wire.wire_path.get_segments()):
                 intersection = self._segment_intersection(
                     seg1_start, seg1_end, seg2_start, seg2_end
                 )
