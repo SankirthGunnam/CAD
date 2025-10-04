@@ -199,6 +199,165 @@ class FlatTreeItemModel(QAbstractItemModel):
         return parent.sibling(parent.row(), column)
 
 
+class RecordsTreeModel(QAbstractItemModel):
+    """Two-level tree over raw records (no id/parent in input), with stable internalIds.
+
+    Parents: one per record (column 0 shows a selected label field; column 1 shows a tag like "Device").
+    Children: all other fields except skip_keys.
+    """
+
+    def __init__(
+        self,
+        records: List[Dict],
+        parent_label_key: str,
+        parent_info_label: str = "Device",
+        parent=None,
+    ) -> None:
+        super().__init__(parent)
+        self._records: List[Dict] = list(records)
+        self._parent_label_key = parent_label_key
+        self._parent_info_label = parent_info_label
+        # id maps
+        self._parent_ids: List[int] = []             # row -> parent_id
+        self._parent_id_to_row: Dict[int, int] = {}  # parent_id -> row
+        self._child_ids_by_row: Dict[int, List[int]] = {}  # row -> [child_id]
+        self._child_id_to_info: Dict[int, Tuple[int, str]] = {}  # child_id -> (row, key)
+        self._rebuild_ids()
+
+    def _child_keys(self, rec: Dict) -> List[str]:
+        keys: List[str] = []
+        for k in rec.keys():
+            # exclude the field used for parent label to avoid duplication
+            if k == self._parent_label_key:
+                continue
+            keys.append(str(k))
+        return keys
+
+    def _rebuild_ids(self) -> None:
+        self._parent_ids.clear()
+        self._parent_id_to_row.clear()
+        self._child_ids_by_row.clear()
+        self._child_id_to_info.clear()
+        next_id = 1
+        for row, rec in enumerate(self._records):
+            pid = next_id
+            next_id += 1
+            self._parent_ids.append(pid)
+            self._parent_id_to_row[pid] = row
+            child_ids: List[int] = []
+            for key in self._child_keys(rec):
+                cid = next_id
+                next_id += 1
+                self._child_id_to_info[cid] = (row, key)
+                child_ids.append(cid)
+            self._child_ids_by_row[row] = child_ids
+
+    # Qt model API
+    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:  # type: ignore[override]
+        return 2
+
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # type: ignore[override]
+        if not parent.isValid():
+            return len(self._records)
+        pid = int(parent.internalId())
+        prow = self._parent_id_to_row.get(pid)
+        if prow is None:
+            return 0
+        return len(self._child_ids_by_row.get(prow, []))
+
+    def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:  # type: ignore[override]
+        if row < 0 or column < 0 or column >= self.columnCount():
+            return QModelIndex()
+        if not parent.isValid():
+            if 0 <= row < len(self._parent_ids):
+                return self.createIndex(row, column, self._parent_ids[row])
+            return QModelIndex()
+        pid = int(parent.internalId())
+        prow = self._parent_id_to_row.get(pid)
+        if prow is None:
+            return QModelIndex()
+        child_ids = self._child_ids_by_row.get(prow, [])
+        if 0 <= row < len(child_ids):
+            return self.createIndex(row, column, child_ids[row])
+        return QModelIndex()
+
+    def parent(self, index: QModelIndex) -> QModelIndex:  # type: ignore[override]
+        if not index.isValid():
+            return QModelIndex()
+        nid = int(index.internalId())
+        info = self._child_id_to_info.get(nid)
+        if info is None:
+            return QModelIndex()
+        prow, _ = info
+        pid = self._parent_ids[prow]
+        return self.createIndex(prow, 0, pid)
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):  # type: ignore[override]
+        if not index.isValid():
+            return None
+        nid = int(index.internalId())
+        if nid in self._parent_id_to_row:
+            rec = self._records[self._parent_id_to_row[nid]]
+            if role in (Qt.DisplayRole, Qt.EditRole):
+                if index.column() == 0:
+                    return str(rec.get(self._parent_label_key, ""))
+                if index.column() == 1:
+                    return self._parent_info_label
+            if role == Qt.FontRole and index.column() == 0:
+                f = QFont()
+                f.setBold(True)
+                return f
+            if role == Qt.ToolTipRole:
+                return f"Device: {rec.get(self._parent_label_key, '')}"
+            return None
+        info = self._child_id_to_info.get(nid)
+        if info is None:
+            return None
+        prow, key = info
+        rec = self._records[prow]
+        if role in (Qt.DisplayRole, Qt.EditRole):
+            if index.column() == 0:
+                return key
+            if index.column() == 1:
+                val = rec.get(key)
+                return "" if val is None else str(val)
+        if role == Qt.ToolTipRole:
+            if index.column() == 0:
+                return f"Property: {key}"
+            if index.column() == 1:
+                return f"Value: {rec.get(key)}"
+        return None
+
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):  # type: ignore[override]
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return "Property" if section == 0 else "Value"
+        return None
+
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags:  # type: ignore[override]
+        if not index.isValid():
+            return Qt.NoItemFlags
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
+    # Convenience ops compatible with views calling remove_subtree(node_id)
+    def remove_subtree(self, node_id: int) -> None:
+        self.beginResetModel()
+        if node_id in self._parent_id_to_row:
+            row = self._parent_id_to_row[node_id]
+            if 0 <= row < len(self._records):
+                del self._records[row]
+        else:
+            info = self._child_id_to_info.get(node_id)
+            if info is not None:
+                prow, key = info
+                try:
+                    if key in self._records[prow]:
+                        del self._records[prow][key]
+                except Exception:
+                    pass
+        self._rebuild_ids()
+        self.endResetModel()
+
+
 class DeviceSettingsModel(AbstractModel):
 
     @property
@@ -272,15 +431,21 @@ class DeviceSettingsModel(AbstractModel):
         )
         print(f"✓ Device Settings model initialized with gpio_devices_model: {self.gpio_devices_model}")
 
-        # Build tree models from RDB data
-        self.all_devices_tree_model = FlatTreeItemModel(
-            self._build_all_devices_tree_rows(), columns=[("Property", "label"), ("Value", "info")]
+        # Tree models directly over raw records (no id/parent keys required)
+        self.all_devices_tree_model = RecordsTreeModel(
+            self._iter_rows(self.rdb[paths.DCF_DEVICES]),
+            parent_label_key=TabsDeviceSettings.AllDevicesTable.DEVICE_NAME(),
+            parent_info_label="Device",
         )
-        self.mipi_devices_tree_model = FlatTreeItemModel(
-            self._build_mipi_devices_tree_rows(), columns=[("Property", "label"), ("Value", "info")]
+        self.mipi_devices_tree_model = RecordsTreeModel(
+            self._iter_rows(self.rdb[paths.BCF_DEV_MIPI(self.current_revision)]),
+            parent_label_key=TabsDeviceSettings.MipiDevicesTable.NAME(),
+            parent_info_label="Device",
         )
-        self.gpio_devices_tree_model = FlatTreeItemModel(
-            self._build_gpio_devices_tree_rows(), columns=[("Property", "label"), ("Value", "info")]
+        self.gpio_devices_tree_model = RecordsTreeModel(
+            self._iter_rows(self.rdb[paths.BCF_DEV_GPIO(self.current_revision)]),
+            parent_label_key=TabsDeviceSettings.GpioDevicesTable.NAME(),
+            parent_info_label="Device",
         )
 
     def refresh_from_data_model(self) -> bool:
@@ -291,14 +456,20 @@ class DeviceSettingsModel(AbstractModel):
             self.gpio_devices_model.layoutChanged.emit()
             print("✓ Device Settings tables refreshed from data model")
             # Rebuild tree models
-            self.all_devices_tree_model = FlatTreeItemModel(
-                self._build_all_devices_tree_rows(), columns=[("Property", "label"), ("Value", "info")]
+            self.all_devices_tree_model = RecordsTreeModel(
+                self._iter_rows(self.rdb[paths.DCF_DEVICES]),
+                parent_label_key=TabsDeviceSettings.AllDevicesTable.DEVICE_NAME(),
+                parent_info_label="Device",
             )
-            self.mipi_devices_tree_model = FlatTreeItemModel(
-                self._build_mipi_devices_tree_rows(), columns=[("Property", "label"), ("Value", "info")]
+            self.mipi_devices_tree_model = RecordsTreeModel(
+                self._iter_rows(self.rdb[paths.BCF_DEV_MIPI(self.current_revision)]),
+                parent_label_key=TabsDeviceSettings.MipiDevicesTable.NAME(),
+                parent_info_label="Device",
             )
-            self.gpio_devices_tree_model = FlatTreeItemModel(
-                self._build_gpio_devices_tree_rows(), columns=[("Property", "label"), ("Value", "info")]
+            self.gpio_devices_tree_model = RecordsTreeModel(
+                self._iter_rows(self.rdb[paths.BCF_DEV_GPIO(self.current_revision)]),
+                parent_label_key=TabsDeviceSettings.GpioDevicesTable.NAME(),
+                parent_info_label="Device",
             )
             return True
         except Exception as e:
@@ -315,50 +486,3 @@ class DeviceSettingsModel(AbstractModel):
         except Exception:
             pass
         return []
-
-    def _build_all_devices_tree_rows(self) -> List[Dict]:
-        rows: List[Dict] = []
-        data = self._iter_rows(self.rdb[paths.DCF_DEVICES])
-        next_id = 1
-        for record in data:
-            device_name = record.get(TabsDeviceSettings.AllDevicesTable.DEVICE_NAME(), "Device")
-            parent_id = next_id
-            rows.append({"id": parent_id, "parent_id": None, "label": device_name, "info": "Device"})
-            next_id += 1
-            child_base = parent_id * 100
-            for key, value in record.items():
-                if key == TabsDeviceSettings.AllDevicesTable.DEVICE_NAME():
-                    continue
-                rows.append({"id": child_base, "parent_id": parent_id, "label": str(key), "info": str(value)})
-                child_base += 1
-        return rows
-
-    def _build_mipi_devices_tree_rows(self) -> List[Dict]:
-        rows: List[Dict] = []
-        data = self._iter_rows(self.rdb[paths.BCF_DEV_MIPI(self.current_revision)])
-        next_id = 1
-        for record in data:
-            title = record.get(TabsDeviceSettings.MipiDevicesTable.NAME(), "MIPI Device")
-            parent_id = next_id
-            rows.append({"id": parent_id, "parent_id": None, "label": title, "info": "Device"})
-            next_id += 1
-            child_base = parent_id * 100
-            for key, value in record.items():
-                rows.append({"id": child_base, "parent_id": parent_id, "label": str(key), "info": str(value)})
-                child_base += 1
-        return rows
-
-    def _build_gpio_devices_tree_rows(self) -> List[Dict]:
-        rows: List[Dict] = []
-        data = self._iter_rows(self.rdb[paths.BCF_DEV_GPIO(self.current_revision)])
-        next_id = 1
-        for record in data:
-            title = record.get(TabsDeviceSettings.GpioDevicesTable.NAME(), "GPIO Device")
-            parent_id = next_id
-            rows.append({"id": parent_id, "parent_id": None, "label": title, "info": "Device"})
-            next_id += 1
-            child_base = parent_id * 100
-            for key, value in record.items():
-                rows.append({"id": child_base, "parent_id": parent_id, "label": str(key), "info": str(value)})
-                child_base += 1
-        return rows
