@@ -237,7 +237,7 @@ class FloatingToolbar(QWidget):
         self.save_scene_btn = QPushButton("💾", self)
         self.save_scene_btn.setToolTip("Save Scene")
         self.save_scene_btn.setFixedSize(30, 30)
-        self.save_scene_btn.clicked.connect(self.save_scene_requested.emit)
+        self.save_scene_btn.clicked.connect(self._on_save_scene)
         layout.addWidget(self.save_scene_btn)
 
         self.load_scene_btn = QPushButton("📂", self)
@@ -245,6 +245,15 @@ class FloatingToolbar(QWidget):
         self.load_scene_btn.setFixedSize(30, 30)
         self.load_scene_btn.clicked.connect(self.load_scene_requested.emit)
         layout.addWidget(self.load_scene_btn)
+
+    def _on_save_scene(self):
+        # Persist view scrollbars/zoom before emitting save
+        try:
+            if self.device_data_provider and hasattr(self.device_data_provider, 'save_view_state'):
+                self.device_data_provider.save_view_state()
+        except Exception:
+            pass
+        self.save_scene_requested.emit()
 
     def _apply_styling(self):
         """Apply custom styling to the toolbar"""
