@@ -257,3 +257,11 @@ class ComponentScene(QGraphicsScene):
         if hasattr(self, 'wire_thread_manager'):
             self.wire_thread_manager.cleanup()
             logger.info("Scene cleanup completed")
+
+    def get_component_at_position(self, position: QPointF) -> ComponentWithPins:
+        """Get the component at the specified position"""
+        items = self.items(position)
+        for item in items:
+            if isinstance(item, ComponentWithPins):
+                return item
+        return None
