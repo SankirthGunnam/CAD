@@ -1,0 +1,313 @@
+{
+  "revision": "1.0.0",
+  "dcf_devices": [
+    {
+      "ID": "1",
+      "Name": "RFIC",
+      "Control Type": "RFIC",
+      "Module": "RF_Frontend",
+      "Properties": {
+        "Frequency_Range": "2.4-6 GHz",
+        "Power_Consumption": "150mW",
+        "Package": "QFN-48"
+      }
+    },
+    {
+      "ID": "2", 
+      "Name": "FEM_2G4",
+      "Control Type": "FEM",
+      "Module": "RF_Frontend",
+      "Properties": {
+        "Frequency_Range": "2.4-2.5 GHz",
+        "Gain": "28 dB",
+        "Package": "LGA-16"
+      }
+    },
+    {
+      "ID": "3",
+      "Name": "FEM_5G",
+      "Control Type": "FEM", 
+      "Module": "RF_Frontend",
+      "Properties": {
+        "Frequency_Range": "5.1-5.9 GHz",
+        "Gain": "32 dB",
+        "Package": "LGA-20"
+      }
+    },
+    {
+      "ID": "4",
+      "Name": "LNA_2G4",
+      "Control Type": "LNA",
+      "Module": "RF_Frontend", 
+      "Properties": {
+        "Frequency_Range": "2.4-2.5 GHz",
+        "Noise_Figure": "0.8 dB",
+        "Package": "SOT-23"
+      }
+    },
+    {
+      "ID": "5",
+      "Name": "PAM_5G",
+      "Control Type": "PAM",
+      "Module": "RF_Frontend",
+      "Properties": {
+        "Frequency_Range": "5.1-5.9 GHz", 
+        "Output_Power": "23 dBm",
+        "Package": "QFN-24"
+      }
+    },
+    {
+      "ID": "6",
+      "Name": "Coupler_2G4",
+      "Control Type": "Coupler",
+      "Module": "RF_Frontend",
+      "Properties": {
+        "Frequency_Range": "2.4-2.5 GHz",
+        "Coupling": "10 dB",
+        "Package": "SOT-6"
+      }
+    },
+    {
+      "ID": "7",
+      "Name": "Antenna_2G4",
+      "Control Type": "Antenna",
+      "Module": "RF_Frontend",
+      "Properties": {
+        "Frequency_Range": "2.4-2.5 GHz",
+        "Gain": "2 dBi",
+        "Type": "PCB_Antenna"
+      }
+    },
+    {
+      "ID": "8",
+      "Name": "Antenna_5G",
+      "Control Type": "Antenna", 
+      "Module": "RF_Frontend",
+      "Properties": {
+        "Frequency_Range": "5.1-5.9 GHz",
+        "Gain": "3 dBi", 
+        "Type": "PCB_Antenna"
+      }
+    }
+  ],
+  "mipi_devices": [
+    {
+      "ID": "1",
+      "Name": "RFIC",
+      "DCF": "DCF_001",
+      "USID": "USID_RFIC",
+      "Module": "RF_Frontend",
+      "MIPI Type": "RFFE",
+      "MIPI Channel": "Channel_0",
+      "Default USID": "0x11",
+      "User USID": "0x11",
+      "PID": "PID_RFIC",
+      "EXT PID": "EXT_RFIC",
+      "Properties": {
+        "Frequency_Range": "2.4-6 GHz",
+        "Power_Consumption": "150mW"
+      }
+    },
+    {
+      "ID": "2",
+      "Name": "FEM_2G4", 
+      "DCF": "DCF_002",
+      "USID": "USID_FEM2G4",
+      "Module": "RF_Frontend",
+      "MIPI Type": "RFFE",
+      "MIPI Channel": "Channel_1",
+      "Default USID": "0x12",
+      "User USID": "0x12",
+      "PID": "PID_FEM2G4",
+      "EXT PID": "EXT_FEM2G4",
+      "Properties": {
+        "Frequency_Range": "2.4-2.5 GHz",
+        "Gain": "28 dB"
+      }
+    },
+    {
+      "ID": "3",
+      "Name": "FEM_5G",
+      "DCF": "DCF_003", 
+      "USID": "USID_FEM5G",
+      "Module": "RF_Frontend",
+      "MIPI Type": "RFFE",
+      "MIPI Channel": "Channel_2",
+      "Default USID": "0x13",
+      "User USID": "0x13",
+      "PID": "PID_FEM5G",
+      "EXT PID": "EXT_FEM5G",
+      "Properties": {
+        "Frequency_Range": "5.1-5.9 GHz",
+        "Gain": "32 dB"
+      }
+    }
+  ],
+  "gpio_devices": [
+    {
+      "ID": "6",
+      "Name": "LNA_2G4",
+      "DCF": "DCF_004",
+      "Control Type": "LNA",
+      "Board": "Main_Board",
+      "Properties": {
+        "Frequency_Range": "2.4-2.5 GHz",
+        "Noise_Figure": "0.8 dB"
+      }
+    },
+    {
+      "ID": "7",
+      "Name": "PAM_5G",
+      "DCF": "DCF_005",
+      "Control Type": "PAM",
+      "Board": "Main_Board",
+      "Properties": {
+        "Frequency_Range": "5.1-5.9 GHz",
+        "Output_Power": "23 dBm"
+      }
+    },
+    {
+      "ID": "8",
+      "Name": "Coupler_2G4",
+      "DCF": "DCF_006",
+      "Control Type": "Coupler",
+      "Board": "Main_Board",
+      "Properties": {
+        "Frequency_Range": "2.4-2.5 GHz",
+        "Coupling": "10 dB"
+      }
+    },
+    {
+      "ID": "9",
+      "Name": "Antenna_2G4",
+      "DCF": "DCF_007",
+      "Control Type": "Antenna",
+      "Board": "Main_Board",
+      "Properties": {
+        "Frequency_Range": "2.4-2.5 GHz",
+        "Gain": "2 dBi"
+      }
+    },
+    {
+      "ID": "10",
+      "Name": "Antenna_5G",
+      "DCF": "DCF_008",
+      "Control Type": "Antenna",
+      "Board": "Main_Board",
+      "Properties": {
+        "Frequency_Range": "5.1-5.9 GHz",
+        "Gain": "3 dBi"
+      }
+    }
+  ],
+  "io_connections": [
+    {
+      "Connection ID": "1",
+      "Source Device": "RFIC",
+      "Source Pin": "RFFE_CLK",
+      "Source Sub Block": "RFFE_MASTER",
+      "Dest Device": "FEM_2G4",
+      "Dest Pin": "RFFE_CLK",
+      "Dest Sub Block": "RFFE_SLAVE"
+    },
+    {
+      "Connection ID": "2", 
+      "Source Device": "RFIC",
+      "Source Pin": "RFFE_DATA",
+      "Source Sub Block": "RFFE_MASTER",
+      "Dest Device": "FEM_2G4",
+      "Dest Pin": "RFFE_DATA",
+      "Dest Sub Block": "RFFE_SLAVE"
+    },
+    {
+      "Connection ID": "3",
+      "Source Device": "RFIC",
+      "Source Pin": "RFFE_CLK",
+      "Source Sub Block": "RFFE_MASTER", 
+      "Dest Device": "FEM_5G",
+      "Dest Pin": "RFFE_CLK",
+      "Dest Sub Block": "RFFE_SLAVE"
+    },
+    {
+      "Connection ID": "4",
+      "Source Device": "RFIC",
+      "Source Pin": "RFFE_DATA",
+      "Source Sub Block": "RFFE_MASTER",
+      "Dest Device": "FEM_5G", 
+      "Dest Pin": "RFFE_DATA",
+      "Dest Sub Block": "RFFE_SLAVE"
+    },
+    {
+      "Connection ID": "5",
+      "Source Device": "RFIC",
+      "Source Pin": "RF_TX_2G4",
+      "Source Sub Block": "TX_PATH",
+      "Dest Device": "FEM_2G4",
+      "Dest Pin": "RF_IN",
+      "Dest Sub Block": "INPUT"
+    },
+    {
+      "Connection ID": "6",
+      "Source Device": "RFIC",
+      "Source Pin": "RF_TX_5G",
+      "Source Sub Block": "TX_PATH",
+      "Dest Device": "FEM_5G",
+      "Dest Pin": "RF_IN",
+      "Dest Sub Block": "INPUT"
+    },
+    {
+      "Connection ID": "7",
+      "Source Device": "FEM_2G4",
+      "Source Pin": "RF_OUT",
+      "Source Sub Block": "OUTPUT",
+      "Dest Device": "Antenna_2G4",
+      "Dest Pin": "RF_IN",
+      "Dest Sub Block": "INPUT"
+    },
+    {
+      "Connection ID": "8",
+      "Source Device": "FEM_5G",
+      "Source Pin": "RF_OUT",
+      "Source Sub Block": "OUTPUT",
+      "Dest Device": "Antenna_5G",
+      "Dest Pin": "RF_IN",
+      "Dest Sub Block": "INPUT"
+    },
+    {
+      "Connection ID": "9",
+      "Source Device": "Antenna_2G4",
+      "Source Pin": "RF_OUT",
+      "Source Sub Block": "OUTPUT",
+      "Dest Device": "LNA_2G4",
+      "Dest Pin": "RF_IN",
+      "Dest Sub Block": "INPUT"
+    },
+    {
+      "Connection ID": "10",
+      "Source Device": "LNA_2G4",
+      "Source Pin": "RF_OUT",
+      "Source Sub Block": "OUTPUT",
+      "Dest Device": "RFIC",
+      "Dest Pin": "RF_RX_2G4",
+      "Dest Sub Block": "RX_PATH"
+    },
+    {
+      "Connection ID": "11",
+      "Source Device": "Coupler_2G4",
+      "Source Pin": "COUPLED_OUT",
+      "Source Sub Block": "COUPLER",
+      "Dest Device": "RFIC",
+      "Dest Pin": "RF_FB_2G4",
+      "Dest Sub Block": "FEEDBACK"
+    },
+    {
+      "Connection ID": "12",
+      "Source Device": "FEM_2G4",
+      "Source Pin": "RF_OUT",
+      "Source Sub Block": "OUTPUT",
+      "Dest Device": "Coupler_2G4",
+      "Dest Pin": "RF_IN",
+      "Dest Sub Block": "INPUT"
+    }
+  ]
+}

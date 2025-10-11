@@ -1,0 +1,342 @@
+{
+  "components": {
+    "RFIC": {
+    "name": "RFIC",
+    "type": "rfic",
+    "width": 80,
+    "height": 60,
+    "color": "#4A90E2",
+    "pins": [
+      {
+        "pin_id": "RFFE_CLK",
+        "pin_name": "RFFE_CLK",
+        "side": "left",
+        "position": 0.2,
+        "type": "digital"
+      },
+      {
+        "pin_id": "RFFE_DATA", 
+        "pin_name": "RFFE_DATA",
+        "side": "left",
+        "position": 0.4,
+        "type": "digital"
+      },
+      {
+        "pin_id": "RF_TX_2G4",
+        "pin_name": "RF_TX_2G4",
+        "side": "right",
+        "position": 0.2,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_TX_5G",
+        "pin_name": "RF_TX_5G", 
+        "side": "right",
+        "position": 0.4,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_RX_2G4",
+        "pin_name": "RF_RX_2G4",
+        "side": "right",
+        "position": 0.6,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_FB_2G4",
+        "pin_name": "RF_FB_2G4",
+        "side": "left",
+        "position": 0.6,
+        "type": "rf"
+      },
+      {
+        "pin_id": "VCC",
+        "pin_name": "VCC",
+        "side": "top",
+        "position": 0.5,
+        "type": "power"
+      },
+      {
+        "pin_id": "GND",
+        "pin_name": "GND",
+        "side": "bottom",
+        "position": 0.5,
+        "type": "ground"
+      }
+    ]
+  },
+  "FEM_2G4": {
+    "name": "FEM_2G4",
+    "type": "fem",
+    "width": 70,
+    "height": 50,
+    "color": "#7ED321",
+    "pins": [
+      {
+        "pin_id": "RFFE_CLK",
+        "pin_name": "RFFE_CLK",
+        "side": "left",
+        "position": 0.2,
+        "type": "digital"
+      },
+      {
+        "pin_id": "RFFE_DATA",
+        "pin_name": "RFFE_DATA",
+        "side": "left",
+        "position": 0.4,
+        "type": "digital"
+      },
+      {
+        "pin_id": "RF_IN",
+        "pin_name": "RF_IN",
+        "side": "left",
+        "position": 0.6,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_OUT",
+        "pin_name": "RF_OUT",
+        "side": "right",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "VCC",
+        "pin_name": "VCC",
+        "side": "top",
+        "position": 0.5,
+        "type": "power"
+      },
+      {
+        "pin_id": "GND",
+        "pin_name": "GND",
+        "side": "bottom",
+        "position": 0.5,
+        "type": "ground"
+      }
+    ]
+  },
+  "FEM_5G": {
+    "name": "FEM_5G",
+    "type": "fem",
+    "width": 70,
+    "height": 50,
+    "color": "#7ED321",
+    "pins": [
+      {
+        "pin_id": "RFFE_CLK",
+        "pin_name": "RFFE_CLK",
+        "side": "left",
+        "position": 0.2,
+        "type": "digital"
+      },
+      {
+        "pin_id": "RFFE_DATA",
+        "pin_name": "RFFE_DATA",
+        "side": "left",
+        "position": 0.4,
+        "type": "digital"
+      },
+      {
+        "pin_id": "RF_IN",
+        "pin_name": "RF_IN",
+        "side": "left",
+        "position": 0.6,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_OUT",
+        "pin_name": "RF_OUT",
+        "side": "right",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "VCC",
+        "pin_name": "VCC",
+        "side": "top",
+        "position": 0.5,
+        "type": "power"
+      },
+      {
+        "pin_id": "GND",
+        "pin_name": "GND",
+        "side": "bottom",
+        "position": 0.5,
+        "type": "ground"
+      }
+    ]
+  },
+  "LNA_2G4": {
+    "name": "LNA_2G4",
+    "type": "lna",
+    "width": 60,
+    "height": 40,
+    "color": "#F5A623",
+    "pins": [
+      {
+        "pin_id": "RF_IN",
+        "pin_name": "RF_IN",
+        "side": "left",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_OUT",
+        "pin_name": "RF_OUT",
+        "side": "right",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "VCC",
+        "pin_name": "VCC",
+        "side": "top",
+        "position": 0.5,
+        "type": "power"
+      },
+      {
+        "pin_id": "GND",
+        "pin_name": "GND",
+        "side": "bottom",
+        "position": 0.5,
+        "type": "ground"
+      }
+    ]
+  },
+  "PAM_5G": {
+    "name": "PAM_5G",
+    "type": "pam",
+    "width": 60,
+    "height": 40,
+    "color": "#D0021B",
+    "pins": [
+      {
+        "pin_id": "RF_IN",
+        "pin_name": "RF_IN",
+        "side": "left",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_OUT",
+        "pin_name": "RF_OUT",
+        "side": "right",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "VCC",
+        "pin_name": "VCC",
+        "side": "top",
+        "position": 0.5,
+        "type": "power"
+      },
+      {
+        "pin_id": "GND",
+        "pin_name": "GND",
+        "side": "bottom",
+        "position": 0.5,
+        "type": "ground"
+      }
+    ]
+  },
+  "Coupler_2G4": {
+    "name": "Coupler_2G4",
+    "type": "coupler",
+    "width": 50,
+    "height": 30,
+    "color": "#9013FE",
+    "pins": [
+      {
+        "pin_id": "RF_IN",
+        "pin_name": "RF_IN",
+        "side": "left",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_OUT",
+        "pin_name": "RF_OUT",
+        "side": "right",
+        "position": 0.3,
+        "type": "rf"
+      },
+      {
+        "pin_id": "COUPLED_OUT",
+        "pin_name": "COUPLED_OUT",
+        "side": "right",
+        "position": 0.7,
+        "type": "rf"
+      },
+      {
+        "pin_id": "GND",
+        "pin_name": "GND",
+        "side": "bottom",
+        "position": 0.5,
+        "type": "ground"
+      }
+    ]
+  },
+  "Antenna_2G4": {
+    "name": "Antenna_2G4",
+    "type": "antenna",
+    "width": 40,
+    "height": 60,
+    "color": "#50E3C2",
+    "pins": [
+      {
+        "pin_id": "RF_IN",
+        "pin_name": "RF_IN",
+        "side": "bottom",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_OUT",
+        "pin_name": "RF_OUT",
+        "side": "top",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "GND",
+        "pin_name": "GND",
+        "side": "left",
+        "position": 0.5,
+        "type": "ground"
+      }
+    ]
+  },
+  "Antenna_5G": {
+    "name": "Antenna_5G",
+    "type": "antenna",
+    "width": 40,
+    "height": 60,
+    "color": "#50E3C2",
+    "pins": [
+      {
+        "pin_id": "RF_IN",
+        "pin_name": "RF_IN",
+        "side": "bottom",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "RF_OUT",
+        "pin_name": "RF_OUT",
+        "side": "top",
+        "position": 0.5,
+        "type": "rf"
+      },
+      {
+        "pin_id": "GND",
+        "pin_name": "GND",
+        "side": "left",
+        "position": 0.5,
+        "type": "ground"
+      }
+    ]
+  }
+  }
+}

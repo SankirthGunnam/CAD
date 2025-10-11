@@ -1,0 +1,1217 @@
+{
+  "config": {
+    "device": {
+      "settings": [
+        {
+          "name": "Chip_temp",
+          "function_type": "CHIP",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "CHIP001"
+          }
+        }
+      ],
+      "properties": {}
+    },
+    "band": {
+      "settings": [],
+      "properties": {}
+    },
+    "board": {
+      "settings": [],
+      "properties": {}
+    },
+    "rcc": {
+      "settings": [],
+      "properties": {}
+    },
+    "visual_bcf": {
+      "components": [
+        {
+          "id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
+          "name": "Chip_temp",
+          "component_type": "chip",
+          "function_type": "generic",
+          "properties": {
+            "function_type": "generic",
+            "interface_type": "GPIO"
+          },
+          "visual_properties": {
+            "position": {
+              "x": -253.3598693076721,
+              "y": 146.69772227603949
+            },
+            "size": {
+              "width": 80,
+              "height": 60
+            },
+            "rotation": 0
+          },
+          "pins": [
+            "IN1",
+            "IN2",
+            "OUT",
+            "VCC",
+            "GND"
+          ],
+          "interface_type": "GPIO",
+          "interface": {},
+          "config": {},
+          "usid": "858c4962",
+          "mid_msb": "00",
+          "mid_lsb": "01",
+          "pid": "0000",
+          "ext_pid": "0000",
+          "rev_id": "1.0",
+          "dcf_type": "Standard"
+        },
+        {
+          "id": "d554e28d-0b9e-4125-bdc4-c5658e860d11",
+          "name": "Resistor_temp",
+          "component_type": "resistor",
+          "function_type": "",
+          "properties": {},
+          "visual_properties": {
+            "position": {
+              "x": -73.6240257860714,
+              "y": -158.84285719390653
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "interface_type": "",
+          "interface": {},
+          "config": {},
+          "usid": "d554e28d",
+          "mid_msb": "00",
+          "mid_lsb": "01",
+          "pid": "0000",
+          "ext_pid": "0000",
+          "rev_id": "1.0",
+          "dcf_type": "Standard"
+        },
+        {
+          "id": "21773c7e-9afb-4c15-8e88-b26933cbe2a7",
+          "name": "Capacitor_temp",
+          "component_type": "capacitor",
+          "function_type": "",
+          "properties": {},
+          "visual_properties": {
+            "position": {
+              "x": 30.151767287939947,
+              "y": 31.896083303679575
+            },
+            "size": {
+              "width": 100,
+              "height": 80
+            },
+            "rotation": 0
+          },
+          "pins": [],
+          "interface_type": "",
+          "interface": {},
+          "config": {},
+          "usid": "21773c7e",
+          "mid_msb": "00",
+          "mid_lsb": "01",
+          "pid": "0000",
+          "ext_pid": "0000",
+          "rev_id": "1.0",
+          "dcf_type": "Standard"
+        },
+        {
+          "id": "906ed2e7-a48a-4e80-af2a-4d6ff6f6e792",
+          "name": "Chip_temp",
+          "component_type": "chip",
+          "function_type": "generic",
+          "properties": {
+            "function_type": "generic",
+            "interface_type": "GPIO"
+          },
+          "visual_properties": {
+            "position": {
+              "x": -349.0,
+              "y": -133.0
+            },
+            "size": {
+              "width": 80,
+              "height": 60
+            },
+            "rotation": 0
+          },
+          "pins": [
+            "IN1",
+            "IN2",
+            "OUT",
+            "VCC",
+            "GND"
+          ],
+          "interface_type": "GPIO",
+          "interface": {},
+          "config": {},
+          "usid": "906ed2e7",
+          "mid_msb": "00",
+          "mid_lsb": "01",
+          "pid": "0000",
+          "ext_pid": "0000",
+          "rev_id": "1.0",
+          "dcf_type": "Standard"
+        }
+      ],
+      "connections": [
+        {
+          "id": "b34e8673-80ac-4933-bbfd-bb8cbdcfa55a",
+          "from_component_id": "906ed2e7-a48a-4e80-af2a-4d6ff6f6e792",
+          "from_pin_id": "B1",
+          "to_component_id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
+          "to_pin_id": "T1",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "source_device": "Chip_temp",
+          "source_pin": "B1",
+          "dest_device": "Chip_temp",
+          "dest_pin": "T1",
+          "source_sub_block": "Main Block",
+          "dest_sub_block": "Main Block",
+          "status": "Active"
+        },
+        {
+          "id": "162e49d5-c095-4fb4-82eb-0d3ebbf33092",
+          "from_component_id": "858c4962-9433-4f84-9ec5-57bbe05775d2",
+          "from_pin_id": "T6",
+          "to_component_id": "906ed2e7-a48a-4e80-af2a-4d6ff6f6e792",
+          "to_pin_id": "T6",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "source_device": "Chip_temp",
+          "source_pin": "T6",
+          "dest_device": "Chip_temp",
+          "dest_pin": "T6",
+          "source_sub_block": "Main Block",
+          "dest_sub_block": "Main Block",
+          "status": "Active"
+        },
+        {
+          "id": "05b0aa5f-fbe9-44b4-af66-252a1f153e9b",
+          "from_component_id": "906ed2e7-a48a-4e80-af2a-4d6ff6f6e792",
+          "from_pin_id": "R2",
+          "to_component_id": "d554e28d-0b9e-4125-bdc4-c5658e860d11",
+          "to_pin_id": "A",
+          "connection_type": "wire",
+          "properties": {},
+          "visual_properties": {
+            "path_points": [],
+            "line_style": "solid",
+            "color": "#000000"
+          },
+          "source_device": "Chip_temp",
+          "source_pin": "R2",
+          "dest_device": "Resistor_temp",
+          "dest_pin": "A",
+          "source_sub_block": "Main Block",
+          "dest_sub_block": "Main Block",
+          "status": "Active"
+        }
+      ],
+      "layout": {
+        "scene_rect": {
+          "x": -1000,
+          "y": -1000,
+          "width": 2000,
+          "height": 2000
+        },
+        "grid_settings": {
+          "enabled": true,
+          "size": 20
+        }
+      },
+      "visual_properties": {
+        "1": {
+          "position": {
+            "x": -1578.3313988856596,
+            "y": -252.80815263545017
+          }
+        },
+        "18": {
+          "position": {
+            "x": 148.0,
+            "y": -251.0
+          }
+        },
+        "2": {
+          "position": {
+            "x": -1006.0141172437209,
+            "y": -166.3057651466973
+          }
+        },
+        "17": {
+          "position": {
+            "x": 297.0,
+            "y": -173.0
+          }
+        },
+        "16": {
+          "position": {
+            "x": -75.0,
+            "y": -128.0
+          }
+        },
+        "15": {
+          "position": {
+            "x": 231.0,
+            "y": 36.0
+          }
+        },
+        "8": {
+          "position": {
+            "x": -440.3421394885848,
+            "y": 34.19601140114258
+          }
+        },
+        "14": {
+          "position": {
+            "x": 402.0,
+            "y": 136.0
+          }
+        },
+        "13": {
+          "position": {
+            "x": 296.0,
+            "y": -186.0
+          }
+        },
+        "12": {
+          "position": {
+            "x": 365.0,
+            "y": -14.0
+          }
+        },
+        "11": {
+          "position": {
+            "x": 201.0,
+            "y": -44.0
+          }
+        },
+        "7": {
+          "position": {
+            "x": -904.8113456414056,
+            "y": -545.294138747656
+          }
+        },
+        "10": {
+          "position": {
+            "x": -735.8562566101529,
+            "y": -158.20915074921837
+          }
+        },
+        "9": {
+          "position": {
+            "x": -574.2151146093734,
+            "y": -408.32368824999975
+          }
+        },
+        "6": {
+          "position": {
+            "x": -1538.430840625998,
+            "y": -538.834109972395
+          }
+        },
+        "5": {
+          "position": {
+            "x": 765.4224999999999,
+            "y": 82.54250000000002
+          }
+        },
+        "4": {
+          "position": {
+            "x": 114.08774999999991,
+            "y": -12.280749999999955
+          }
+        },
+        "3": {
+          "position": {
+            "x": -1178.9837646756039,
+            "y": -557.1136270688282
+          }
+        }
+      },
+      "view_state": {
+        "h_scroll": -1116,
+        "v_scroll": -441,
+        "zoom": 0.5578466012364796
+      }
+    },
+    "dcf": {
+      "devices": {
+        "devices": [
+          {
+            "Device Name": "Chip_temp",
+            "Control Type\n(MIPI / GPIO)": "GPIO",
+            "Module": "CHIP",
+            "USID\n(Default)": "981a5b9e",
+            "MID\n(MSB)": "00",
+            "MID\n(LSB)": "01",
+            "PID": "0000",
+            "EXT PID": "0000",
+            "REV ID": "1.0",
+            "DCF Type": "Standard"
+          },
+          {
+            "Device Name": "Resistor_temp",
+            "Control Type\n(MIPI / GPIO)": "GPIO",
+            "Module": "RESISTOR",
+            "USID\n(Default)": "58291af8",
+            "MID\n(MSB)": "00",
+            "MID\n(LSB)": "01",
+            "PID": "0000",
+            "EXT PID": "0000",
+            "REV ID": "1.0",
+            "DCF Type": "Standard"
+          },
+          {
+            "Device Name": "Capacitor_temp",
+            "Control Type\n(MIPI / GPIO)": "GPIO",
+            "Module": "CAPACITOR",
+            "USID\n(Default)": "6829ba0d",
+            "MID\n(MSB)": "00",
+            "MID\n(LSB)": "01",
+            "PID": "0000",
+            "EXT PID": "0000",
+            "REV ID": "1.0",
+            "DCF Type": "Standard"
+          }
+        ],
+        "mips": []
+      },
+      "dcf_devices": [
+        {
+          "ID": "1",
+          "Name": "RFIC",
+          "Control Type": "RFIC",
+          "Module": "RF_Frontend",
+          "Properties": {
+            "Frequency_Range": "2.4-6 GHz",
+            "Power_Consumption": "150mW",
+            "Package": "QFN-48"
+          }
+        },
+        {
+          "ID": "2",
+          "Name": "FEM_2G4",
+          "Control Type": "FEM",
+          "Module": "RF_Frontend",
+          "Properties": {
+            "Frequency_Range": "2.4-2.5 GHz",
+            "Gain": "28 dB",
+            "Package": "LGA-16"
+          }
+        },
+        {
+          "ID": "3",
+          "Name": "FEM_5G",
+          "Control Type": "FEM",
+          "Module": "RF_Frontend",
+          "Properties": {
+            "Frequency_Range": "5.1-5.9 GHz",
+            "Gain": "32 dB",
+            "Package": "LGA-20"
+          }
+        },
+        {
+          "ID": "4",
+          "Name": "LNA_2G4",
+          "Control Type": "LNA",
+          "Module": "RF_Frontend",
+          "Properties": {
+            "Frequency_Range": "2.4-2.5 GHz",
+            "Noise_Figure": "0.8 dB",
+            "Package": "SOT-23"
+          }
+        },
+        {
+          "ID": "5",
+          "Name": "PAM_5G",
+          "Control Type": "PAM",
+          "Module": "RF_Frontend",
+          "Properties": {
+            "Frequency_Range": "5.1-5.9 GHz",
+            "Output_Power": "23 dBm",
+            "Package": "QFN-24"
+          }
+        },
+        {
+          "ID": "6",
+          "Name": "Coupler_2G4",
+          "Control Type": "Coupler",
+          "Module": "RF_Frontend",
+          "Properties": {
+            "Frequency_Range": "2.4-2.5 GHz",
+            "Coupling": "10 dB",
+            "Package": "SOT-6"
+          }
+        },
+        {
+          "ID": "7",
+          "Name": "Antenna_2G4",
+          "Control Type": "Antenna",
+          "Module": "RF_Frontend",
+          "Properties": {
+            "Frequency_Range": "2.4-2.5 GHz",
+            "Gain": "2 dBi",
+            "Type": "PCB_Antenna"
+          }
+        },
+        {
+          "ID": "8",
+          "Name": "Antenna_5G",
+          "Control Type": "Antenna",
+          "Module": "RF_Frontend",
+          "Properties": {
+            "Frequency_Range": "5.1-5.9 GHz",
+            "Gain": "3 dBi",
+            "Type": "PCB_Antenna"
+          }
+        }
+      ]
+    },
+    "bcf": {
+      "bcf_db": {
+        "bcf_db_io_connect_enhanced": {
+          "io_connects": [
+            {
+              "Connection ID": "ffa59edf-329b-447d-bd54-af51216bfd19",
+              "Source Device": "Chip_temp",
+              "Source Pin": "R4",
+              "Source Sub Block": "Main Block",
+              "Dest Device": "Resistor_temp",
+              "Dest Pin": "A",
+              "Dest Sub Block": "Main Block",
+              "Connection Type": "Wire",
+              "Status": "Active"
+            },
+            {
+              "Connection ID": "7dbd1857-a3c5-4a8a-8b40-67f91aa16da5",
+              "Source Device": "Capacitor_temp",
+              "Source Pin": "POS",
+              "Source Sub Block": "Main Block",
+              "Dest Device": "Chip_temp",
+              "Dest Pin": "R6",
+              "Dest Sub Block": "Main Block",
+              "Connection Type": "Wire",
+              "Status": "Active"
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            },
+            {
+              "Connection ID": "",
+              "Source Device": "",
+              "Source Pin": "",
+              "Source Sub Block": "",
+              "Dest Device": "",
+              "Dest Pin": "",
+              "Dest Sub Block": "",
+              "Connection Type": "",
+              "Status": ""
+            }
+          ]
+        }
+      },
+      "1": {
+        "0": {
+          "0": {
+            "bcf_db": {
+              "all_devices": [
+                {
+                  "device_id": "1",
+                  "device_name": "Device 1",
+                  "control_type": "MIPI",
+                  "module": "Module 1"
+                }
+              ],
+              "mipi_devices": [
+                {
+                  "id": "1",
+                  "dcf": "DCF 1",
+                  "name": "Device 1",
+                  "usid": "USID 1",
+                  "module": "Module 1"
+                }
+              ],
+              "gpio_devices": [],
+              "io_connect": [
+                {
+                  "connection_id": "1",
+                  "source_device": "Device 1",
+                  "source_pin": "Pin 1",
+                  "source_sub_block": "Sub Block 1",
+                  "dest_device": "Device 2",
+                  "dest_pin": "Pin 2",
+                  "dest_sub_block": "Sub Block 2"
+                }
+              ],
+              "ant_types": [],
+              "dcf_for_bcf": [],
+              "dynamic_mipi_version": [],
+              "dynamic_ant_types": [],
+              "device_ant_types": [],
+              "device_selection": [],
+              "static_mipi_channels": [],
+              "bcf_config": {},
+              "bcf_db": {},
+              "bcf_db_ant": {},
+              "bcf_db_cpl": {},
+              "bcf_db_filter": {},
+              "bcf_db_ext_io": {},
+              "bcf_db_io_connect": {},
+              "bcf_dev_mipi": {},
+              "bcf_dev_gpio": {},
+              "bcf_db_io_conn": {}
+            },
+            "bcf_dev_mipi": [
+              {
+                "ID": "1",
+                "Name": "RFIC",
+                "DCF": "DCF_001",
+                "USID": "USID_RFIC",
+                "Module": "RF_Frontend",
+                "MIPI Type": "RFFE",
+                "MIPI Channel": "Channel_0",
+                "Default USID": "0x11",
+                "User USID": "0x11",
+                "PID": "PID_RFIC",
+                "EXT PID": "EXT_RFIC",
+                "Properties": {
+                  "Frequency_Range": "2.4-6 GHz",
+                  "Power_Consumption": "150mW"
+                }
+              },
+              {
+                "ID": "2",
+                "Name": "FEM_2G4",
+                "DCF": "DCF_002",
+                "USID": "USID_FEM2G4",
+                "Module": "RF_Frontend",
+                "MIPI Type": "RFFE",
+                "MIPI Channel": "Channel_1",
+                "Default USID": "0x12",
+                "User USID": "0x12",
+                "PID": "PID_FEM2G4",
+                "EXT PID": "EXT_FEM2G4",
+                "Properties": {
+                  "Frequency_Range": "2.4-2.5 GHz",
+                  "Gain": "28 dB"
+                }
+              },
+              {
+                "ID": "3",
+                "Name": "FEM_5G",
+                "DCF": "DCF_003",
+                "USID": "USID_FEM5G",
+                "Module": "RF_Frontend",
+                "MIPI Type": "RFFE",
+                "MIPI Channel": "Channel_2",
+                "Default USID": "0x13",
+                "User USID": "0x13",
+                "PID": "PID_FEM5G",
+                "EXT PID": "EXT_FEM5G",
+                "Properties": {
+                  "Frequency_Range": "5.1-5.9 GHz",
+                  "Gain": "32 dB"
+                }
+              }
+            ],
+            "bcf_dev_gpio": [
+              {
+                "ID": "6",
+                "Name": "LNA_2G4",
+                "DCF": "DCF_004",
+                "Control Type": "LNA",
+                "Board": "Main_Board",
+                "Properties": {
+                  "Frequency_Range": "2.4-2.5 GHz",
+                  "Noise_Figure": "0.8 dB"
+                }
+              },
+              {
+                "ID": "7",
+                "Name": "PAM_5G",
+                "DCF": "DCF_005",
+                "Control Type": "PAM",
+                "Board": "Main_Board",
+                "Properties": {
+                  "Frequency_Range": "5.1-5.9 GHz",
+                  "Output_Power": "23 dBm"
+                }
+              },
+              {
+                "ID": "8",
+                "Name": "Coupler_2G4",
+                "DCF": "DCF_006",
+                "Control Type": "Coupler",
+                "Board": "Main_Board",
+                "Properties": {
+                  "Frequency_Range": "2.4-2.5 GHz",
+                  "Coupling": "10 dB"
+                }
+              },
+              {
+                "ID": "9",
+                "Name": "Antenna_2G4",
+                "DCF": "DCF_007",
+                "Control Type": "Antenna",
+                "Board": "Main_Board",
+                "Properties": {
+                  "Frequency_Range": "2.4-2.5 GHz",
+                  "Gain": "2 dBi"
+                }
+              },
+              {
+                "ID": "10",
+                "Name": "Antenna_5G",
+                "DCF": "DCF_008",
+                "Control Type": "Antenna",
+                "Board": "Main_Board",
+                "Properties": {
+                  "Frequency_Range": "5.1-5.9 GHz",
+                  "Gain": "3 dBi"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "bcf_db_io_connect": [
+        {
+          "Connection ID": "1",
+          "Source Device": "RFIC",
+          "Source Pin": "RFFE_CLK",
+          "Source Sub Block": "RFFE_MASTER",
+          "Dest Device": "FEM_2G4",
+          "Dest Pin": "RFFE_CLK",
+          "Dest Sub Block": "RFFE_SLAVE"
+        },
+        {
+          "Connection ID": "2",
+          "Source Device": "RFIC",
+          "Source Pin": "RFFE_DATA",
+          "Source Sub Block": "RFFE_MASTER",
+          "Dest Device": "FEM_2G4",
+          "Dest Pin": "RFFE_DATA",
+          "Dest Sub Block": "RFFE_SLAVE"
+        },
+        {
+          "Connection ID": "3",
+          "Source Device": "RFIC",
+          "Source Pin": "RFFE_CLK",
+          "Source Sub Block": "RFFE_MASTER",
+          "Dest Device": "FEM_5G",
+          "Dest Pin": "RFFE_CLK",
+          "Dest Sub Block": "RFFE_SLAVE"
+        },
+        {
+          "Connection ID": "4",
+          "Source Device": "RFIC",
+          "Source Pin": "RFFE_DATA",
+          "Source Sub Block": "RFFE_MASTER",
+          "Dest Device": "FEM_5G",
+          "Dest Pin": "RFFE_DATA",
+          "Dest Sub Block": "RFFE_SLAVE"
+        },
+        {
+          "Connection ID": "5",
+          "Source Device": "RFIC",
+          "Source Pin": "RF_TX_2G4",
+          "Source Sub Block": "TX_PATH",
+          "Dest Device": "FEM_2G4",
+          "Dest Pin": "RF_IN",
+          "Dest Sub Block": "INPUT"
+        },
+        {
+          "Connection ID": "6",
+          "Source Device": "RFIC",
+          "Source Pin": "RF_TX_5G",
+          "Source Sub Block": "TX_PATH",
+          "Dest Device": "FEM_5G",
+          "Dest Pin": "RF_IN",
+          "Dest Sub Block": "INPUT"
+        },
+        {
+          "Connection ID": "7",
+          "Source Device": "FEM_2G4",
+          "Source Pin": "RF_OUT",
+          "Source Sub Block": "OUTPUT",
+          "Dest Device": "Antenna_2G4",
+          "Dest Pin": "RF_IN",
+          "Dest Sub Block": "INPUT"
+        },
+        {
+          "Connection ID": "8",
+          "Source Device": "FEM_5G",
+          "Source Pin": "RF_OUT",
+          "Source Sub Block": "OUTPUT",
+          "Dest Device": "Antenna_5G",
+          "Dest Pin": "RF_IN",
+          "Dest Sub Block": "INPUT"
+        },
+        {
+          "Connection ID": "9",
+          "Source Device": "Antenna_2G4",
+          "Source Pin": "RF_OUT",
+          "Source Sub Block": "OUTPUT",
+          "Dest Device": "LNA_2G4",
+          "Dest Pin": "RF_IN",
+          "Dest Sub Block": "INPUT"
+        },
+        {
+          "Connection ID": "10",
+          "Source Device": "LNA_2G4",
+          "Source Pin": "RF_OUT",
+          "Source Sub Block": "OUTPUT",
+          "Dest Device": "RFIC",
+          "Dest Pin": "RF_RX_2G4",
+          "Dest Sub Block": "RX_PATH"
+        },
+        {
+          "Connection ID": "11",
+          "Source Device": "Coupler_2G4",
+          "Source Pin": "COUPLED_OUT",
+          "Source Sub Block": "COUPLER",
+          "Dest Device": "RFIC",
+          "Dest Pin": "RF_FB_2G4",
+          "Dest Sub Block": "FEEDBACK"
+        },
+        {
+          "Connection ID": "12",
+          "Source Device": "FEM_2G4",
+          "Source Pin": "RF_OUT",
+          "Source Sub Block": "OUTPUT",
+          "Dest Device": "Coupler_2G4",
+          "Dest Pin": "RF_IN",
+          "Dest Sub Block": "INPUT"
+        }
+      ]
+    },
+    "component_configs": {
+      "RFIC": {
+        "name": "RFIC",
+        "type": "rfic",
+        "width": 80,
+        "height": 60,
+        "color": "#4A90E2",
+        "pins": [
+          {
+            "pin_id": "RFFE_CLK",
+            "pin_name": "RFFE_CLK",
+            "side": "left",
+            "position": 0.2,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RFFE_DATA",
+            "pin_name": "RFFE_DATA",
+            "side": "left",
+            "position": 0.4,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RF_TX_2G4",
+            "pin_name": "RF_TX_2G4",
+            "side": "right",
+            "position": 0.2,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_TX_5G",
+            "pin_name": "RF_TX_5G",
+            "side": "right",
+            "position": 0.4,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_RX_2G4",
+            "pin_name": "RF_RX_2G4",
+            "side": "right",
+            "position": 0.6,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_FB_2G4",
+            "pin_name": "RF_FB_2G4",
+            "side": "left",
+            "position": 0.6,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "FEM_2G4": {
+        "name": "FEM_2G4",
+        "type": "fem",
+        "width": 70,
+        "height": 50,
+        "color": "#7ED321",
+        "pins": [
+          {
+            "pin_id": "RFFE_CLK",
+            "pin_name": "RFFE_CLK",
+            "side": "left",
+            "position": 0.2,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RFFE_DATA",
+            "pin_name": "RFFE_DATA",
+            "side": "left",
+            "position": 0.4,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.6,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "FEM_5G": {
+        "name": "FEM_5G",
+        "type": "fem",
+        "width": 70,
+        "height": 50,
+        "color": "#7ED321",
+        "pins": [
+          {
+            "pin_id": "RFFE_CLK",
+            "pin_name": "RFFE_CLK",
+            "side": "left",
+            "position": 0.2,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RFFE_DATA",
+            "pin_name": "RFFE_DATA",
+            "side": "left",
+            "position": 0.4,
+            "type": "digital"
+          },
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.6,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "LNA_2G4": {
+        "name": "LNA_2G4",
+        "type": "lna",
+        "width": 60,
+        "height": 40,
+        "color": "#F5A623",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "PAM_5G": {
+        "name": "PAM_5G",
+        "type": "pam",
+        "width": 60,
+        "height": 40,
+        "color": "#D0021B",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "VCC",
+            "pin_name": "VCC",
+            "side": "top",
+            "position": 0.5,
+            "type": "power"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "Coupler_2G4": {
+        "name": "Coupler_2G4",
+        "type": "coupler",
+        "width": 50,
+        "height": 30,
+        "color": "#9013FE",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "left",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "right",
+            "position": 0.3,
+            "type": "rf"
+          },
+          {
+            "pin_id": "COUPLED_OUT",
+            "pin_name": "COUPLED_OUT",
+            "side": "right",
+            "position": 0.7,
+            "type": "rf"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "Antenna_2G4": {
+        "name": "Antenna_2G4",
+        "type": "antenna",
+        "width": 40,
+        "height": 60,
+        "color": "#50E3C2",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "top",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "left",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      },
+      "Antenna_5G": {
+        "name": "Antenna_5G",
+        "type": "antenna",
+        "width": 40,
+        "height": 60,
+        "color": "#50E3C2",
+        "pins": [
+          {
+            "pin_id": "RF_IN",
+            "pin_name": "RF_IN",
+            "side": "bottom",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "RF_OUT",
+            "pin_name": "RF_OUT",
+            "side": "top",
+            "position": 0.5,
+            "type": "rf"
+          },
+          {
+            "pin_id": "GND",
+            "pin_name": "GND",
+            "side": "left",
+            "position": 0.5,
+            "type": "ground"
+          }
+        ]
+      }
+    }
+  },
+  "model": {
+    "current_revision": "1.0.0"
+  }
+}

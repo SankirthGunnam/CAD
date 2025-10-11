@@ -1,0 +1,82 @@
+{
+  "config": {
+    "device": {
+      "settings": [
+        {
+          "name": "Chip1",
+          "function_type": "generic",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "GENERIC001"
+          }
+        },
+        {
+          "name": "Chip4",
+          "function_type": "generic",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "GENERIC002"
+          }
+        },
+        {
+          "name": "Chip5",
+          "function_type": "generic",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "GENERIC003"
+          }
+        },
+        {
+          "name": "Chip2",
+          "function_type": "CHIP",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "CHIP004"
+          }
+        },
+        {
+          "name": "Chip_temp",
+          "function_type": "CHIP",
+          "interface_type": "Generic",
+          "interface": {},
+          "config": {
+            "usid": "CHIP005"
+          }
+        }
+      ],
+      "properties": {}
+    },
+    "band": {
+      "settings": [],
+      "properties": {}
+    },
+    "board": {
+      "settings": [],
+      "properties": {}
+    },
+    "rcc": {
+      "settings": [],
+      "properties": {}
+    },
+    "visual_bcf": {
+      "components": [],
+      "connections": [],
+      "layout": {
+        "scene_rect": {
+          "x": -1000,
+          "y": -1000,
+          "width": 2000,
+          "height": 2000
+        },
+        "grid_settings": {
+          "enabled": true,
+          "size": 20
+        }
+      }
+    }
+  }
+}
