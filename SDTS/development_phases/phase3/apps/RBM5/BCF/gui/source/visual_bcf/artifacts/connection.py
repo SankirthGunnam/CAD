@@ -61,7 +61,7 @@ class WirePath:
         # Jog bookkeeping for full-wire offsets (per colinear track)
         self._h_jogs_by_y = {}  # y_value -> vertical offset (dy)
         self._v_jogs_by_x = {}  # x_value -> horizontal offset (dx)
-        self._lane_spacing = 8.0
+        self._lane_spacing = 10
 
         # Orthogonal routing properties
         self.clearance = 30  # Minimum clearance from components
@@ -75,6 +75,8 @@ class WirePath:
         """Get start and end approach points"""
         self.start_approach_point = self._get_perpendicular_approach_point(self.start_pin, self.start_point)
         self.end_approach_point = self._get_perpendicular_approach_point(self.end_pin, self.end_point)
+        # self.start_approach_point = self.start_point
+        # self.end_approach_point = self.end_point
 
     def _get_perpendicular_approach_point(self, pin, pin_point):
         """Get the perpendicular approach point for a pin based on its edge"""
@@ -334,6 +336,81 @@ class WirePath:
 
     # ---------------------- Jog calculation and application (merged) ----------------------
 
+    def _preassign_start_track_lane(self, points: List[QPointF]) -> None:
+        """Assign an initial lane offset for the first track so sibling wires
+        from the same start pin are spaced before they diverge.
+
+        We determine the first segment orientation from the first two points,
+        then compute a stable ordering among all wires that originate from the
+        same `start_pin` by sorting their `end_pin` positions along the axis
+        orthogonal to that first segment. The resulting index maps to a lane
+        offset around center.
+        """
+        try:
+            if not self.scene or not self.start_pin or not self.end_pin:
+                return
+            if not points or len(points) < 2:
+                return
+
+            start_p = points[0]
+            first_p = points[1]
+            is_horizontal = abs(first_p.y() - start_p.y()) < 1.0
+            track_key = start_p.y() if is_horizontal else start_p.x()
+
+            # If already has an offset for this track, keep it
+            if is_horizontal and track_key in self._h_jogs_by_y:
+                return
+            if not is_horizontal and track_key in self._v_jogs_by_x:
+                return
+
+            # Collect end pins of all wires starting from the same start pin
+            end_pins: List[ComponentPin] = []
+            for item in self.scene.items():
+                if hasattr(item, 'start_pin') and hasattr(item, 'end_pin'):
+                    if item.start_pin is self.start_pin and getattr(item, 'end_pin', None) is not None:
+                        end_pins.append(item.end_pin)
+
+            if not end_pins:
+                return
+            if self.end_pin not in end_pins:
+                end_pins.append(self.end_pin)
+            if len(end_pins) <= 1:
+                return
+
+            def pin_pos_x(p):
+                try:
+                    return float(p.scenePos().x())
+                except Exception:
+                    return 0.0
+
+            def pin_pos_y(p):
+                try:
+                    return float(p.scenePos().y())
+                except Exception:
+                    return 0.0
+
+            # Sort by orthogonal axis; tie-break by id for stability
+            if is_horizontal:
+                end_pins.sort(key=lambda p: (pin_pos_y(p), id(p)))
+            else:
+                end_pins.sort(key=lambda p: (pin_pos_x(p), id(p)))
+
+            try:
+                idx = end_pins.index(self.end_pin)
+            except ValueError:
+                idx = 0
+
+            center = (len(end_pins) - 1) / 2.0
+            offset = (idx - center) * self._lane_spacing
+
+            if is_horizontal:
+                self._h_jogs_by_y.setdefault(track_key, offset)
+            else:
+                self._v_jogs_by_x.setdefault(track_key, offset)
+        except Exception:
+            # Fail safe if any scene data is unavailable
+            return
+
     def _compute_and_apply_jogs(self, points: List[QPointF]) -> List[QPointF]:
         """Detect colinear overlaps with other wires and apply jogs in one function.
 
@@ -346,6 +423,8 @@ class WirePath:
         # Reset maps
         self._h_jogs_by_y.clear()
         self._v_jogs_by_x.clear()
+        # Pre-space sibling wires from same start pin before divergence
+        self._preassign_start_track_lane(points)
 
         # Phase 1: collect jog offsets for any overlapping colinear segments
         for i in range(len(points) - 1):
@@ -356,6 +435,15 @@ class WirePath:
 
             if not (is_horizontal or is_vertical):
                 continue
+
+            # Pre-assign lane on this initial track to ensure spacing even if
+            # there is no existing overlapping wire yet (e.g., detour corridor)
+            if is_horizontal:
+                if a.y() not in self._h_jogs_by_y:
+                    self._h_jogs_by_y[a.y()] = self._compute_lane_offset_for_edge(axis='y')
+            else:
+                if a.x() not in self._v_jogs_by_x:
+                    self._v_jogs_by_x[a.x()] = self._compute_lane_offset_for_edge(axis='x')
 
             rect = self._segment_bounding_rect_points(a, b, 1.0)
             if rect is None:

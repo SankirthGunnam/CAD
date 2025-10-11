@@ -33,7 +33,7 @@ class ComponentScene(QGraphicsScene):
         self.preview_component = None  # Preview component that follows mouse
         
         # Initialize wire thread manager for async calculations
-        self.wire_thread_manager = SceneWireThreadManager(max_threads=10, parent=self)
+        # self.wire_thread_manager = SceneWireThreadManager(max_threads=10, parent=self)
         logger.info("Scene initialized with wire thread manager (max 10 threads)")
 
     def mousePressEvent(self, event):
