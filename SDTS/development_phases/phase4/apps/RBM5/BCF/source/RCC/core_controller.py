@@ -309,9 +309,9 @@ class CoreController(QObject):
 
         except Exception as e:
             logger.error("Error creating worker: %s", str(e))
-                            self.state_machine.transition(
-                    ToolEvent.ERROR, {
-                        "error_message": f"Failed to create worker: {str(e)}"})
+            self.state_machine.transition(
+                ToolEvent.ERROR, {"error_message": f"Failed to create worker: {str(e)}"}
+            )
 
     def _handle_worker_input_request(self, request_id: str, message: str):
         """Handle input request from worker"""

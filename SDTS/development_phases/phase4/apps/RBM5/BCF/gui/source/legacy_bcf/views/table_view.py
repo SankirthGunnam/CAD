@@ -8,11 +8,14 @@ class TableView(BaseView):
     """View for displaying data in a table format"""
 
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setup_ui()
+        # BaseView will call the subclass setup_ui() once
+        super().__init__()
 
     def setup_ui(self):
         """Setup the UI components"""
+        # Guard against duplicate layout creation
+        if self.layout() is not None:
+            return
         layout = QVBoxLayout(self)
 
         self.table = QTableWidget()

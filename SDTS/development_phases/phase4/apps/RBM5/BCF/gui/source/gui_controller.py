@@ -13,13 +13,14 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QDockWidget,
     QLabel,
+    QTreeView,
 )
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QStandardItemModel, QStandardItem
 from PySide6.QtCore import Qt, QObject, Signal, Slot, QThread, QMetaObject
 from typing import Dict, Any, Callable, Optional
 
-from apps.RBM5.BCF.gui.source.visual_bcf.scene import RFScene
-from apps.RBM5.BCF.gui.source.visual_bcf.view import RFView
+from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
+from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
 from apps.RBM5.BCF.source.models.visual_bcf.chip import ChipModel
 from apps.RBM5.BCF.source.RCC.core_controller import ToolState
 from apps.RBM5.BCF.gui.source.visual_bcf.visual_bcf_manager import VisualBCFManager
@@ -69,6 +70,39 @@ class GUIController(QMainWindow):
         self.stacked_widget.addWidget(self.legacy_manager)
         self.stacked_widget.addWidget(self.visual_manager)
 
+        # Add legacy children page with breadcrumbs
+        self.legacy_children_page = QWidget()
+        _legacy_children_layout = QVBoxLayout(self.legacy_children_page)
+        _legacy_children_layout.setContentsMargins(8, 8, 8, 8)
+        _legacy_children_layout.setSpacing(6)
+
+        # Breadcrumbs bar: [Legacy] > [Parent]
+        _breadcrumbs_bar = QHBoxLayout()
+        self.legacy_breadcrumbs_back_btn = QPushButton("Legacy")
+        self.legacy_breadcrumbs_back_btn.setFlat(True)
+        self.legacy_breadcrumbs_back_btn.clicked.connect(
+            lambda: self.stacked_widget.setCurrentWidget(self.legacy_manager)
+        )
+        _breadcrumbs_sep = QLabel(">")
+        self.legacy_breadcrumbs_label = QLabel("")
+        _breadcrumbs_bar.addWidget(self.legacy_breadcrumbs_back_btn)
+        _breadcrumbs_bar.addWidget(_breadcrumbs_sep)
+        _breadcrumbs_bar.addWidget(self.legacy_breadcrumbs_label)
+        _breadcrumbs_bar.addStretch(1)
+
+        # Children tree view
+        self.legacy_children_tree = QTreeView()
+        self.legacy_children_tree.setHeaderHidden(True)
+        self.legacy_children_model = QStandardItemModel()
+        self.legacy_children_model.setHorizontalHeaderLabels(["Item"])
+        self.legacy_children_tree.setModel(self.legacy_children_model)
+        self.legacy_children_tree.clicked.connect(self._on_legacy_child_clicked)
+
+        _legacy_children_layout.addLayout(_breadcrumbs_bar)
+        _legacy_children_layout.addWidget(self.legacy_children_tree)
+
+        self.stacked_widget.addWidget(self.legacy_children_page)
+
         # Set initial mode
         self.current_mode = "legacy"
         self.stacked_widget.setCurrentWidget(self.legacy_manager)
@@ -82,6 +116,47 @@ class GUIController(QMainWindow):
         # Connect signals
         self.legacy_manager.data_changed.connect(self._on_data_changed)
         self.visual_manager.data_changed.connect(self._on_data_changed)
+        # When a top-level legacy parent is clicked, show children page
+        if hasattr(self.legacy_manager, 'parent_node_selected'):
+            self.legacy_manager.parent_node_selected.connect(self._on_legacy_parent_selected)
+
+    def _on_legacy_parent_selected(self, parent_name: str, children_map: dict):
+        """Show legacy children page with breadcrumbs for selected parent."""
+        try:
+            # Update breadcrumbs
+            self.legacy_breadcrumbs_label.setText(parent_name)
+
+            # Populate children list
+            self._populate_legacy_children(children_map)
+
+            # Navigate to children page
+            self.stacked_widget.setCurrentWidget(self.legacy_children_page)
+        except Exception as e:
+            self._on_error(f"Error showing legacy children: {str(e)}")
+
+    def _populate_legacy_children(self, children_map: dict):
+        """Populate the children tree from a name -> view_type mapping."""
+        self.legacy_children_model.clear()
+        self.legacy_children_model.setHorizontalHeaderLabels(["Item"])
+        for child_name, view_type in children_map.items():
+            item = QStandardItem(child_name)
+            item.setEditable(False)
+            item.setData(view_type, Qt.UserRole)
+            self.legacy_children_model.appendRow(item)
+
+    def _on_legacy_child_clicked(self, index):
+        """Open the selected child in legacy tab and return to legacy page."""
+        try:
+            item = self.legacy_children_model.itemFromIndex(index)
+            if not item:
+                return
+            view_type = item.data(Qt.UserRole)
+            name = item.text()
+            if view_type:
+                self.legacy_manager.open_tab(name, view_type)
+                self.stacked_widget.setCurrentWidget(self.legacy_manager)
+        except Exception as e:
+            self._on_error(f"Error opening legacy child: {str(e)}")
         # NEW: Connect Visual BCF data changes to refresh Legacy BCF table
         self.visual_manager.data_changed.connect(
             self.on_visual_data_changed_refresh_table)
