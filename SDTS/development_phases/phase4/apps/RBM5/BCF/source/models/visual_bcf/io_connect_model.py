@@ -132,10 +132,32 @@ class RecordsTreeModel(QAbstractItemModel):
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:  # type: ignore[override]
         if not index.isValid():
             return Qt.NoItemFlags
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        nid = int(index.internalId())
+        # Parent rows (connections) are not editable; child value column editable
+        if nid in self._parent_id_to_row:
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        # Child rows
+        flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        if index.column() == 1:
+            flags |= Qt.ItemIsEditable
+        return flags
 
     def setData(self, index: QModelIndex, value, role: int = Qt.EditRole) -> bool:  # type: ignore[override]
-        return False
+        if not index.isValid() or role != Qt.EditRole:
+            return False
+        nid = int(index.internalId())
+        info = self._child_id_to_info.get(nid)
+        if info is None:
+            return False
+        prow, key = info
+        if index.column() != 1:
+            return False
+        try:
+            self._records[prow][key] = str(value)
+            self.dataChanged.emit(index, index, [Qt.DisplayRole, Qt.EditRole])
+            return True
+        except Exception:
+            return False
 
     def remove_subtree(self, node_id: int) -> None:
         self.beginResetModel()
@@ -172,6 +194,48 @@ class RecordsTreeModel(QAbstractItemModel):
                 return parent_index
             return self.createIndex(crow, column, node_id)
         return QModelIndex()
+
+    def add_record(self, defaults: Optional[Dict] = None) -> int:
+        """Append a new connection record and return its parent_id."""
+        rec: Dict[str, str] = {}
+        # Create all expected keys so children render
+        try:
+            from apps.RBM5.BCF.config.constants.tabs import IOConnect as IOCTabs
+            rec[IOCTabs.IOConnectTable.SOURCE_DEVICE()] = ""
+            rec[IOCTabs.IOConnectTable.SOURCE_PIN()] = ""
+            rec[IOCTabs.IOConnectTable.DEST_DEVICE()] = ""
+            rec[IOCTabs.IOConnectTable.DEST_PIN()] = ""
+        except Exception:
+            # Fallback generic keys
+            rec.update({"Source Device": "", "Source Pin": "", "Dest Device": "", "Dest Pin": ""})
+        if defaults:
+            rec.update(defaults)
+        self.beginResetModel()
+        self._records.append(rec)
+        self._rebuild_ids()
+        self.endResetModel()
+        # Return last parent id
+        return self._parent_ids[-1] if self._parent_ids else -1
+
+    def get_record_by_parent_id(self, parent_id: int):
+        row = self._parent_id_to_row.get(parent_id)
+        if row is None:
+            return None
+        try:
+            return self._records[row]
+        except Exception:
+            return None
+
+    def find_parent_id_by_key_value(self, key: str, value) -> int:
+        """Find the parent_id of the first record where rec[key] == value. Returns -1 if not found."""
+        target = str(value)
+        for row, rec in enumerate(self._records):
+            try:
+                if str(rec.get(key)) == target:
+                    return self._parent_ids[row]
+            except Exception:
+                continue
+        return -1
 
 
 class IOConnectModel:

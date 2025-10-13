@@ -174,6 +174,23 @@ class VisualBCFController(QObject):
         print(f"BCF Controller: Component selected: {component_data}")
         self.selected_component_data = component_data
         self.selected_component_type = component_data.get('Component Type', 'chip')
+        # Immediate placement path (e.g., triggered from Device Settings Add Device)
+        if component_data.get('__place_immediately'):
+            try:
+                component_name = component_data.get('Name') or component_data.get('name') or 'New Device'
+                component_config = self.data_model.component_dcf(component_name)
+                comp = ComponentWithPins(
+                    component_name,
+                    self.selected_component_type,
+                    component_config=component_config,
+                )
+                comp.setPos(0, 0)
+                self.scene.addItem(comp)
+                # Track/persist via controller API
+                self.add_component(comp, self.selected_component_type, (0.0, 0.0))
+                return
+            except Exception as e:
+                logger.error("Immediate placement failed, falling back to placement mode: %s", e)
         self.placement_mode = True
         
         # Update cursor to indicate placement mode
@@ -252,11 +269,12 @@ class VisualBCFController(QObject):
 
     def connect_table_controllers(self, device_settings_controller, io_connect_controller):
         """Connect table controllers to handle table changes"""
+        self.device_settings_controller = device_settings_controller
+        self.io_connect_controller = io_connect_controller
         if device_settings_controller:
             device_settings_controller.device_added.connect(self._on_table_device_added)
             device_settings_controller.device_removed.connect(self._on_table_device_removed)
             device_settings_controller.device_updated.connect(self._on_table_device_updated)
-
         if io_connect_controller:
             io_connect_controller.connection_added.connect(self._on_table_connection_added)
             io_connect_controller.connection_removed.connect(self._on_table_connection_removed)
@@ -326,6 +344,7 @@ class VisualBCFController(QObject):
 
     def _on_table_device_added(self, device_data: dict):
         """Handle device added to table - add to graphics scene"""
+        print(f"BCF Controller: Device added to table: {device_data}")
         try:
             device_name = device_data.get('Name', device_data.get('name', 'Unknown'))
             device_id = device_data.get('ID', device_data.get('id', ''))
@@ -351,10 +370,10 @@ class VisualBCFController(QObject):
             )
 
             # Set position (default to center)
-            component.setPos(0, 0)
-
-            # Add to scene
-            self.scene.addItem(component)
+            pos = device_data.get('position', None)
+            if pos is not None:
+                self.scene.addItem(component)
+                component.setPos(*pos)
 
             # Track the graphics item
             self._component_graphics_items[device_id] = component
@@ -371,6 +390,7 @@ class VisualBCFController(QObject):
 
     def _on_table_device_removed(self, device_data: dict):
         """Handle device removed from table - remove from graphics scene"""
+        print(f"BCF Controller: Device removed from table: {device_data}")
         try:
             device_id = device_data.get('ID', device_data.get('id', ''))
             device_name = device_data.get('Name', device_data.get('name', 'Unknown'))
@@ -460,6 +480,9 @@ class VisualBCFController(QObject):
                 logger.info("Connection %s already exists in scene", connection_id)
                 return
 
+            if not connection_data.get('add_to_scene', True):
+                return
+
             # Find component graphics items
             from_component_id = self._get_component_id(from_device)
             to_component_id = self._get_component_id(to_device)
@@ -512,6 +535,8 @@ class VisualBCFController(QObject):
                 logger.warning("Failed to complete wire for connection %s", connection_id)
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             logger.error("Error adding connection from table to scene: %s", e)
 
     def _on_table_connection_removed(self, connection_data: dict):
@@ -649,21 +674,12 @@ class VisualBCFController(QObject):
     def add_component(self,
                       component: ComponentWithPins,
                       component_type: str,
-                      position: Tuple[float,float]) -> str:
+                      position: Tuple[float,float] = None) -> str:
         """Add a new component"""
         try:
             logger.info(f"BCF Controller: Adding component: {component.name} ({component_type}) at {position}")
-            name = component.name
-            properties = getattr(component, 'properties', {})
-            component_id = self.data_model.add_component(
-                name, component_type, position, properties)
-            if component_id:
-                self._component_graphics_items[component_id] = component
-                self.operation_completed.emit(
-                    "add_component", f"Added component: {name}")
-                logger.info(
-                    f"Successfully added component: {name} at {position}")
-            return component_id
+            self.device_settings_controller.add_row(component.name, 'chip', tree="mipi" if component_type.lower() == 'mipi' else 'gpio', position=position)
+
         except Exception as e:
             logger.error("BCF Controller: Error adding component: %s", e)
             self.error_occurred.emit(f"Failed to add component: {str(e)}")
@@ -682,8 +698,8 @@ class VisualBCFController(QObject):
     def remove_component(self, component: ComponentWithPins, emit_user_signal: bool = False) -> bool:
         """Remove a component that was deleted from the scene"""
         try:
-            print(f"BCF Controller: Removing component: {component.name}")
             component_id = self._get_component_id(component)
+            print(f"BCF Controller: Removing component: {component.name}, {component_id}")
             if not component_id:
                 logger.warning("Could not find component ID for deleted component: %s", component.name)
                 return False
@@ -694,38 +710,31 @@ class VisualBCFController(QObject):
                 return False
 
             component_name = component_data.get('Name', 'Unknown')
-            success = self.data_model.remove_component(component_id)
-            if success:
-                # Remove from graphics tracking
-                if component_id in self._component_graphics_items:
-                    component = self._component_graphics_items[component_id]
-                    if component:
-                        # Remove from scene
-                        self.scene.removeItem(component)
-                    del self._component_graphics_items[component_id]
 
-                # Remove any connections to this component
-                connections_to_remove = []
-                for conn_id, wire in self._connection_graphics_items.items():
-                    if wire:
-                        if (hasattr(wire, 'start_pin') and wire.start_pin and
-                            hasattr(wire.start_pin, 'parent_component') and
-                            wire.start_pin.parent_component == component):
-                            connections_to_remove.append(conn_id)
-                        elif (hasattr(wire, 'end_pin') and wire.end_pin and
-                              hasattr(wire.end_pin, 'parent_component') and
-                              wire.end_pin.parent_component == component):
-                            connections_to_remove.append(conn_id)
+            # Route deletion via DeviceSettingsController (single flow)
+            parent_id = -1
+            tree = "mipi"
+            try:
+                # Prefer MIPI by default, fallback to GPIO if not found
+                parent_id = self.device_settings_controller.model.mipi_devices_tree_model.find_parent_id_by_key_value("ID", component_id)
+                if parent_id == -1:
+                    parent_id = self.device_settings_controller.model.gpio_devices_tree_model.find_parent_id_by_key_value("ID", component_id)
+                    tree = "gpio" if parent_id != -1 else tree
+            except Exception:
+                pass
 
-                # Remove connections
-                for conn_id in connections_to_remove:
-                    self.remove_connection(conn_id)
+            if parent_id == -1:
+                logger.warning("Could not map component ID to table parent_id: %s", component_id)
+                return False
 
+            ok = self.device_settings_controller.delete_row(parent_id, tree=tree)
+            if ok:
+                # Table signal handler will remove graphics via _on_table_device_removed
                 self.operation_completed.emit(
                     "remove_component", f"Removed component: {component_name}")
-                logger.info(f"Successfully removed component: {component_name}")
-
-            return success
+                logger.info(f"Successfully removed component via controller: {component_name}")
+                return True
+            return False
         except Exception as e:
             logger.error("Error removing component: %s", e)
             self.error_occurred.emit(f"Failed to remove component: {str(e)}")
@@ -737,13 +746,34 @@ class VisualBCFController(QObject):
             # Get component IDs, not names
             from_component_id = self._get_component_id(wire.start_pin.parent_component)
             from_pin_id = wire.start_pin.pin_id
+            from_pin_name = wire.start_pin.pin_name
             to_component_id = self._get_component_id(wire.end_pin.parent_component)
             to_pin_id = wire.end_pin.pin_id
+            to_pin_name = wire.end_pin.pin_name
 
             if not from_component_id or not to_component_id:
                 logger.error("Could not find component IDs for connection")
                 return ""
 
+            # Route via IOConnectController for unified flow
+            if hasattr(self, 'io_connect_controller') and self.io_connect_controller is not None:
+                source_device = self.data_model.get_component(from_component_id).get('Name', 'Unknown')
+                dest_device = self.data_model.get_component(to_component_id).get('Name', 'Unknown')
+                import uuid
+                rec = {
+                    'Connection ID': str(uuid.uuid4()),
+                    'Source Device': source_device,
+                    'Source Pin': from_pin_name,
+                    'Dest Device': dest_device,
+                    'Dest Pin': to_pin_name,
+                }
+                created = self.io_connect_controller.add_row(rec, add_to_scene=False)
+                self._connection_graphics_items[created['Connection ID']] = wire
+                self.operation_completed.emit("add_connection", "Added connection")
+                logger.info("Successfully added connection via controller")
+                # Connection ID is stored in data model; return empty string placeholder
+                return ""
+            # Fallback: original data model path
             connection_id = self.data_model.add_connection(
                 from_component_id, from_pin_id, to_component_id, to_pin_id
             )
@@ -761,6 +791,7 @@ class VisualBCFController(QObject):
     def remove_connection(self, wire: Wire|str) -> bool:
         """Remove a connection that was deleted from the scene"""
         try:
+            # If we have a connection id string, try to resolve to table parent_id
             if isinstance(wire, str):
                 connection_id = wire
             else:
@@ -769,6 +800,26 @@ class VisualBCFController(QObject):
                 logger.warning("Could not find connection ID for deleted wire")
                 return False
 
+            # Route via IOConnectController for unified flow
+            if hasattr(self, 'io_connect_controller') and self.io_connect_controller is not None:
+                try:
+                    pid = self.io_connect_controller.model.tree_model.find_parent_id_by_key_value('Connection ID', connection_id)
+                    if pid == -1:
+                        # Fallback generic key
+                        pid = self.io_connect_controller.model.tree_model.find_parent_id_by_key_value('id', connection_id)
+                except Exception:
+                    import traceback
+                    traceback.print_exc()
+                    pid = -1
+                if pid != -1:
+                    ok = self.io_connect_controller.delete_row(pid)
+                    if ok:
+                        self.operation_completed.emit("remove_connection", f"Removed connection")
+                        logger.info("Successfully removed connection via controller")
+                        return True
+                    return False
+
+            # Fallback: original data model path
             success = self.data_model.remove_connection(connection_id)
             if success:
                 connection = self._connection_graphics_items.pop(connection_id)

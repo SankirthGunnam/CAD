@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QWidget,
     QSizePolicy,
+    QInputDialog,
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction
@@ -32,6 +33,7 @@ if typing.TYPE_CHECKING:
 class IOConnectTree(QTreeView):
     def __init__(self, parent=None, model=None):
         super().__init__(parent)
+        self._parent = parent
         self.setObjectName("IOConnectTree")
         self.setSelectionMode(QTreeView.SingleSelection)
         self.setAlternatingRowColors(True)
@@ -40,6 +42,7 @@ class IOConnectTree(QTreeView):
         self.setIndentation(18)
         self.setMinimumHeight(300)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setEditTriggers(QTreeView.DoubleClicked | QTreeView.SelectedClicked | QTreeView.EditKeyPressed)
         
         # Enable context menu and keyboard shortcuts
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -55,7 +58,10 @@ class IOConnectTree(QTreeView):
             return
             
         menu = QMenu(self)
-        
+        add_action = QAction("Add Connection", self)
+        add_action.triggered.connect(self._add_connection)
+        menu.addAction(add_action)
+
         # Add delete action
         delete_action = QAction("Delete Row", self)
         delete_action.triggered.connect(self._delete_selected_row)
@@ -85,7 +91,19 @@ class IOConnectTree(QTreeView):
         )
         
         if reply == QMessageBox.Yes:
-            model.remove_subtree(int(idx.internalId()))
+            # Determine parent id (connection row) even if child field selected
+            pid = int(idx.internalId())
+            if pid not in getattr(model, "_parent_id_to_row", {}):
+                parent_index = model.parent(idx)
+                if parent_index.isValid():
+                    pid = int(parent_index.internalId())
+            # Route via controller API for unified flow
+            controller = getattr(self._parent, 'controller', None)
+            if controller is not None and hasattr(controller, 'delete_row'):
+                controller.delete_row(pid)
+            else:
+                # Fallback to direct model change
+                model.remove_subtree(pid)
 
     def keyPressEvent(self, event):
         """Handle keyboard shortcuts"""
@@ -96,6 +114,33 @@ class IOConnectTree(QTreeView):
 
     def column_headers(self):
         return ["Property", "Value"]
+
+    def _add_connection(self):
+        model = self.model()
+        if not model:
+            return
+        parent_view = self.parent()
+        controller = getattr(parent_view, 'controller', None)
+        dm = getattr(parent_view, 'model', None)
+        if controller is None or dm is None:
+            return
+        try:
+            # Route via controller API for unified flow
+            rec = controller.add_row({})
+            # Ensure view uses latest model and select the first editable child cell
+            self.setModel(dm.tree_model)
+            self.expandAll()
+            # Focus first child value of the newly added parent
+            pid = getattr(dm.tree_model, '_parent_ids', [])[-1] if getattr(dm.tree_model, '_parent_ids', []) else -1
+            sel = dm.tree_model.index_for_id(pid, 1)
+            if sel.isValid():
+                # Move to first child row under the parent
+                child_index = dm.tree_model.index(0, 1, sel)
+                target = child_index if child_index.isValid() else sel
+                self.setCurrentIndex(target)
+                self.edit(target)
+        except Exception:
+            pass
 
 
 class View(BaseView):

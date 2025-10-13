@@ -120,6 +120,7 @@ class ComponentScene(QGraphicsScene):
         # Check if we have selected component data from dialog
         if self.controller.selected_component_data:
             component_data = self.controller.selected_component_data
+            print('component_data add_component_at_position', component_data)
             component_type = component_data.get('Component Type', 'chip')
             name = component_data.get('Name', f"{component_type.title()}_temp")
             component_id = component_data.get('ID', '')
@@ -137,7 +138,7 @@ class ComponentScene(QGraphicsScene):
             self.addItem(component)
             
             # Add to data model with the selected component data
-            self.controller.add_component(component, component_type, (position.x(), position.y()))
+            self.controller.add_component(component, component_type)
             
             # Reset placement mode
             self.controller.placement_mode = False

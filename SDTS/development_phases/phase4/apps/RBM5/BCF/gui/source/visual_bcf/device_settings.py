@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QWidget,
+    QInputDialog,
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction
@@ -41,10 +42,12 @@ class AllDevicesTree(QTreeView):
         self.setAnimated(True)
         self.setIndentation(18)
         self.setMinimumHeight(200)
+        self.setEditTriggers(QTreeView.NoEditTriggers)
         
         # Enable context menu and keyboard shortcuts
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
+        self._model = model
         
         print(f"✓ All Devices tree initialized with parent: {parent}")
         print(f"✓ All Devices tree model before setting: {model}")
@@ -63,10 +66,16 @@ class AllDevicesTree(QTreeView):
             
         menu = QMenu(self)
         
+        add_action = QAction("Add Child", self)
+        add_action.triggered.connect(self._add_child)
+        menu.addAction(add_action)
+
         # Add delete action
         delete_action = QAction("Delete Row", self)
         delete_action.triggered.connect(self._delete_selected_row)
         menu.addAction(delete_action)
+        
+        # Editing handled via delegate, no direct menu edit needed
         
         # Show menu at cursor position
         menu.exec(self.mapToGlobal(position))
@@ -92,8 +101,27 @@ class AllDevicesTree(QTreeView):
         )
         
         if reply == QMessageBox.Yes:
+            pass
             # Remove the subtree
-            model.remove_subtree(int(idx.internalId()))
+           # self.expandAll()
+
+    def _add_child(self):
+        model = self.model()
+        if not model:
+            return
+        idx = self.currentIndex()
+        parent_id = int(idx.internalId()) if idx.isValid() else None
+        try:
+            new_id = model.add_child(parent_id)
+            self.expandAll()
+            sel = model.index_for_id(new_id, 1) if hasattr(model, 'index_for_id') else QModelIndex()
+            if sel.isValid():
+                self.setCurrentIndex(sel)
+                self.edit(sel)
+        except Exception:
+            pass
+
+    # Editing is handled via an item delegate installed by the parent view
 
     def keyPressEvent(self, event):
         """Handle keyboard shortcuts"""
@@ -109,6 +137,7 @@ class AllDevicesTree(QTreeView):
 class MipiDevicesTree(QTreeView):
     def __init__(self, parent=None, model=None):
         super().__init__(parent)
+        self._parent = parent
         self.setObjectName("MipiDevicesTree")
         self.setSelectionMode(QTreeView.SingleSelection)
         self.setAlternatingRowColors(True)
@@ -116,10 +145,12 @@ class MipiDevicesTree(QTreeView):
         self.setAnimated(True)
         self.setIndentation(18)
         self.setMinimumHeight(200)
+        self.setEditTriggers(QTreeView.NoEditTriggers)
         
         # Enable context menu and keyboard shortcuts
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
+        self._model = model
         
         if model is not None:
             self.setModel(model)
@@ -132,10 +163,16 @@ class MipiDevicesTree(QTreeView):
             
         menu = QMenu(self)
         
+        add_action = QAction("Add Child", self)
+        add_action.triggered.connect(self._add_child)
+        menu.addAction(add_action)
+
         # Add delete action
         delete_action = QAction("Delete Row", self)
         delete_action.triggered.connect(self._delete_selected_row)
         menu.addAction(delete_action)
+        
+        # Editing handled via delegate
         
         # Show menu at cursor position
         menu.exec(self.mapToGlobal(position))
@@ -161,7 +198,27 @@ class MipiDevicesTree(QTreeView):
         )
         
         if reply == QMessageBox.Yes:
-            model.remove_subtree(int(idx.internalId()))
+            controller = getattr(self._parent, 'controller', None)
+            if controller and hasattr(controller, 'delete_row'):
+                controller.delete_row(int(idx.internalId()), tree='mipi')
+
+    def _add_child(self):
+        model = self.model()
+        if not model:
+            return
+        idx = self.currentIndex()
+        parent_id = int(idx.internalId()) if idx.isValid() else None
+        try:
+            new_id = model.add_child(parent_id)
+            self.expandAll()
+            sel = model.index_for_id(new_id, 1) if hasattr(model, 'index_for_id') else QModelIndex()
+            if sel.isValid():
+                self.setCurrentIndex(sel)
+                self.edit(sel)
+        except Exception:
+            pass
+
+    # Editing is handled via an item delegate
 
     def keyPressEvent(self, event):
         """Handle keyboard shortcuts"""
@@ -177,6 +234,7 @@ class MipiDevicesTree(QTreeView):
 class GpioDevicesTree(QTreeView):
     def __init__(self, parent=None, model=None):
         super().__init__(parent)
+        self._parent = parent
         self.setObjectName("GpioDevicesTree")
         self.setSelectionMode(QTreeView.SingleSelection)
         self.setAlternatingRowColors(True)
@@ -184,10 +242,12 @@ class GpioDevicesTree(QTreeView):
         self.setAnimated(True)
         self.setIndentation(18)
         self.setMinimumHeight(200)
+        self.setEditTriggers(QTreeView.NoEditTriggers)
         
         # Enable context menu and keyboard shortcuts
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
+        self._model = model
         
         if model is not None:
             self.setModel(model)
@@ -200,10 +260,16 @@ class GpioDevicesTree(QTreeView):
             
         menu = QMenu(self)
         
+        add_action = QAction("Add Child", self)
+        add_action.triggered.connect(self._add_child)
+        menu.addAction(add_action)
+
         # Add delete action
         delete_action = QAction("Delete Row", self)
         delete_action.triggered.connect(self._delete_selected_row)
         menu.addAction(delete_action)
+        
+        # Editing handled via delegate
         
         # Show menu at cursor position
         menu.exec(self.mapToGlobal(position))
@@ -229,7 +295,27 @@ class GpioDevicesTree(QTreeView):
         )
         
         if reply == QMessageBox.Yes:
-            model.remove_subtree(int(idx.internalId()))
+            controller = getattr(self._parent, 'controller', None)
+            if controller and hasattr(controller, 'delete_row'):
+                controller.delete_row(int(idx.internalId()), tree='gpio')
+
+    def _add_child(self):
+        model = self.model()
+        if not model:
+            return
+        idx = self.currentIndex()
+        parent_id = int(idx.internalId()) if idx.isValid() else None
+        try:
+            new_id = model.add_child(parent_id)
+            self.expandAll()
+            sel = model.index_for_id(new_id, 1) if hasattr(model, 'index_for_id') else QModelIndex()
+            if sel.isValid():
+                self.setCurrentIndex(sel)
+                self.edit(sel)
+        except Exception:
+            pass
+
+    # Editing is handled via an item delegate
 
     def keyPressEvent(self, event):
         """Handle keyboard shortcuts"""
@@ -245,6 +331,7 @@ class GpioDevicesTree(QTreeView):
 class SectionAccordion(QTreeWidget):
     def __init__(self, parent: QWidget, sections: list[tuple[str, QTreeView]]):
         super().__init__(parent)
+        self._parent = parent
         self.setColumnCount(1)
         self.setHeaderHidden(True)
         self.setRootIsDecorated(True)
@@ -336,9 +423,44 @@ class SectionAccordion(QTreeWidget):
         btn_collapse = QToolButton(self)
         btn_collapse.setText("Collapse All")
         btn_collapse.clicked.connect(tree.collapseAll)
+        # Add New Device button for MIPI and GPIO sections only
+        btn_add = None
+        if isinstance(tree, (MipiDevicesTree, GpioDevicesTree)):
+            btn_add = QToolButton(self)
+            btn_add.setText("Add Device")
+            def _on_add_device():
+                try:
+                    # Show ChipSelectionDialog and send result via controller signal
+                    from apps.RBM5.BCF.gui.source.visual_bcf.chip_selection_dialog import ChipSelectionDialog
+                    import apps.RBM5.BCF.source.RDB.paths as paths
+                    # Use controller's model to fetch all devices table
+                    dm = self._parent.model
+                    all_devices = dm.rdb[paths.DCF_DEVICES]
+                    dialog = ChipSelectionDialog(all_devices, self)
+                    def _emit_selected(data):
+                        # Call controller.add_row to add to the appropriate tree; scene will update via signals
+                        controller = getattr(self._parent, 'controller', None)
+                        if controller and hasattr(controller, 'add_row'):
+                            device_name = data.get('Name') or data.get('name') or "New Device"
+                            component_type = data.get('Component Type', 'chip')
+                            tree_key = 'mipi' if isinstance(tree, MipiDevicesTree) else ('gpio' if isinstance(tree, GpioDevicesTree) else 'mipi')
+                            try:
+                                controller.add_row(device_name, component_type, tree=tree_key)
+                            except Exception:
+                                pass
+                    dialog.component_selected.connect(_emit_selected)
+                    dialog.exec()
+                except Exception:
+                    print("❌ Error adding device")
+                    import traceback
+                    traceback.print_exc()
+
+            btn_add.clicked.connect(_on_add_device)
         bar.addStretch(1)
         bar.addWidget(btn_expand)
         bar.addWidget(btn_collapse)
+        if btn_add is not None:
+            bar.addWidget(btn_add)
         return bar
 
 
@@ -363,5 +485,58 @@ class View(BaseView):
             ("GPIO Devices", self.gpio_devices_tree),
         ])
         base_layout.addWidget(accordion)
+        # Install an editing delegate for the Value column across all trees
+        delegate = _ValueEditDelegate(self)
+        self.all_devices_tree.setItemDelegateForColumn(1, delegate)
+        self.mipi_devices_tree.setItemDelegateForColumn(1, delegate)
+        self.gpio_devices_tree.setItemDelegateForColumn(1, delegate)
+        # Allow editing on click via delegate
+        for tree in (self.all_devices_tree, self.mipi_devices_tree, self.gpio_devices_tree):
+            tree.setEditTriggers(QTreeView.DoubleClicked | QTreeView.SelectedClicked | QTreeView.EditKeyPressed)
         print(f"✓ Device Settings view initialized with base_layout: {base_layout}")
         self.setLayout(base_layout)
+
+    # Public API for external callers (e.g., VisualBCFController/Manager)
+    def add_mipi_device(self):
+        try:
+            dm = self.model
+            new_id = dm.add_mipi_device_defaults()
+            self.mipi_devices_tree.setModel(dm.mipi_devices_tree_model)
+            self.mipi_devices_tree.expandAll()
+            sel = dm.mipi_devices_tree_model.index_for_id(new_id, 1)
+            if sel.isValid():
+                self.mipi_devices_tree.setCurrentIndex(sel)
+                self.mipi_devices_tree.edit(sel)
+        except Exception:
+            pass
+
+    def add_gpio_device(self):
+        try:
+            dm = self.model
+            new_id = dm.add_gpio_device_defaults()
+            self.gpio_devices_tree.setModel(dm.gpio_devices_tree_model)
+            self.gpio_devices_tree.expandAll()
+            sel = dm.gpio_devices_tree_model.index_for_id(new_id, 1)
+            if sel.isValid():
+                self.gpio_devices_tree.setCurrentIndex(sel)
+                self.gpio_devices_tree.edit(sel)
+        except Exception:
+            pass
+
+
+from PySide6.QtWidgets import QStyledItemDelegate, QLineEdit
+
+
+class _ValueEditDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = QLineEdit(parent)
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, Qt.EditRole)
+        if value is None:
+            value = index.model().data(index, Qt.DisplayRole)
+        editor.setText("" if value is None else str(value))
+
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.text(), Qt.EditRole)

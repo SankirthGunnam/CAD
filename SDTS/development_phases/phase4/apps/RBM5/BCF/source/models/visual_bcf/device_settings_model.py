@@ -15,190 +15,6 @@ from typing import Dict, List, Optional, Tuple
 # Two-column hierarchical model for QTreeView (moved from demo)
 # -----------------------------
 
-
-class FlatTreeItemModel(QAbstractItemModel):
-    def __init__(
-        self,
-        rows: List[Dict],
-        columns: List[Tuple[str, str]] | None = None,
-        id_key: str = "id",
-        parent_key: str = "parent_id",
-        parent=None,
-    ) -> None:
-        super().__init__(parent)
-        self._rows: List[Dict] = list(rows)
-        self._id_key = id_key
-        self._parent_key = parent_key
-        self._id_to_row_index: Dict[int, int] = {}
-        self._columns: List[Tuple[str, str]] = columns or [("Property", "label"), ("Value", "info")]
-        self._reindex()
-
-    def _reindex(self) -> None:
-        self._id_to_row_index = {int(r[self._id_key]): i for i, r in enumerate(self._rows)}
-
-    def _children_ids(self, parent_id: Optional[int]) -> List[int]:
-        ids: List[int] = []
-        for r in self._rows:
-            if r.get(self._parent_key) == parent_id:
-                ids.append(int(r[self._id_key]))
-        return ids
-
-    def _parent_id_of(self, node_id: int) -> Optional[int]:
-        row_idx = self._id_to_row_index.get(node_id)
-        if row_idx is None:
-            return None
-        parent_val = self._rows[row_idx].get(self._parent_key)
-        return int(parent_val) if parent_val is not None else None
-
-    def _row_in_parent(self, node_id: int) -> int:
-        parent_id = self._parent_id_of(node_id)
-        siblings = self._children_ids(parent_id)
-        try:
-            return siblings.index(node_id)
-        except ValueError:
-            return -1
-
-    # Qt model API
-    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:  # type: ignore[override]
-        return len(self._columns)
-
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # type: ignore[override]
-        if not parent.isValid():
-            parent_id: Optional[int] = None
-        else:
-            parent_id = int(parent.internalId())
-        return len(self._children_ids(parent_id))
-
-    def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:  # type: ignore[override]
-        if row < 0 or column < 0 or column >= self.columnCount():
-            return QModelIndex()
-        if not parent.isValid():
-            parent_id: Optional[int] = None
-        else:
-            parent_id = int(parent.internalId())
-        children = self._children_ids(parent_id)
-        if row >= len(children):
-            return QModelIndex()
-        node_id = children[row]
-        return self.createIndex(row, column, node_id)
-
-    def parent(self, index: QModelIndex) -> QModelIndex:  # type: ignore[override]
-        if not index.isValid():
-            return QModelIndex()
-        node_id = int(index.internalId())
-        parent_id = self._parent_id_of(node_id)
-        if parent_id is None:
-            return QModelIndex()
-        row_in_grandparent = self._row_in_parent(parent_id)
-        return self.createIndex(row_in_grandparent, 0, parent_id)
-
-    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):  # type: ignore[override]
-        if not index.isValid():
-            return None
-        node_id = int(index.internalId())
-        row_idx = self._id_to_row_index.get(node_id)
-        if row_idx is None:
-            return None
-        row = self._rows[row_idx]
-        header, key = self._columns[index.column()]
-        if role in (Qt.DisplayRole, Qt.EditRole):
-            if key == self._id_key:
-                return str(int(row[self._id_key]))
-            value = row.get(key)
-            return "" if value is None else str(value)
-        if role == Qt.FontRole and index.column() == 0:
-            is_top = row.get(self._parent_key) is None or str(row.get("info", "")) == "Device"
-            if is_top:
-                f = QFont()
-                f.setBold(True)
-                return f
-        if role == Qt.ToolTipRole:
-            if index.column() == 0:
-                is_top = row.get(self._parent_key) is None or str(row.get("info", "")) == "Device"
-                return ("Device: " if is_top else "Property: ") + str(row.get("label", ""))
-            if index.column() == 1:
-                return "Value: " + str(row.get("info", ""))
-        return None
-
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):  # type: ignore[override]
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if 0 <= section < len(self._columns):
-                return self._columns[section][0]
-        return None
-
-    def flags(self, index: QModelIndex) -> Qt.ItemFlags:  # type: ignore[override]
-        if not index.isValid():
-            return Qt.NoItemFlags
-        header, key = self._columns[index.column()]
-        editable = key not in (self._id_key, self._parent_key)
-        flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
-        if editable:
-            flags |= Qt.ItemIsEditable
-        return flags
-
-    def setData(self, index: QModelIndex, value, role: int = Qt.EditRole) -> bool:  # type: ignore[override]
-        if not index.isValid() or role != Qt.EditRole:
-            return False
-        node_id = int(index.internalId())
-        row_idx = self._id_to_row_index.get(node_id)
-        if row_idx is None:
-            return False
-        header, key = self._columns[index.column()]
-        if key in (self._id_key, self._parent_key):
-            return False
-        self._rows[row_idx][key] = str(value)
-        self.dataChanged.emit(index, index, [Qt.DisplayRole, Qt.EditRole])
-        return True
-
-    # Convenience ops
-    def add_child(self, parent_id: Optional[int], values: Optional[Dict] = None) -> int:
-        new_id = 1
-        if self._rows:
-            new_id = max(int(r[self._id_key]) for r in self._rows) + 1
-        new_row = {self._id_key: new_id, self._parent_key: parent_id}
-        for _, key in self._columns:
-            if key not in (self._id_key, self._parent_key):
-                new_row[key] = None
-        if values:
-            new_row.update(values)
-        self.beginResetModel()
-        self._rows.append(new_row)
-        self._reindex()
-        self.endResetModel()
-        return new_id
-
-    def remove_subtree(self, node_id: int) -> None:
-        to_remove: set[int] = set()
-        stack: List[int] = [node_id]
-        while stack:
-            cur = stack.pop()
-            if cur in to_remove:
-                continue
-            to_remove.add(cur)
-            stack.extend(self._children_ids(cur))
-        self.beginResetModel()
-        self._rows = [r for r in self._rows if int(r[self._id_key]) not in to_remove]
-        self._reindex()
-        self.endResetModel()
-
-    def index_for_id(self, node_id: int, column: int = 0) -> QModelIndex:
-        chain: List[int] = []
-        cur: Optional[int] = node_id
-        while cur is not None:
-            chain.append(cur)
-            cur = self._parent_id_of(cur)
-        chain.reverse()
-        parent = QModelIndex()
-        for i, nid in enumerate(chain):
-            if i == 0:
-                row = self._row_in_parent(nid)
-                parent = self.index(row, 0, QModelIndex())
-            else:
-                row = self._row_in_parent(nid)
-                parent = self.index(row, 0, parent)
-        return parent.sibling(parent.row(), column)
-
-
 class RecordsTreeModel(QAbstractItemModel):
     """Two-level tree over raw records (no id/parent in input), with stable internalIds.
 
@@ -251,6 +67,102 @@ class RecordsTreeModel(QAbstractItemModel):
                 self._child_id_to_info[cid] = (row, key)
                 child_ids.append(cid)
             self._child_ids_by_row[row] = child_ids
+
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags:  # type: ignore[override]
+        if not index.isValid():
+            return Qt.NoItemFlags
+        nid = int(index.internalId())
+        # Parent rows: allow editing of label (column 0)
+        if nid in self._parent_id_to_row:
+            flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
+            if index.column() == 0:
+                flags |= Qt.ItemIsEditable
+            return flags
+        # Child rows: allow editing of value (column 1)
+        flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        if index.column() == 1:
+            flags |= Qt.ItemIsEditable
+        return flags
+
+    def setData(self, index: QModelIndex, value, role: int = Qt.EditRole) -> bool:  # type: ignore[override]
+        if not index.isValid() or role != Qt.EditRole:
+            return False
+        nid = int(index.internalId())
+        if nid in self._parent_id_to_row:
+            # Edit parent label field
+            if index.column() != 0:
+                return False
+            row = self._parent_id_to_row[nid]
+            try:
+                self._records[row][self._parent_label_key] = str(value)
+                self.dataChanged.emit(index, index, [Qt.DisplayRole, Qt.EditRole])
+                return True
+            except Exception:
+                return False
+        info = self._child_id_to_info.get(nid)
+        if info is None:
+            return False
+        if index.column() != 1:
+            return False
+        prow, key = info
+        try:
+            self._records[prow][key] = str(value)
+            self.dataChanged.emit(index, index, [Qt.DisplayRole, Qt.EditRole])
+            return True
+        except Exception:
+            return False
+
+    def add_record(self, defaults: Optional[Dict] = None) -> int:
+        """Append a new parent record and return its parent_id."""
+        rec: Dict[str, str] = {}
+        # Ensure label key exists
+        rec[self._parent_label_key] = "New Device"
+        if defaults:
+            rec.update(defaults)
+        self.beginResetModel()
+        self._records.append(rec)
+        self._rebuild_ids()
+        self.endResetModel()
+        # Return last parent id
+        return self._parent_ids[-1] if self._parent_ids else -1
+
+    def index_for_id(self, node_id: int, column: int = 0) -> QModelIndex:
+        if node_id in self._parent_id_to_row:
+            row = self._parent_id_to_row[node_id]
+            return self.createIndex(row, column, node_id)
+        info = self._child_id_to_info.get(node_id)
+        if info is not None:
+            prow, _ = info
+            pid = self._parent_ids[prow]
+            parent_index = self.createIndex(prow, 0, pid)
+            child_ids = self._child_ids_by_row.get(prow, [])
+            try:
+                crow = child_ids.index(node_id)
+            except ValueError:
+                return parent_index
+            return self.createIndex(crow, column, node_id)
+        return QModelIndex()
+
+    def get_record_by_parent_id(self, parent_id: int):
+        """Return the underlying record dict for a given parent node id, or None."""
+        row = self._parent_id_to_row.get(parent_id)
+        if row is None:
+            return None
+        try:
+            return self._records[row]
+        except Exception:
+            return None
+
+    def find_parent_id_by_key_value(self, key: str, value) -> int:
+        """Find the parent_id of the first record where rec[key] == value. Returns -1 if not found."""
+        target = str(value)
+        for row, rec in enumerate(self._records):
+            try:
+                if str(rec.get(key)) == target:
+                    return self._parent_ids[row]
+            except Exception:
+                continue
+        return -1
 
     # Qt model API
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:  # type: ignore[override]
@@ -336,7 +248,45 @@ class RecordsTreeModel(QAbstractItemModel):
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:  # type: ignore[override]
         if not index.isValid():
             return Qt.NoItemFlags
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        nid = int(index.internalId())
+        # Parent row (device): make label (column 0) editable; column 1 is info tag
+        if nid in self._parent_id_to_row:
+            flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
+            if index.column() == 0:
+                flags |= Qt.ItemIsEditable
+            return flags
+        # Child row (property/value): allow editing only in Value column
+        flags = Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        if index.column() == 1:
+            flags |= Qt.ItemIsEditable
+        return flags
+
+    def setData(self, index: QModelIndex, value, role: int = Qt.EditRole) -> bool:  # type: ignore[override]
+        if not index.isValid() or role != Qt.EditRole:
+            return False
+        nid = int(index.internalId())
+        # Parent label edit
+        if nid in self._parent_id_to_row:
+            if index.column() != 0:
+                return False
+            row = self._parent_id_to_row[nid]
+            try:
+                self._records[row][self._parent_label_key] = str(value)
+                self.dataChanged.emit(index, index, [Qt.DisplayRole, Qt.EditRole])
+                return True
+            except Exception:
+                return False
+        # Child value edit
+        info = self._child_id_to_info.get(nid)
+        if info is None or index.column() != 1:
+            return False
+        prow, key = info
+        try:
+            self._records[prow][key] = str(value)
+            self.dataChanged.emit(index, index, [Qt.DisplayRole, Qt.EditRole])
+            return True
+        except Exception:
+            return False
 
     # Convenience ops compatible with views calling remove_subtree(node_id)
     def remove_subtree(self, node_id: int) -> None:
@@ -400,74 +350,72 @@ class DeviceSettingsModel(AbstractModel):
             ],
         )
         print(f"✓ Device Settings model initialized with all_devices_model: {self.all_devices_model}")
-        self.mipi_devices_model = TableModel(
-            self.rdb,  # Pass the RDBManager, not the bcf_db dict
-            paths.BCF_DEV_MIPI(self.current_revision),
-            columns=[
-                DeviceSettings.MipiDevicesTable.ID(),
-                DeviceSettings.MipiDevicesTable.DCF(),
-                DeviceSettings.MipiDevicesTable.NAME(),
-                DeviceSettings.MipiDevicesTable.USID(),
-                DeviceSettings.MipiDevicesTable.MODULE(),
-                DeviceSettings.MipiDevicesTable.MIPI_TYPE(),
-                DeviceSettings.MipiDevicesTable.MIPI_CHANNEL(),
-                DeviceSettings.MipiDevicesTable.DEFAULT_USID(),
-                DeviceSettings.MipiDevicesTable.USER_USID(),
-                DeviceSettings.MipiDevicesTable.PID(),
-                DeviceSettings.MipiDevicesTable.EXT_PID(),
-            ],
-        )
-        print(f"✓ Device Settings model initialized with mipi_devices_model: {self.mipi_devices_model}")
-        self.gpio_devices_model = TableModel(
-            self.rdb,  # Pass the RDBManager, not the bcf_db dict
-            paths.BCF_DEV_GPIO(self.current_revision),
-            columns=[
-                DeviceSettings.GpioDevicesTable.ID(),
-                DeviceSettings.GpioDevicesTable.DCF(),
-                DeviceSettings.GpioDevicesTable.NAME(),
-                DeviceSettings.GpioDevicesTable.CTRL_TYPE(),
-                DeviceSettings.GpioDevicesTable.BOARD(),
-            ],
-        )
-        print(f"✓ Device Settings model initialized with gpio_devices_model: {self.gpio_devices_model}")
+        # Removed mipi_devices_model and gpio_devices_model; operate directly on tree models
 
         # Tree models directly over raw records (no id/parent keys required)
         self.all_devices_tree_model = RecordsTreeModel(
-            self._iter_rows(self.rdb[paths.DCF_DEVICES]),
+            self.rdb[paths.DCF_DEVICES],
             parent_label_key=TabsDeviceSettings.AllDevicesTable.DEVICE_NAME(),
             parent_info_label="Device",
         )
         self.mipi_devices_tree_model = RecordsTreeModel(
-            self._iter_rows(self.rdb[paths.BCF_DEV_MIPI(self.current_revision)]),
+            self.rdb[paths.BCF_DEV_MIPI(self.current_revision)],
             parent_label_key=TabsDeviceSettings.MipiDevicesTable.NAME(),
             parent_info_label="Device",
         )
         self.gpio_devices_tree_model = RecordsTreeModel(
-            self._iter_rows(self.rdb[paths.BCF_DEV_GPIO(self.current_revision)]),
+            self.rdb[paths.BCF_DEV_GPIO(self.current_revision)],
             parent_label_key=TabsDeviceSettings.GpioDevicesTable.NAME(),
             parent_info_label="Device",
         )
 
+    # --------- Public API to add devices directly to tree models ---------
+    def add_mipi_device_defaults(self, data: Dict = None) -> int:
+        import uuid
+        m = TabsDeviceSettings.MipiDevicesTable
+        defaults = {
+            m.ID(): str(uuid.uuid4()),
+            m.DCF(): data.get(m.DCF(), ""),
+            m.NAME(): data.get(m.NAME(), "New Device"),
+            m.USID(): data.get(m.USID(), ""),
+            m.MODULE(): data.get(m.MODULE(), ""),
+            m.MIPI_TYPE(): data.get(m.MIPI_TYPE(), ""),
+            m.MIPI_CHANNEL(): data.get(m.MIPI_CHANNEL(), ""),
+            m.DEFAULT_USID(): data.get(m.DEFAULT_USID(), ""),
+            m.USER_USID(): data.get(m.USER_USID(), ""),
+            m.PID(): data.get(m.PID(), ""),
+            m.EXT_PID(): data.get(m.EXT_PID(), ""),
+        }
+        return self.mipi_devices_tree_model.add_record(defaults)
+
+    def add_gpio_device_defaults(self, data: Dict = None) -> int:
+        import uuid
+        g = TabsDeviceSettings.GpioDevicesTable
+        defaults = {
+            g.ID(): str(uuid.uuid4()),
+            g.DCF(): data.get(g.DCF(), ""),
+            g.NAME(): data.get(g.NAME(), "New Device"),
+            g.CTRL_TYPE(): data.get(g.CTRL_TYPE(), ""),
+            g.BOARD(): data.get(g.BOARD(), ""),
+        }
+        return self.gpio_devices_tree_model.add_record(defaults)
+
     def refresh_from_data_model(self) -> bool:
         """Refresh all table models from the data model"""
         try:
-            # Force refresh of all table models
-            self.mipi_devices_model.layoutChanged.emit()
-            self.gpio_devices_model.layoutChanged.emit()
-            print("✓ Device Settings tables refreshed from data model")
-            # Rebuild tree models
+            # Rebuild tree models only (no table models)
             self.all_devices_tree_model = RecordsTreeModel(
-                self._iter_rows(self.rdb[paths.DCF_DEVICES]),
+                self.rdb[paths.DCF_DEVICES],
                 parent_label_key=TabsDeviceSettings.AllDevicesTable.DEVICE_NAME(),
                 parent_info_label="Device",
             )
             self.mipi_devices_tree_model = RecordsTreeModel(
-                self._iter_rows(self.rdb[paths.BCF_DEV_MIPI(self.current_revision)]),
+                self.rdb[paths.BCF_DEV_MIPI(self.current_revision)],
                 parent_label_key=TabsDeviceSettings.MipiDevicesTable.NAME(),
                 parent_info_label="Device",
             )
             self.gpio_devices_tree_model = RecordsTreeModel(
-                self._iter_rows(self.rdb[paths.BCF_DEV_GPIO(self.current_revision)]),
+                self.rdb[paths.BCF_DEV_GPIO(self.current_revision)],
                 parent_label_key=TabsDeviceSettings.GpioDevicesTable.NAME(),
                 parent_info_label="Device",
             )
@@ -475,14 +423,3 @@ class DeviceSettingsModel(AbstractModel):
         except Exception as e:
             print(f"✗ Error refreshing device settings tables: {e}")
             return False
-
-    # --------- Tree builders ---------
-    def _iter_rows(self, obj) -> List[Dict]:
-        try:
-            if isinstance(obj, list):
-                return obj
-            if isinstance(obj, dict):
-                return list(obj.values())
-        except Exception:
-            pass
-        return []

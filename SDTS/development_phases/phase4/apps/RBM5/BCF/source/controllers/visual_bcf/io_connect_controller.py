@@ -71,3 +71,47 @@ class IOConnectController(AbstractController):
 
     def init_tab(self, revision: int):
         return super().init_tab(revision)
+
+    # Public APIs mirroring DeviceSettingsController for IO Connect
+    def add_row(self, defaults: dict | None = None, add_to_scene: bool = True) -> dict:
+        try:
+            pid = self.model.tree_model.add_record(defaults or {})
+            # Build record to emit
+            rec = {}
+            try:
+                rec = self.model.tree_model.get_record_by_parent_id(pid)  # type: ignore[attr-defined]
+            except Exception:
+                pass
+            self.connection_added.emit({**rec, 'add_to_scene': add_to_scene})
+            return rec
+        except Exception:
+            return {}
+
+    def delete_row(self, parent_id: int) -> bool:
+        print(f"✓ Deleting connection with parent_id: {parent_id}")
+        try:
+            rec = {}
+            try:
+                rec = self.model.tree_model.get_record_by_parent_id(parent_id)  # type: ignore[attr-defined]
+            except Exception:
+                pass
+            self.model.tree_model.remove_subtree(parent_id)
+            self.connection_removed.emit(rec)
+            return True
+        except Exception:
+            return False
+
+    def update_row(self, parent_id: int, updates: dict) -> bool:
+        try:
+            # RecordsTreeModel lacks a direct update; emit updated payload
+            rec = {}
+            try:
+                rec = self.model.tree_model.get_record_by_parent_id(parent_id)  # type: ignore[attr-defined]
+                if isinstance(rec, dict):
+                    rec.update(updates)
+            except Exception:
+                pass
+            self.connection_updated.emit(rec)
+            return True
+        except Exception:
+            return False

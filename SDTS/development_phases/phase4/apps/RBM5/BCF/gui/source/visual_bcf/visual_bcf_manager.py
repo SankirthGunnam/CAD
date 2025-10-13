@@ -115,6 +115,8 @@ class VisualBCFManager(QMainWindow):
             if self.visual_bcf_controller:
                 # Connect data change signals to refresh tables
                 self.visual_bcf_controller.data_synchronized.connect(self.refresh_tables_from_data_model)
+                # Listen for operations to update side panels
+                self.visual_bcf_controller.operation_completed.connect(self._on_scene_operation_completed)
                 print("✓ Controller signals connected to manager")
         except Exception as e:
             print(f"✗ Error connecting controller signals: {e}")
@@ -349,6 +351,21 @@ class VisualBCFManager(QMainWindow):
             device_count = event_data.get('device_count', 0)
             self.status_updated.emit(
                 f"Devices updated: {device_count} devices available")
+
+    def _on_scene_operation_completed(self, op_type: str, message: str):
+        """React to scene operations by updating device tables as needed."""
+        try:
+            if op_type == "add_component" and self.device_settings_controller:
+                # Route to MIPI by default; adjust based on component type if available
+                if hasattr(self.device_settings_controller, 'view') and hasattr(self.device_settings_controller.view, 'add_mipi_device'):
+                    self.device_settings_controller.view.add_mipi_device()
+            elif op_type == "add_connection" and self.io_connect_controller:
+                # Optionally add a blank connection in IO Connect
+                if hasattr(self.io_connect_controller, 'view') and hasattr(self.io_connect_controller.view, 'tree'):
+                    # Reuse IO Connect add action via context-like method if present in view (not implemented)
+                    pass
+        except Exception as e:
+            print(f"✗ Error handling scene operation: {e}")
 
     # Component/scene action methods removed - controller handles these
     # directly

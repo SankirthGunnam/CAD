@@ -376,6 +376,16 @@ class VisualBCFDataModel(QObject):
             logger.error("Error getting component ID: %s", e)
             return None
 
+    def get_pin(self, pin_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific pin directly from RDB"""
+        try:
+            for pin in self.rdb_manager[paths.BCF_DEV_MIPI(self.revision)]:
+                if pin.get('ID') == pin_id:
+                    return pin
+        except Exception as e:
+            logger.error("Error getting pin: %s", e)
+            return None
+
     def get_all_components(self) -> Dict[str, Dict[str, Any]]:
         """Get all components as a dictionary with component IDs as keys"""
         try:

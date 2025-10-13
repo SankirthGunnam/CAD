@@ -169,9 +169,6 @@ class LegacyBCFManager(QWidget):
         self.content_tree.setHeaderHidden(True)
         # Allow rows to grow based on embedded widgets
         self.content_tree.setUniformRowHeights(False)
-        self.content_tree.itemExpanded.connect(self._on_content_item_expanded)
-        self.content_tree.itemCollapsed.connect(self._on_content_item_collapsed)
-        self.content_tree.itemClicked.connect(self._on_content_item_clicked)
 
         # Create breadcrumbs label above the tab widget
         self.breadcrumbs_label = QLabel("")
@@ -300,8 +297,8 @@ class LegacyBCFManager(QWidget):
         self.component_structure = {
             "Bands": {
                 "Band Group A": {  # sub-parent with sub-children
-                    "Band 1": "table",
-                    "Band 2": "table",
+                "Band 1": "table",
+                "Band 2": "table",
                 },
                 "Band 3": "table",
             },
@@ -373,43 +370,6 @@ class LegacyBCFManager(QWidget):
         except Exception as e:
             self.error_occurred.emit(f"Error populating content tree: {str(e)}")
 
-    def _on_content_item_expanded(self, item: QTreeWidgetItem):
-        try:
-            node_info = item.data(0, Qt.UserRole) or {}
-            name = item.text(0)
-            if node_info.get("type") == "parent":
-                # Update breadcrumbs for parent with full hierarchy
-                crumbs = self._breadcrumbs_from_content_item(item)
-                self._update_breadcrumbs(crumbs)
-            elif node_info.get("type") == "child":
-                # For child expansion, embed the corresponding view as a grandchild row
-                view_type = node_info.get("view_type")
-                # Only embed if not already embedded (no grandchild yet)
-                if item.childCount() == 0:
-                    self._embed_child_view(item, name, view_type)
-                # Update breadcrumbs with full hierarchy
-                crumbs = self._breadcrumbs_from_content_item(item)
-                self._update_breadcrumbs(crumbs)
-        except Exception as e:
-            self.error_occurred.emit(f"Error handling item expansion: {str(e)}")
-
-    def _on_content_item_collapsed(self, item: QTreeWidgetItem):
-        try:
-            node_info = item.data(0, Qt.UserRole) or {}
-            name = item.text(0)
-            if node_info.get("type") == "child":
-                # Remove embedded widget if any by removing grandchild
-                while item.childCount() > 0:
-                    grandchild = item.child(0)
-                    self.content_tree.removeItemWidget(grandchild, 0)
-                    item.removeChild(grandchild)
-                # Update breadcrumbs back to parent
-                parent_item = item.parent()
-                parent_name = parent_item.text(0) if parent_item else ""
-                self._update_breadcrumbs(["Legacy", parent_name])
-        except Exception as e:
-            self.error_occurred.emit(f"Error handling item collapse: {str(e)}")
-
     def _embed_child_view(self, item: QTreeWidgetItem, name: str, view_type: str, update_breadcrumbs: bool = True):
         try:
             # Create the view and set controller similar to open_tab logic
@@ -451,34 +411,6 @@ class LegacyBCFManager(QWidget):
                 self.error_occurred.emit(f"View type {view_type} not found for {name}")
         except Exception as e:
             self.error_occurred.emit(f"Error embedding child view: {str(e)}")
-
-    def _on_content_item_clicked(self, item: QTreeWidgetItem, column: int) -> None:
-        try:
-            node_info = item.data(0, Qt.UserRole) or {}
-            name = item.text(0)
-            if node_info.get("type") == "parent":
-                # Select and expand parent; update breadcrumbs
-                self.content_tree.expandItem(item)
-                self._update_breadcrumbs(["Legacy", name])
-            elif node_info.get("type") == "child":
-                # Ensure parent is expanded and embed view once; update breadcrumbs
-                parent_item = item.parent()
-                parent_name = parent_item.text(0) if parent_item else ""
-                if parent_item is not None:
-                    self.content_tree.expandItem(parent_item)
-                # Avoid duplicate embedding: only embed if no grandchild exists
-                if item.childCount() == 0:
-                    view_type = node_info.get("view_type")
-                    self._embed_child_view(item, name, view_type)
-                self._update_breadcrumbs(["Legacy", parent_name, name])
-            elif node_info.get("type") == "group":
-                # Group nodes should expand/collapse to show their children
-                self.content_tree.expandItem(item)
-                parent_item = item.parent()
-                parent_name = parent_item.text(0) if parent_item else ""
-                self._update_breadcrumbs(["Legacy", parent_name, name])
-        except Exception as e:
-            self.error_occurred.emit(f"Error handling item click: {str(e)}")
 
     def _on_tree_item_clicked(self, index: QModelIndex):
         """Handle tree item click"""
@@ -562,7 +494,7 @@ class LegacyBCFManager(QWidget):
         try:
             layout = self.single_child_container.layout()
             if not layout:
-                return
+                    return
             while layout.count():
                 item = layout.takeAt(0)
                 widget = item.widget()
@@ -582,12 +514,12 @@ class LegacyBCFManager(QWidget):
                     )
                     controller_class = getattr(controller_module, "TableController")
                 else:
-                    controller_module = importlib.import_module(
+                controller_module = importlib.import_module(
                         f"apps.RBM5.BCF.source.controllers.{view_type}_controller"
-                    )
-                    controller_class = getattr(
-                        controller_module, f"{view_type.title()}Controller"
-                    )
+                )
+                controller_class = getattr(
+                    controller_module, f"{view_type.title()}Controller"
+                )
                 controller = controller_class()
                 controller.set_view(view)
 
