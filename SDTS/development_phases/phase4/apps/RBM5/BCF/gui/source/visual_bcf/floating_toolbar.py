@@ -30,9 +30,11 @@ class FloatingToolbar(QWidget):
     paste_chip_requested = Signal()
     select_mode_requested = Signal()
     connection_mode_requested = Signal()
+    move_mode_requested = Signal()
     phase_info_requested = Signal()
     save_scene_requested = Signal()
     load_scene_requested = Signal()
+    toggle_connections_requested = Signal(bool)
 
     def __init__(self, parent=None, device_data_provider=None):
         super().__init__(parent)
@@ -113,6 +115,13 @@ class FloatingToolbar(QWidget):
         self.connection_btn.clicked.connect(self._on_connection_mode)
         layout.addWidget(self.connection_btn)
 
+        self.move_btn = QPushButton("✋", self)
+        self.move_btn.setToolTip("Move/Pan Mode (Hand)")
+        self.move_btn.setCheckable(True)
+        self.move_btn.setFixedSize(30, 30)
+        self.move_btn.clicked.connect(self._on_move_mode)
+        layout.addWidget(self.move_btn)
+
         # Separator
         sep1 = QFrame()
         sep1.setFrameShape(QFrame.VLine)
@@ -187,6 +196,13 @@ class FloatingToolbar(QWidget):
             self.delete_selected_requested.emit)
         layout.addWidget(self.delete_selected_btn)
 
+        self.toggle_conns_btn = QPushButton("🔌", self)
+        self.toggle_conns_btn.setToolTip("Show/Hide All Connections")
+        self.toggle_conns_btn.setCheckable(True)
+        self.toggle_conns_btn.setFixedSize(30, 30)
+        self.toggle_conns_btn.clicked.connect(self._on_toggle_connections)
+        layout.addWidget(self.toggle_conns_btn)
+
         self.clear_scene_btn = QPushButton("🗋", self)
         self.clear_scene_btn.setToolTip("Clear Scene")
         self.clear_scene_btn.setFixedSize(30, 30)
@@ -254,6 +270,12 @@ class FloatingToolbar(QWidget):
         except Exception:
             pass
         self.save_scene_requested.emit()
+
+    def _on_toggle_connections(self):
+        try:
+            self.toggle_connections_requested.emit(self.toggle_conns_btn.isChecked())
+        except Exception:
+            pass
 
     def _apply_styling(self):
         """Apply custom styling to the toolbar"""
@@ -329,8 +351,18 @@ class FloatingToolbar(QWidget):
         """Handle connection mode action"""
         self.current_mode = "connection"
         self.select_btn.setChecked(False)
+        self.move_btn.setChecked(False)
         self._clear_component_selection()
         self.connection_mode_requested.emit()
+
+    def _on_move_mode(self):
+        """Handle move/pan mode action"""
+        self.current_mode = "move"
+        self.select_btn.setChecked(False)
+        self.connection_btn.setChecked(False)
+        self._clear_component_selection()
+        self.move_btn.setChecked(True)
+        self.move_mode_requested.emit()
 
     def _on_add_chip_clicked(self):
         """Handle add chip button click - show component selection dialog"""
@@ -360,6 +392,7 @@ class FloatingToolbar(QWidget):
         """Clear mode button selections"""
         self.select_btn.setChecked(False)
         self.connection_btn.setChecked(False)
+        self.move_btn.setChecked(False)
 
     def _clear_component_selection(self):
         """Clear component button selections"""

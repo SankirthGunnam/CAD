@@ -18,6 +18,7 @@ class CustomGraphicsView(QGraphicsView):
         self.zoom_min = 0.1
         self.zoom_max = 10.0
         self.view_transform_changed = Signal()
+        self._mode = 'select'
 
     def wheelEvent(self, event):
         """Handle mouse wheel events for zooming"""
@@ -112,6 +113,34 @@ class CustomGraphicsView(QGraphicsView):
             self.view_transform_changed.emit()
         except Exception:
             pass
+
+    def set_mode(self, mode: str):
+        self._mode = mode
+        if mode == 'move':
+            self.setDragMode(QGraphicsView.ScrollHandDrag)
+            self.setCursor(Qt.OpenHandCursor)
+        elif mode == 'select':
+            self.setDragMode(QGraphicsView.RubberBandDrag)
+            self.setCursor(Qt.ArrowCursor)
+        elif mode == 'connection':
+            self.setDragMode(QGraphicsView.NoDrag)
+            self.setCursor(Qt.CrossCursor)
+
+    def mousePressEvent(self, event):
+        if self._mode == 'move' and event.button() == Qt.LeftButton:
+            try:
+                self.setCursor(Qt.ClosedHandCursor)
+            except Exception:
+                pass
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        if self._mode == 'move':
+            try:
+                self.setCursor(Qt.OpenHandCursor)
+            except Exception:
+                pass
 
 
 class MiniMapView(QGraphicsView):

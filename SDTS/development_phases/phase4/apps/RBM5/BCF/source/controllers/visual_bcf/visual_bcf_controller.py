@@ -115,8 +115,22 @@ class VisualBCFController(QObject):
             self._on_component_selected)
         self.floating_toolbar.select_mode_requested.connect(
             self._set_select_mode)
-        self.floating_toolbar.connection_mode_requested.connect(
-            self._set_select_mode)
+        # Update view cursor/mode explicitly for select/connection
+        try:
+            self.floating_toolbar.select_mode_requested.connect(
+                lambda: self._set_view_mode('select'))
+            self.floating_toolbar.connection_mode_requested.connect(
+                lambda: self._set_view_mode('connection'))
+        except Exception:
+            pass
+        # Move/pan mode
+        try:
+            self.floating_toolbar.move_mode_requested.connect(
+                lambda: self._set_view_mode('move'))
+            self.floating_toolbar.toggle_connections_requested.connect(
+                self._on_toggle_connections)
+        except Exception:
+            pass
         self.floating_toolbar.delete_selected_requested.connect(
             self._on_delete_selected)
         self.floating_toolbar.clear_scene_requested.connect(
@@ -261,6 +275,25 @@ class VisualBCFController(QObject):
         # Reset cursor
         if self.view:
             self.view.setCursor(Qt.ArrowCursor)
+
+    def _set_view_mode(self, mode: str):
+        try:
+            if hasattr(self.view, 'set_mode'):
+                self.view.set_mode(mode)
+        except Exception:
+            pass
+
+    def _on_toggle_connections(self, visible: bool):
+        try:
+            for cid, wire in list(self._connection_graphics_items.items()):
+                if wire:
+                    wire.setVisible(visible)
+            # Force refresh
+            self.scene.update()
+            if self.view:
+                self.view.viewport().update()
+        except Exception:
+            pass
 
     def _on_delete_selected(self):
         """Handle delete selected request from toolbar"""

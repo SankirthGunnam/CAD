@@ -7,7 +7,7 @@ Enhanced component with visible pins for connections.
 from PySide6.QtCore import QPointF, Qt, QTimer
 from PySide6.QtGui import QPen, QBrush, QColor, QFont
 from PySide6.QtWidgets import (
-    QGraphicsRectItem, QGraphicsTextItem, QMenu, QMessageBox, QGraphicsItem)
+    QGraphicsRectItem, QGraphicsTextItem, QMenu, QMessageBox, QGraphicsItem, QGraphicsView)
 
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire
@@ -380,11 +380,31 @@ class ComponentWithPins(QGraphicsRectItem):
         """Handle mouse release to trigger full wire updates after dragging"""
         super().mouseReleaseEvent(event)
 
+        # Restore open hand cursor if in move/pan mode
+        try:
+            scene = self.scene()
+            view = getattr(getattr(scene, 'controller', None), 'view', None)
+            if view and view.dragMode() == QGraphicsView.ScrollHandDrag:
+                view.setCursor(Qt.OpenHandCursor)
+        except Exception:
+            pass
+
         # After dragging is complete, do a full wire update
         # This ensures proper collision detection and routing
         QTimer.singleShot(100, self.update_connected_wires_full)
         # And finalize intersecting wire updates
         QTimer.singleShot(120, lambda: self._update_intersecting_wires(final=True))
+
+    def mousePressEvent(self, event):
+        """Switch cursor to closed hand when starting a drag in move mode"""
+        try:
+            scene = self.scene()
+            view = getattr(getattr(scene, 'controller', None), 'view', None)
+            if view and view.dragMode() == QGraphicsView.ScrollHandDrag and event.button() == Qt.LeftButton:
+                view.setCursor(Qt.ClosedHandCursor)
+        except Exception:
+            pass
+        super().mousePressEvent(event)
 
     def _update_intersecting_wires(self, final: bool = False):
         """Find wires whose paths intersect this component's expanded scene rect and update them.
