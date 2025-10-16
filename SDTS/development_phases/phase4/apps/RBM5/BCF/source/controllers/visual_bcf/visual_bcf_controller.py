@@ -10,12 +10,12 @@ import logging
 import traceback
 from typing import Dict, List, Any, Tuple, Optional
 
-from PySide6.QtCore import QObject, Signal, QTimer, Qt, QPoint
+from PySide6.QtCore import QObject, Signal, QTimer, Qt, QPoint, QEvent
 from PySide6.QtWidgets import QWidget, QGraphicsTextItem, QMessageBox
 
 from apps.RBM5.BCF.source.models.visual_bcf.visual_bcf_data_model import VisualBCFDataModel
 from apps.RBM5.BCF.gui.source.visual_bcf.scene import ComponentScene
-from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView
+from apps.RBM5.BCF.gui.source.visual_bcf.view import CustomGraphicsView, MiniMapView
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts import ComponentWithPins, Wire, ComponentPin
 from apps.RBM5.BCF.gui.source.visual_bcf.floating_toolbar import FloatingToolbar
 
@@ -62,6 +62,7 @@ class VisualBCFController(QObject):
 
         # Create floating toolbar
         self.floating_toolbar = None
+        self.minimap = None
 
         # Connect signals
         self._connect_signals()
@@ -71,6 +72,7 @@ class VisualBCFController(QObject):
 
         # Setup toolbar after everything else is initialized
         self._setup_toolbar()
+        self._setup_minimap()
 
         # Restore view scroll and zoom from persisted visual properties (if present)
         QTimer.singleShot(150, self._restore_view_state)
@@ -82,6 +84,16 @@ class VisualBCFController(QObject):
         try:
             self.view.horizontalScrollBar().valueChanged.connect(self._schedule_save_view_state)
             self.view.verticalScrollBar().valueChanged.connect(self._schedule_save_view_state)
+            # Reposition overlay widgets (toolbar/minimap) on scroll
+            self.view.horizontalScrollBar().valueChanged.connect(self._position_toolbar_on_graphics_view)
+            self.view.verticalScrollBar().valueChanged.connect(self._position_toolbar_on_graphics_view)
+        except Exception:
+            pass
+
+        # Track parent resize/move to reposition overlays
+        try:
+            if self.parent_widget:
+                self.parent_widget.installEventFilter(self)
         except Exception:
             pass
 
@@ -163,6 +175,44 @@ class VisualBCFController(QObject):
         # # Debug logging
         # logger.info(f"Positioned floating toolbar at ({x}, {y}) "
         #             f"relative to graphics view at {view_global_pos}")
+
+        # Also position minimap at bottom-right of the graphics view
+        try:
+            if self.minimap:
+                mx = view_global_pos.x() + view_rect.width() - self.minimap.width() - 10
+                my = view_global_pos.y() + view_rect.height() - self.minimap.height() - 10
+                self.minimap.move(max(0, mx), max(0, my))
+        except Exception:
+            pass
+
+    def _setup_minimap(self):
+        try:
+            self.minimap = MiniMapView(self.scene, self.view, parent=self.parent_widget)
+            self.minimap.setWindowFlag(self.minimap.windowFlags())
+            self.minimap.raise_()
+            self.minimap.show()
+            # Keep minimap viewport rectangle updated when main view changes
+            try:
+                if hasattr(self.view, 'view_transform_changed'):
+                    def _update_minimap():
+                        try:
+                            self.minimap.viewport().update()
+                            self._position_toolbar_on_graphics_view()
+                        except Exception:
+                            pass
+                    self.view.view_transform_changed.connect(_update_minimap)
+            except Exception:
+                pass
+        except Exception:
+            self.minimap = None
+
+    def eventFilter(self, obj, event):
+        try:
+            if obj is self.parent_widget and event.type() in (QEvent.Resize, QEvent.Move):
+                self._position_toolbar_on_graphics_view()
+        except Exception:
+            pass
+        return False
 
     def _set_component_type(self, component_type: str):
         """Set the component type for placement"""
@@ -545,7 +595,39 @@ class VisualBCFController(QObject):
             connection_id = connection_data.get('Connection ID', connection_data.get('id', ''))
             
             if not connection_id:
-                logger.warning("Connection removed from table without ID")
+                # Fallback: attempt to match by endpoints
+                from_device = connection_data.get('Source Device', connection_data.get('source_device', ''))
+                to_device = connection_data.get('Dest Device', connection_data.get('dest_device', ''))
+                from_pin = connection_data.get('Source Pin', connection_data.get('source_pin', ''))
+                to_pin = connection_data.get('Dest Pin', connection_data.get('dest_pin', ''))
+                removed_any = False
+                try:
+                    for cid, wire in list(self._connection_graphics_items.items()):
+                        s_comp = getattr(wire.start_pin, 'parent_component', None)
+                        e_comp = getattr(wire.end_pin, 'parent_component', None)
+                        s_name = getattr(s_comp, 'name', '') if s_comp else ''
+                        e_name = getattr(e_comp, 'name', '') if e_comp else ''
+                        s_pin_name = getattr(wire.start_pin, 'pin_name', getattr(wire.start_pin, 'pin_id', ''))
+                        e_pin_name = getattr(wire.end_pin, 'pin_name', getattr(wire.end_pin, 'pin_id', ''))
+                        if s_name == from_device and e_name == to_device and s_pin_name == from_pin and e_pin_name == to_pin:
+                            if hasattr(wire, 'start_pin') and wire.start_pin and hasattr(wire.start_pin, 'parent_component'):
+                                wire.start_pin.parent_component.remove_wire(wire)
+                            if hasattr(wire, 'end_pin') and wire.end_pin and hasattr(wire.end_pin, 'parent_component'):
+                                wire.end_pin.parent_component.remove_wire(wire)
+                            wire.setVisible(False)
+                            self.scene.removeItem(wire)
+                            del self._connection_graphics_items[cid]
+                            removed_any = True
+                    if removed_any:
+                        # Force refresh to clear any stale painting
+                        self.scene.update()
+                        if self.view:
+                            self.view.viewport().update()
+                        logger.info("Connection(s) removed via endpoint fallback match")
+                        return
+                except Exception:
+                    pass
+                logger.warning("Connection removed from table without ID and no matching wire found")
                 return
 
             # Find and remove connection from scene
@@ -559,12 +641,18 @@ class VisualBCFController(QObject):
                     wire.end_pin.parent_component.remove_wire(wire)
 
                 # Remove from scene
+                wire.setVisible(False)
                 self.scene.removeItem(wire)
                 del self._connection_graphics_items[connection_id]
 
                 logger.info("Connection %s removed from scene via table", connection_id)
             else:
                 logger.warning("Connection %s not found in scene for removal", connection_id)
+
+            # Force refresh to ensure wire is no longer painted
+            self.scene.update()
+            if self.view:
+                self.view.viewport().update()
 
         except Exception as e:
             logger.error("Error removing connection from scene via table: %s", e)

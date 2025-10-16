@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QWidget,
     QInputDialog,
+    QHeaderView,
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction
@@ -43,6 +44,14 @@ class AllDevicesTree(QTreeView):
         self.setIndentation(18)
         self.setMinimumHeight(200)
         self.setEditTriggers(QTreeView.NoEditTriggers)
+        self.setTextElideMode(Qt.ElideNone)
+        self.setHorizontalScrollMode(QTreeView.ScrollPerPixel)
+        try:
+            hdr = self.header()
+            hdr.setStretchLastSection(False)
+            hdr.setSectionResizeMode(QHeaderView.ResizeToContents)
+        except Exception:
+            pass
         
         # Enable context menu and keyboard shortcuts
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -56,8 +65,32 @@ class AllDevicesTree(QTreeView):
             self.setModel(model)
             self.expandAll()
             print(f"✓ All Devices tree initialized with model: {model}")
+            self._wire_model_signals()
+            self._resize_columns()
         else:
             print("❌ All Devices tree model is None - not setting model")
+
+    def _wire_model_signals(self):
+        try:
+            m = self.model()
+            if m is None:
+                return
+            m.dataChanged.connect(self._resize_columns)
+            m.modelReset.connect(self._resize_columns)
+            m.layoutChanged.connect(self._resize_columns)
+        except Exception:
+            pass
+
+    def _resize_columns(self):
+        try:
+            m = self.model()
+            if m is None:
+                return
+            cols = max(1, m.columnCount())
+            for c in range(cols):
+                self.resizeColumnToContents(c)
+        except Exception:
+            pass
 
     def _show_context_menu(self, position):
         """Show context menu for table row operations"""
@@ -146,6 +179,14 @@ class MipiDevicesTree(QTreeView):
         self.setIndentation(18)
         self.setMinimumHeight(200)
         self.setEditTriggers(QTreeView.NoEditTriggers)
+        self.setTextElideMode(Qt.ElideNone)
+        self.setHorizontalScrollMode(QTreeView.ScrollPerPixel)
+        try:
+            hdr = self.header()
+            hdr.setStretchLastSection(False)
+            hdr.setSectionResizeMode(QHeaderView.ResizeToContents)
+        except Exception:
+            pass
         
         # Enable context menu and keyboard shortcuts
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -155,6 +196,8 @@ class MipiDevicesTree(QTreeView):
         if model is not None:
             self.setModel(model)
             self.expandAll()
+            self._wire_model_signals()
+            self._resize_columns()
 
     def _show_context_menu(self, position):
         """Show context menu for table row operations"""
@@ -218,6 +261,28 @@ class MipiDevicesTree(QTreeView):
         except Exception:
             pass
 
+    def _wire_model_signals(self):
+        try:
+            m = self.model()
+            if m is None:
+                return
+            m.dataChanged.connect(self._resize_columns)
+            m.modelReset.connect(self._resize_columns)
+            m.layoutChanged.connect(self._resize_columns)
+        except Exception:
+            pass
+
+    def _resize_columns(self):
+        try:
+            m = self.model()
+            if m is None:
+                return
+            cols = max(1, m.columnCount())
+            for c in range(cols):
+                self.resizeColumnToContents(c)
+        except Exception:
+            pass
+
     # Editing is handled via an item delegate
 
     def keyPressEvent(self, event):
@@ -243,6 +308,14 @@ class GpioDevicesTree(QTreeView):
         self.setIndentation(18)
         self.setMinimumHeight(200)
         self.setEditTriggers(QTreeView.NoEditTriggers)
+        self.setTextElideMode(Qt.ElideNone)
+        self.setHorizontalScrollMode(QTreeView.ScrollPerPixel)
+        try:
+            hdr = self.header()
+            hdr.setStretchLastSection(False)
+            hdr.setSectionResizeMode(QHeaderView.ResizeToContents)
+        except Exception:
+            pass
         
         # Enable context menu and keyboard shortcuts
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -252,6 +325,8 @@ class GpioDevicesTree(QTreeView):
         if model is not None:
             self.setModel(model)
             self.expandAll()
+            self._wire_model_signals()
+            self._resize_columns()
 
     def _show_context_menu(self, position):
         """Show context menu for table row operations"""
@@ -312,6 +387,28 @@ class GpioDevicesTree(QTreeView):
             if sel.isValid():
                 self.setCurrentIndex(sel)
                 self.edit(sel)
+        except Exception:
+            pass
+
+    def _wire_model_signals(self):
+        try:
+            m = self.model()
+            if m is None:
+                return
+            m.dataChanged.connect(self._resize_columns)
+            m.modelReset.connect(self._resize_columns)
+            m.layoutChanged.connect(self._resize_columns)
+        except Exception:
+            pass
+
+    def _resize_columns(self):
+        try:
+            m = self.model()
+            if m is None:
+                return
+            cols = max(1, m.columnCount())
+            for c in range(cols):
+                self.resizeColumnToContents(c)
         except Exception:
             pass
 
@@ -503,6 +600,7 @@ class View(BaseView):
             new_id = dm.add_mipi_device_defaults()
             self.mipi_devices_tree.setModel(dm.mipi_devices_tree_model)
             self.mipi_devices_tree.expandAll()
+            self.mipi_devices_tree._resize_columns()
             sel = dm.mipi_devices_tree_model.index_for_id(new_id, 1)
             if sel.isValid():
                 self.mipi_devices_tree.setCurrentIndex(sel)
@@ -516,6 +614,7 @@ class View(BaseView):
             new_id = dm.add_gpio_device_defaults()
             self.gpio_devices_tree.setModel(dm.gpio_devices_tree_model)
             self.gpio_devices_tree.expandAll()
+            self.gpio_devices_tree._resize_columns()
             sel = dm.gpio_devices_tree_model.index_for_id(new_id, 1)
             if sel.isValid():
                 self.gpio_devices_tree.setCurrentIndex(sel)

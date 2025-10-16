@@ -65,25 +65,37 @@ class TreeModel(QAbstractItemModel):
     def _build_tree(self, parent_node, tree_dict):
         for key, value in tree_dict.items():
             child_node = TreeItem(key)
-            # Set view type based on the value
+            # Determine node semantics:
+            # - Non-empty dict => group (has nested children)
+            # - Empty dict => leaf (table)
+            # - List => group (its items are leaves shown in right pane)
+            # - Other => leaf (fallback to table)
+
+            is_group = False
             if isinstance(value, dict):
-                # This node is a group with children; do not mark as table
-                child_node.view_type = "group"
+                if value:
+                    child_node.view_type = "group"
+                    is_group = True
+                else:
+                    child_node.view_type = "table"  # empty dict treated as leaf
+            elif isinstance(value, list):
+                # Lists are treated as leaves; the list contents feed the view
+                child_node.view_type = "table"
+                is_group = False
             else:
-                child_node.view_type = value  # e.g., "table"
+                child_node.view_type = "table"
 
             # Customize font and icon
             font = QFont()
             font.setBold(True if not parent_node.parent else False)
             child_node.font = font
             child_node.icon = (
-                QIcon.fromTheme("folder")
-                if isinstance(value, dict)
-                else QIcon.fromTheme("text-x-generic")
+                QIcon.fromTheme("folder") if is_group else QIcon.fromTheme("text-x-generic")
             )
             parent_node.append_child(child_node)
 
-            if isinstance(value, dict):
+            if isinstance(value, dict) and value:
+                # Only recurse into non-empty dicts
                 self._build_tree(child_node, value)
 
     def index(self, row, column, parent=QModelIndex()):
@@ -296,21 +308,21 @@ class LegacyBCFManager(QWidget):
         """Setup the tree structure"""
         self.component_structure = {
             "Bands": {
-                "Band Group A": {  # sub-parent with sub-children
-                "Band 1": "table",
-                "Band 2": "table",
-                },
-                "Band 3": "table",
+                "Band Group A": [  # sub-parent with sub-children
+                "Band 1",
+                "Band 2"
+                ],
+                "Band 3": {},
             },
             "Boards": {
-                "Board 1": "table",
-                "Board 2": "table",
-                "Board 3": "table",
+                "Board 1": {},
+                "Board 2": {},
+                "Board 3": {},
             },
             "RCCs": {
-                "RCC 1": "table",
-                "RCC 2": "table",
-                "RCC 3": "table",
+                "RCC 1": {},
+                "RCC 2": {},
+                "RCC 3": {},
             },
         }
 
@@ -329,26 +341,26 @@ class LegacyBCFManager(QWidget):
             parent_item.setData(0, Qt.UserRole, {"type": "parent"})
             print('parent_children', parent_children)
             if isinstance(parent_children, dict):
-                for child_name, view_val in parent_children.items():
-                    child_item = QTreeWidgetItem([child_name])
-                    if isinstance(view_val, dict):
-                        # This is a group node, not a table leaf
-                        child_item.setData(0, Qt.UserRole, {"type": "group"})
-                        # Add its own children as leaf nodes
-                        for grandchild_name, grandchild_view in view_val.items():
-                            grandchild_item = QTreeWidgetItem([grandchild_name])
-                            grandchild_item.setData(0, Qt.UserRole, {"type": "child", "view_type": grandchild_view})
-                            child_item.addChild(grandchild_item)
-                            # Pre-embed table for grandchild
-                            if grandchild_item.childCount() == 0 and grandchild_view == "table":
-                                self._embed_child_view(grandchild_item, grandchild_name, grandchild_view, update_breadcrumbs=False)
-                    else:
-                        # Leaf node
-                        child_item.setData(0, Qt.UserRole, {"type": "child", "view_type": view_val})
-                        # Pre-embed the child's widget as a grandchild so it's ready by default
-                        if child_item.childCount() == 0 and view_val == "table":
-                            self._embed_child_view(child_item, child_name, view_val, update_breadcrumbs=False)
-                    parent_item.addChild(child_item)
+                def add_children(parent_qitem: QTreeWidgetItem, children_map: Dict[str, Any]):
+                    for child_name, child_val in children_map.items():
+                        # Determine if this is a group (non-empty dict) or a leaf (empty dict or list)
+                        is_group = isinstance(child_val, dict) and bool(child_val)
+                        if is_group:
+                            group_item = QTreeWidgetItem([child_name])
+                            group_item.setData(0, Qt.UserRole, {"type": "group"})
+                            parent_qitem.addChild(group_item)
+                            add_children(group_item, child_val)
+                        else:
+                            # Treat lists and empty dicts as leaf nodes with view_type 'table'
+                            view_type = "table"
+                            leaf_item = QTreeWidgetItem([child_name])
+                            leaf_item.setData(0, Qt.UserRole, {"type": "child", "view_type": view_type})
+                            parent_qitem.addChild(leaf_item)
+                            # Pre-embed the child's widget so it's ready by default
+                            if leaf_item.childCount() == 0:
+                                self._embed_child_view(leaf_item, child_name, view_type, update_breadcrumbs=False)
+
+                add_children(parent_item, parent_children)
 
             self.content_tree.addTopLevelItem(parent_item)
             self.content_tree.expandAll()
@@ -434,7 +446,8 @@ class LegacyBCFManager(QWidget):
                 # Check if this child has sub-children in the component structure (search nested)
                 child_map = self._get_children_for_parent_name(parent_name)
                 child_value = child_map.get(item.name)
-                if isinstance(child_value, dict):
+                has_children = isinstance(child_value, dict) and bool(child_value)
+                if has_children:
                     # It has sub-children: rebuild right pane for this child as a new parent
                     self.single_child_container.setVisible(False)
                     self.content_tree.setVisible(True)
@@ -514,7 +527,7 @@ class LegacyBCFManager(QWidget):
                     )
                     controller_class = getattr(controller_module, "TableController")
                 else:
-                controller_module = importlib.import_module(
+                    controller_module = importlib.import_module(
                         f"apps.RBM5.BCF.source.controllers.{view_type}_controller"
                 )
                 controller_class = getattr(

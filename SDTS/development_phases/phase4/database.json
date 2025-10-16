@@ -351,9 +351,9 @@
         }
       },
       "view_state": {
-        "h_scroll": -1116,
-        "v_scroll": -441,
-        "zoom": 0.5578466012364796
+        "h_scroll": -579,
+        "v_scroll": -419,
+        "zoom": 0.4850840010751999
       }
     },
     "dcf": {
@@ -402,7 +402,7 @@
         {
           "ID": "1",
           "Name": "RFIC",
-          "Control Type": "RFIC",
+          "Control Type": "MIPI",
           "Module": "RF_Frontend",
           "Properties": {
             "Frequency_Range": "2.4-6 GHz",
@@ -413,7 +413,7 @@
         {
           "ID": "2",
           "Name": "FEM_2G4",
-          "Control Type": "FEM",
+          "Control Type": "MIPI",
           "Module": "RF_Frontend",
           "Properties": {
             "Frequency_Range": "2.4-2.5 GHz",
@@ -424,7 +424,7 @@
         {
           "ID": "3",
           "Name": "FEM_5G",
-          "Control Type": "FEM",
+          "Control Type": "MIPI",
           "Module": "RF_Frontend",
           "Properties": {
             "Frequency_Range": "5.1-5.9 GHz",
@@ -435,7 +435,7 @@
         {
           "ID": "4",
           "Name": "LNA_2G4",
-          "Control Type": "LNA",
+          "Control Type": "GPIO",
           "Module": "RF_Frontend",
           "Properties": {
             "Frequency_Range": "2.4-2.5 GHz",
@@ -446,7 +446,7 @@
         {
           "ID": "5",
           "Name": "PAM_5G",
-          "Control Type": "PAM",
+          "Control Type": "GPIO",
           "Module": "RF_Frontend",
           "Properties": {
             "Frequency_Range": "5.1-5.9 GHz",
@@ -457,7 +457,7 @@
         {
           "ID": "6",
           "Name": "Coupler_2G4",
-          "Control Type": "Coupler",
+          "Control Type": "GPIO",
           "Module": "RF_Frontend",
           "Properties": {
             "Frequency_Range": "2.4-2.5 GHz",
@@ -468,7 +468,7 @@
         {
           "ID": "7",
           "Name": "Antenna_2G4",
-          "Control Type": "Antenna",
+          "Control Type": "GPIO",
           "Module": "RF_Frontend",
           "Properties": {
             "Frequency_Range": "2.4-2.5 GHz",
@@ -479,7 +479,7 @@
         {
           "ID": "8",
           "Name": "Antenna_5G",
-          "Control Type": "Antenna",
+          "Control Type": "GPIO",
           "Module": "RF_Frontend",
           "Properties": {
             "Frequency_Range": "5.1-5.9 GHz",
@@ -704,7 +704,7 @@
                 "ID": "6",
                 "Name": "LNA_2G4",
                 "DCF": "DCF_004",
-                "Control Type": "LNA",
+                "Control Type": "GPIO",
                 "Board": "Main_Board",
                 "Properties": {
                   "Frequency_Range": "2.4-2.5 GHz",
@@ -715,7 +715,7 @@
                 "ID": "7",
                 "Name": "PAM_5G",
                 "DCF": "DCF_005",
-                "Control Type": "PAM",
+                "Control Type": "GPIO",
                 "Board": "Main_Board",
                 "Properties": {
                   "Frequency_Range": "5.1-5.9 GHz",
@@ -726,7 +726,7 @@
                 "ID": "8",
                 "Name": "Coupler_2G4",
                 "DCF": "DCF_006",
-                "Control Type": "Coupler",
+                "Control Type": "GPIO",
                 "Board": "Main_Board",
                 "Properties": {
                   "Frequency_Range": "2.4-2.5 GHz",
@@ -737,7 +737,7 @@
                 "ID": "9",
                 "Name": "Antenna_2G4",
                 "DCF": "DCF_007",
-                "Control Type": "Antenna",
+                "Control Type": "GPIO",
                 "Board": "Main_Board",
                 "Properties": {
                   "Frequency_Range": "2.4-2.5 GHz",
@@ -748,7 +748,7 @@
                 "ID": "10",
                 "Name": "Antenna_5G",
                 "DCF": "DCF_008",
-                "Control Type": "Antenna",
+                "Control Type": "GPIO",
                 "Board": "Main_Board",
                 "Properties": {
                   "Frequency_Range": "5.1-5.9 GHz",

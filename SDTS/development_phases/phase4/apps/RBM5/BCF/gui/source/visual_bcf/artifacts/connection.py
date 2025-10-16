@@ -9,6 +9,8 @@ Wire connection between component pins with advanced routing:
 
 from typing import Optional, List, Tuple
 import math
+import time
+from datetime import datetime
 
 from PySide6.QtCore import QPointF, Qt, QRectF, QLineF
 from PySide6.QtGui import QPen, QColor, QPainter, QPainterPath, QPainterPathStroker
@@ -274,27 +276,28 @@ class WirePath:
         return not self._line_intersects_any_component(test_line)
 
     def _line_intersects_any_component(self, line: QLineF) -> bool:
-        """Check if a line intersects any component in the scene"""
+        """Check if a line intersects any component in the scene using spatial query"""
         if not self.scene:
             return False
 
-        for item in self.scene.items():
+        # Build a bounding box around the line with clearance padding
+        min_x = min(line.p1().x(), line.p2().x()) - self.clearance
+        max_x = max(line.p1().x(), line.p2().x()) + self.clearance
+        min_y = min(line.p1().y(), line.p2().y()) - self.clearance
+        max_y = max(line.p1().y(), line.p2().y()) + self.clearance
+        query_rect = QRectF(min_x, min_y, max(1.0, max_x - min_x), max(1.0, max_y - min_y))
+
+        # Query only items within the vicinity of the line
+        candidates = self.scene.items(query_rect)
+        for item in candidates:
             if not hasattr(item, "component_id"):
                 continue
-
-            # Get component bounding rectangle
-            item_rect = item.boundingRect()
-            item_rect = item.mapRectToScene(item_rect)
-
-            # Expand rectangle by clearance
+            item_rect = item.mapRectToScene(item.boundingRect())
             expanded_rect = item_rect.adjusted(
                 -self.clearance, -self.clearance, self.clearance, self.clearance
             )
-
-            # Check if line intersects with expanded rectangle
             if self._line_intersects_rect(line, expanded_rect):
                 return True
-
         return False
 
     def _avoid_component_intersections(
@@ -598,26 +601,26 @@ class WirePath:
         return None
 
     def _find_intersecting_components(self, line: QLineF) -> List[QGraphicsItem]:
-        """Find components that intersect the given line"""
+        """Find components that intersect the given line using spatial query"""
         intersecting_components = []
 
         if not self.scene:
             return intersecting_components
 
-        for item in self.scene.items():
+        # Bounding box around the line for candidate filtering
+        min_x = min(line.p1().x(), line.p2().x()) - self.clearance
+        max_x = max(line.p1().x(), line.p2().x()) + self.clearance
+        min_y = min(line.p1().y(), line.p2().y()) - self.clearance
+        max_y = max(line.p1().y(), line.p2().y()) + self.clearance
+        query_rect = QRectF(min_x, min_y, max(1.0, max_x - min_x), max(1.0, max_y - min_y))
+
+        for item in self.scene.items(query_rect):
             if not hasattr(item, "component_id"):
                 continue
-
-            # Get component bounding rectangle
-            item_rect = item.boundingRect()
-            item_rect = item.mapRectToScene(item_rect)
-
-            # Expand rectangle by clearance
+            item_rect = item.mapRectToScene(item.boundingRect())
             expanded_rect = item_rect.adjusted(
                 -self.clearance, -self.clearance, self.clearance, self.clearance
             )
-
-            # Check if line intersects with expanded rectangle
             if self._line_intersects_rect(line, expanded_rect):
                 intersecting_components.append(item)
 
@@ -912,6 +915,17 @@ class Wire(QGraphicsPathItem):
             # Update graphics
             self.setPath(wire_path.get_path())
             self.setPen(QPen(self.wire_color, self.wire_width))
+            # Timing end for async calculation
+            try:
+                if hasattr(self, "_update_start_perf") and self._update_start_perf is not None:
+                    elapsed_ms = (time.perf_counter() - self._update_start_perf) * 1000.0
+                    start_ts = getattr(self, "_update_start_wall", None)
+                    end_ts = datetime.now().strftime("%H:%M:%S.%f")
+                    print(f"[Wire.update_path][{wire_id}] start={start_ts} end={end_ts} duration_ms={elapsed_ms:.2f}")
+                    self._update_start_perf = None
+                    self._update_start_wall = None
+            except Exception:
+                pass
             print(f"✅ Wire path calculated and updated for {wire_id}")
         else:
             print(f"❌ Wire path calculation failed for {wire_id}")
@@ -921,6 +935,8 @@ class Wire(QGraphicsPathItem):
     def _calculate_path_sync(self):
         """Fallback synchronous path calculation"""
         try:
+            start_wall = datetime.now().strftime("%H:%M:%S.%f")
+            start_perf = time.perf_counter()
             start_pos = self.start_pin.get_connection_point()
             end_pos = self.end_pin.get_connection_point()
             self.wire_path = WirePath(
@@ -928,6 +944,9 @@ class Wire(QGraphicsPathItem):
             )
             self.setPath(self.wire_path.get_path())
             self.setPen(QPen(self.wire_color, self.wire_width))
+            elapsed_ms = (time.perf_counter() - start_perf) * 1000.0
+            end_ts = datetime.now().strftime("%H:%M:%S.%f")
+            print(f"[Wire._calculate_path_sync] start={start_wall} end={end_ts} duration_ms={elapsed_ms:.2f}")
         except Exception as e:
             import traceback
             print(f"Error in sync wire calculation: {e}")
@@ -945,9 +964,15 @@ class Wire(QGraphicsPathItem):
             # Temporary wire being drawn - use sync calculation for immediate feedback
             end_pos = temp_end_pos
             self.setPen(QPen(self.temp_color, self.wire_width))
+            # Timing for temporary path calculation
+            start_wall = datetime.now().strftime("%H:%M:%S.%f")
+            start_perf = time.perf_counter()
             self._calculate_optimal_path(start_pos, end_pos)
             if self.wire_path:
                 self.setPath(self.wire_path.get_path())
+            elapsed_ms = (time.perf_counter() - start_perf) * 1000.0
+            end_ts = datetime.now().strftime("%H:%M:%S.%f")
+            print(f"[Wire.update_path:temp] start={start_wall} end={end_ts} duration_ms={elapsed_ms:.2f}")
             return
         else:
             return
@@ -967,6 +992,9 @@ class Wire(QGraphicsPathItem):
 
         # Use async calculation for permanent wires
         if not self._calculation_in_progress:
+            # Record timing start for async update
+            self._update_start_wall = datetime.now().strftime("%H:%M:%S.%f")
+            self._update_start_perf = time.perf_counter()
             self._start_async_calculation()
 
     def _calculate_optimal_path(self, start_pos: QPointF, end_pos: QPointF):
@@ -979,9 +1007,6 @@ class Wire(QGraphicsPathItem):
         # Clear old intersection bumps before recalculating
         if self.wire_path:
             self.wire_path.intersection_bumps.clear()
-
-        # Apply collision avoidance
-        self._avoid_component_collisions()
 
         # Only handle wire intersections for permanent wires (not temporary ones being drawn)
         if not self.is_temporary:
