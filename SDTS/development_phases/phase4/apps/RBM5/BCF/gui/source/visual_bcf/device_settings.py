@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QHeaderView,
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QAction
 from apps.RBM5.BCF.config.constants.tabs import DeviceSettings
 
@@ -562,6 +562,7 @@ class SectionAccordion(QTreeWidget):
 
 
 class View(BaseView):
+    selection_changed = Signal(dict)
     def __init__(self, controller, model: "DeviceSettingsModel"):
         super().__init__(controller, model)
         print(f"✓ Device Settings view initialized with controller: {controller}")
@@ -590,6 +591,12 @@ class View(BaseView):
         # Allow editing on click via delegate
         for tree in (self.all_devices_tree, self.mipi_devices_tree, self.gpio_devices_tree):
             tree.setEditTriggers(QTreeView.DoubleClicked | QTreeView.SelectedClicked | QTreeView.EditKeyPressed)
+        # Hook selection changes to notify controller/visual controller
+        try:
+            self.mipi_devices_tree.selectionModel().currentChanged.connect(lambda cur, prev: self._on_tree_current_changed(self.mipi_devices_tree, cur))
+            self.gpio_devices_tree.selectionModel().currentChanged.connect(lambda cur, prev: self._on_tree_current_changed(self.gpio_devices_tree, cur))
+        except Exception:
+            pass
         print(f"✓ Device Settings view initialized with base_layout: {base_layout}")
         self.setLayout(base_layout)
 
@@ -619,6 +626,43 @@ class View(BaseView):
             if sel.isValid():
                 self.gpio_devices_tree.setCurrentIndex(sel)
                 self.gpio_devices_tree.edit(sel)
+        except Exception:
+            pass
+
+    def _on_tree_current_changed(self, tree: QTreeView, index):
+        try:
+            if not index or not index.isValid():
+                return
+            model = tree.model()
+            if model is None:
+                return
+            pid = int(index.internalId())
+            # Ensure parent row id
+            if pid not in getattr(model, "_parent_id_to_row", {}):
+                parent = model.parent(index)
+                if parent.isValid():
+                    pid = int(parent.internalId())
+            rec = None
+            if hasattr(model, 'get_record_by_parent_id'):
+                rec = model.get_record_by_parent_id(pid)
+            if isinstance(rec, dict):
+                self.selection_changed.emit(rec)
+        except Exception:
+            pass
+
+    def select_by_parent_id(self, tree_key: str, parent_id: int):
+        try:
+            if tree_key == 'gpio':
+                tree = self.gpio_devices_tree
+                model = self.model.gpio_devices_tree_model
+            else:
+                tree = self.mipi_devices_tree
+                model = self.model.mipi_devices_tree_model
+            idx = model.index_for_id(parent_id, 0)
+            if idx.isValid():
+                tree.expandAll()
+                tree.setCurrentIndex(idx)
+                tree.scrollTo(idx, QTreeView.PositionAtCenter)
         except Exception:
             pass
 

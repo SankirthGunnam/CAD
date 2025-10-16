@@ -33,8 +33,14 @@ class ComponentScene(QGraphicsScene):
         self.preview_component = None  # Preview component that follows mouse
         
         # Initialize wire thread manager for async calculations
-        # self.wire_thread_manager = SceneWireThreadManager(max_threads=10, parent=self)
+        self.wire_thread_manager = SceneWireThreadManager(max_threads=10, parent=self)
         logger.info("Scene initialized with wire thread manager (max 10 threads)")
+
+        # Auto-populate an RFIC testbed if the scene starts empty (for performance testing)
+        try:
+            self._populate_rfic_test_if_empty()
+        except Exception as e:
+            logger.debug("RFIC testbed init skipped: %s", e)
 
     def mousePressEvent(self, event):
         """Handle mouse press for component placement mode"""
@@ -258,6 +264,134 @@ class ComponentScene(QGraphicsScene):
         if hasattr(self, 'wire_thread_manager'):
             self.wire_thread_manager.cleanup()
             logger.info("Scene cleanup completed")
+
+    # ---------------------- RFIC Testbed helpers ----------------------
+
+    def _populate_rfic_test_if_empty(self):
+        """Populate a synthetic RFIC testbed (two RFICs + connections) when the scene is empty.
+
+        This aids performance testing of wire routing with many pins/wires.
+        """
+        if len(self.items()) > 0:
+            return
+        self.add_rfic_testbed()
+
+    def _build_rfic_config(self, name: str, num_pairs: int = 8) -> dict:
+        """Build a config dict for an RFIC with PRX/DRX pins on left/right and misc top/bottom pins."""
+        pins = []
+        # Distribute pins evenly along edges, avoid extremes
+        if num_pairs < 1:
+            num_pairs = 1
+        step = 1.0 / (num_pairs + 1)
+        for i in range(num_pairs):
+            pos = (i + 1) * step
+            idx = i + 1
+            # Left edge: PRX_IN, DRX_IN
+            pins.append({
+                'pin_id': f'PRX_IN{idx}', 'pin_name': f'PRX_IN{idx}', 'side': 'left', 'position': pos, 'type': 'rf_in'
+            })
+            pins.append({
+                'pin_id': f'DRX_IN{idx}', 'pin_name': f'DRX_IN{idx}', 'side': 'left', 'position': min(pos + step/2.0, 0.98), 'type': 'rf_in'
+            })
+            # Right edge: PRX_OUT, DRX_OUT
+            pins.append({
+                'pin_id': f'PRX_OUT{idx}', 'pin_name': f'PRX_OUT{idx}', 'side': 'right', 'position': pos, 'type': 'rf_out'
+            })
+            pins.append({
+                'pin_id': f'DRX_OUT{idx}', 'pin_name': f'DRX_OUT{idx}', 'side': 'right', 'position': min(pos + step/2.0, 0.98), 'type': 'rf_out'
+            })
+
+        # A few top/bottom pins
+        pins.extend([
+            {'pin_id': 'LO_IN', 'pin_name': 'LO_IN', 'side': 'top', 'position': 0.3, 'type': 'rf_lo'},
+            {'pin_id': 'REFCLK', 'pin_name': 'REFCLK', 'side': 'top', 'position': 0.7, 'type': 'clock'},
+            {'pin_id': 'VDD', 'pin_name': 'VDD', 'side': 'bottom', 'position': 0.25, 'type': 'power'},
+            {'pin_id': 'GND', 'pin_name': 'GND', 'side': 'bottom', 'position': 0.75, 'type': 'gnd'},
+        ])
+
+        return {
+            'visual_properties': {'color': '#2E86DE'},
+            'pins': pins,
+        }
+
+    def add_rfic_testbed(self, num_pairs: int = 8):
+        """Create two RFIC components with many PRX/DRX pins and connect them."""
+        try:
+            # Build components
+            cfg_a = self._build_rfic_config('RFIC_A', num_pairs=num_pairs)
+            cfg_b = self._build_rfic_config('RFIC_B', num_pairs=num_pairs)
+
+            rfic_a = ComponentWithPins('RFIC_A', 'rfic', component_config=cfg_a)
+            rfic_b = ComponentWithPins('RFIC_B', 'rfic', component_config=cfg_b)
+
+            rfic_a.setPos(100, 120)
+            rfic_b.setPos(500, 140)
+
+            # Ensure they have component_id used by collision checks
+            rfic_a.component_id = 'RFIC_A'
+            rfic_b.component_id = 'RFIC_B'
+
+            self.addItem(rfic_a)
+            self.addItem(rfic_b)
+
+            # Register with controller/model if available
+            if self.controller and hasattr(self.controller, 'add_component'):
+                self.controller.add_component(rfic_a, 'rfic')
+                self.controller.add_component(rfic_b, 'rfic')
+
+            # Helper to find pin by id
+            def pin(comp, pid):
+                for p in getattr(comp, 'pins', []):
+                    if getattr(p, 'pin_id', '') == pid:
+                        return p
+                return None
+
+            # Create connections between A and B for PRX and DRX (both directions)
+            for i in range(1, num_pairs + 1):
+                # A.PRX_OUTi -> B.PRX_INi
+                sp = pin(rfic_a, f'PRX_OUT{i}')
+                ep = pin(rfic_b, f'PRX_IN{i}')
+                if sp and ep:
+                    self._add_wire_between(sp, ep)
+
+                # A.DRX_OUTi -> B.DRX_INi
+                sp = pin(rfic_a, f'DRX_OUT{i}')
+                ep = pin(rfic_b, f'DRX_IN{i}')
+                if sp and ep:
+                    self._add_wire_between(sp, ep)
+
+            # Add a few intra-component loops to stress self-avoidance
+            for i in range(1, min(4, num_pairs) + 1):
+                sp = pin(rfic_a, f'PRX_IN{i}')
+                ep = pin(rfic_a, f'PRX_OUT{i}')
+                if sp and ep:
+                    self._add_wire_between(sp, ep)
+
+                sp = pin(rfic_b, f'DRX_IN{i}')
+                ep = pin(rfic_b, f'DRX_OUT{i}')
+                if sp and ep:
+                    self._add_wire_between(sp, ep)
+
+        except Exception as e:
+            logger.warning("Failed to add RFIC testbed: %s", e)
+
+    def _add_wire_between(self, start_pin: ComponentPin, end_pin: ComponentPin):
+        """Create and register a wire between two pins."""
+        try:
+            wire = Wire(start_pin, end_pin=end_pin, scene=self)
+            self.addItem(wire)
+
+            # Register with components
+            if hasattr(start_pin, 'parent_component'):
+                start_pin.parent_component.add_wire(wire)
+            if hasattr(end_pin, 'parent_component'):
+                end_pin.parent_component.add_wire(wire)
+
+            # Notify controller/model if available
+            if self.controller and hasattr(self.controller, 'add_connection'):
+                self.controller.add_connection(wire)
+        except Exception as e:
+            logger.debug("Wire creation failed: %s", e)
 
     def get_component_at_position(self, position: QPointF) -> ComponentWithPins:
         """Get the component at the specified position"""

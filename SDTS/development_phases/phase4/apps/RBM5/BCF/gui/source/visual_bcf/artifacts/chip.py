@@ -329,6 +329,14 @@ class ComponentWithPins(QGraphicsRectItem):
 
     def itemChange(self, change, value):
         """Handle item changes, particularly position changes"""
+        if change == QGraphicsItem.GraphicsItemChange.ItemSelectedChange:
+            try:
+                if value:
+                    scene = self.scene()
+                    if scene and hasattr(scene, 'controller') and hasattr(scene.controller, 'on_graphics_component_selected'):
+                        scene.controller.on_graphics_component_selected(self)
+            except Exception:
+                pass
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
             # Don't update wires during dragging - only update on final position
             # This prevents performance issues during mouse movement

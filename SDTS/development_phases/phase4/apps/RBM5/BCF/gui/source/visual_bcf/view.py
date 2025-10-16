@@ -168,7 +168,7 @@ class MiniMapView(QGraphicsView):
             vis_rect = QRectF(top_left, bottom_right)
             painter = QPainter(self.viewport())
             pen = QPen(QColor(220, 38, 38))  # red
-            pen.setWidth(2)
+            pen.setWidth(1)
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawRect(vis_rect)

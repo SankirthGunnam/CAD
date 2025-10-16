@@ -54,6 +54,8 @@ class VisualBCFController(QObject):
         # Maps to track graphics items
         self._component_graphics_items: Dict[str, ComponentWithPins] = {}
         self._connection_graphics_items: Dict[str, Wire] = {}
+        # Guard to prevent selection feedback loops between scene and trees
+        self._suppress_table_center = False
 
         # Component placement state
         self.placement_mode = False
@@ -325,6 +327,12 @@ class VisualBCFController(QObject):
             device_settings_controller.device_added.connect(self._on_table_device_added)
             device_settings_controller.device_removed.connect(self._on_table_device_removed)
             device_settings_controller.device_updated.connect(self._on_table_device_updated)
+            # Center on component when user selects in tree
+            try:
+                if hasattr(device_settings_controller, 'view') and hasattr(device_settings_controller.view, 'selection_changed'):
+                    device_settings_controller.view.selection_changed.connect(self._on_table_selection_changed)
+            except Exception:
+                pass
         if io_connect_controller:
             io_connect_controller.connection_added.connect(self._on_table_connection_added)
             io_connect_controller.connection_removed.connect(self._on_table_connection_removed)
@@ -511,6 +519,67 @@ class VisualBCFController(QObject):
 
         except Exception as e:
             logger.error("Error updating device in scene via table: %s", e)
+
+    def _on_table_selection_changed(self, device_rec: dict):
+        """Center the view on the component selected in the tree."""
+        try:
+            if self._suppress_table_center:
+                return
+            if not isinstance(device_rec, dict):
+                return
+            device_id = device_rec.get('ID') or device_rec.get('id')
+            component = None
+            if device_id:
+                component = self._component_graphics_items.get(device_id)
+            if component is None:
+                # Fallback by name
+                device_name = device_rec.get('Name') or device_rec.get('name')
+                if device_name:
+                    for cid, comp in self._component_graphics_items.items():
+                        if getattr(comp, 'name', None) == device_name:
+                            component = comp
+                            break
+            if component is None:
+                return
+            # Ensure in scene
+            if self.view and component.scene() is self.scene:
+                self.view.centerOn(component)
+        except Exception as e:
+            logger.warning(f"Center on selection failed: {e}")
+
+    def on_graphics_component_selected(self, component: ComponentWithPins):
+        """Select and scroll to the corresponding item in the device settings tree."""
+        try:
+            if not component:
+                return
+            device_id = getattr(component, 'component_id', None)
+            tree_key = 'mipi'
+            pid = -1
+            if device_id and hasattr(self.device_settings_controller, 'model'):
+                pid = self.device_settings_controller.model.mipi_devices_tree_model.find_parent_id_by_key_value('ID', device_id)
+                if pid == -1:
+                    pid = self.device_settings_controller.model.gpio_devices_tree_model.find_parent_id_by_key_value('ID', device_id)
+                    if pid != -1:
+                        tree_key = 'gpio'
+            if pid == -1:
+                # fallback by name
+                name = getattr(component, 'name', None)
+                if name:
+                    # search both models
+                    pid = self.device_settings_controller.model.mipi_devices_tree_model.find_parent_id_by_key_value(self.device_settings_controller.model.mipi_devices_tree_model._parent_label_key, name)
+                    if pid == -1:
+                        pid = self.device_settings_controller.model.gpio_devices_tree_model.find_parent_id_by_key_value(self.device_settings_controller.model.gpio_devices_tree_model._parent_label_key, name)
+                        if pid != -1:
+                            tree_key = 'gpio'
+            if pid != -1 and hasattr(self.device_settings_controller, 'view'):
+                # Suppress centering back to scene while we update the tree selection
+                self._suppress_table_center = True
+                try:
+                    self.device_settings_controller.view.select_by_parent_id(tree_key, pid)
+                finally:
+                    self._suppress_table_center = False
+        except Exception as e:
+            logger.warning(f"Could not select tree item for component: {e}")
 
     def _on_table_connection_added(self, connection_data: dict):
         """Handle connection added to table - add to graphics scene"""
