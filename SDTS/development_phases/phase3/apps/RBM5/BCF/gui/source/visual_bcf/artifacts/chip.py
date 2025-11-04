@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QGraphicsRectItem, QGraphicsTextItem, QMenu, QMessageBox, QGraphicsItem)
 
 from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.pin import ComponentPin
+from apps.RBM5.BCF.gui.source.visual_bcf.artifacts.connection import Wire
 
 
 class ComponentWithPins(QGraphicsRectItem):
@@ -309,6 +310,9 @@ class ComponentWithPins(QGraphicsRectItem):
             elif hasattr(wire, 'update_line'):
                 wire.update_line()  # Fallback for old wire types
 
+        # Also update any other wires intersecting this moved component
+        self._update_intersecting_wires(final=False)
+
     def update_connected_wires_full(self):
         """Force full update of all connected wires (use after placement is complete)"""
         for wire in self.connected_wires:
@@ -319,6 +323,9 @@ class ComponentWithPins(QGraphicsRectItem):
                 wire.update_path()
             elif hasattr(wire, 'update_line'):
                 wire.update_line()  # Fallback for old wire types
+
+        # And recalc any other wires intersecting this component
+        self._update_intersecting_wires(final=True)
 
     def itemChange(self, change, value):
         """Handle item changes, particularly position changes"""
@@ -331,6 +338,9 @@ class ComponentWithPins(QGraphicsRectItem):
             # Update connected wires only after the move is complete
             # Use QTimer.singleShot to defer the update
             QTimer.singleShot(0, self.update_connected_wires)
+
+            # Defer intersecting wires update in the same tick
+            QTimer.singleShot(0, lambda: self._update_intersecting_wires(final=False))
 
             # Notify controller to sync model position (deferred)
             try:
@@ -365,3 +375,42 @@ class ComponentWithPins(QGraphicsRectItem):
         # After dragging is complete, do a full wire update
         # This ensures proper collision detection and routing
         QTimer.singleShot(100, self.update_connected_wires_full)
+        # And finalize intersecting wire updates
+        QTimer.singleShot(120, lambda: self._update_intersecting_wires(final=True))
+
+    def _update_intersecting_wires(self, final: bool = False):
+        """Find wires whose paths intersect this component's expanded scene rect and update them.
+
+        We use the scene's spatial index via items(rect) with a modest padding to catch near misses.
+        """
+        scene = self.scene()
+        if not scene:
+            return
+        try:
+            comp_rect = self.mapRectToScene(self.boundingRect())
+            padding = 30.0
+            expanded = comp_rect.adjusted(-padding, -padding, padding, padding)
+
+            candidates = scene.items(expanded)
+            for item in candidates:
+                if not isinstance(item, Wire):
+                    continue
+
+                # Quick bounding check using wire's scene bounds
+                try:
+                    wire_bounds = item.mapRectToScene(item.boundingRect())
+                except Exception:
+                    continue
+                if not wire_bounds.intersects(expanded):
+                    continue
+
+                # Trigger appropriate update
+                if final and hasattr(item, 'update_wire_position_final'):
+                    item.update_wire_position_final()
+                elif hasattr(item, 'update_wire_position_dragging'):
+                    item.update_wire_position_dragging()
+                elif hasattr(item, 'update_path'):
+                    item.update_path()
+        except Exception as e:
+            # Non-fatal; best effort only
+            print(f"Warning: intersecting wire update failed: {e}")

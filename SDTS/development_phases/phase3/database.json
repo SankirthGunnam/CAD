@@ -243,8 +243,8 @@
       "visual_properties": {
         "1": {
           "position": {
-            "x": -1144.5192420008098,
-            "y": -310.85344513171134
+            "x": -1578.3313988856596,
+            "y": -252.80815263545017
           }
         },
         "18": {
@@ -255,8 +255,8 @@
         },
         "2": {
           "position": {
-            "x": -951.1751008967394,
-            "y": 384.1571154802989
+            "x": -1006.0141172437209,
+            "y": -166.3057651466973
           }
         },
         "17": {
@@ -279,8 +279,8 @@
         },
         "8": {
           "position": {
-            "x": -334.13802994561706,
-            "y": -300.7470105988574
+            "x": -440.3421394885848,
+            "y": 34.19601140114258
           }
         },
         "14": {
@@ -309,26 +309,26 @@
         },
         "7": {
           "position": {
-            "x": 282.42021978125024,
-            "y": -335.32412729687485
+            "x": -904.8113456414056,
+            "y": -545.294138747656
           }
         },
         "10": {
           "position": {
-            "x": 719.3448594062506,
-            "y": -119.22396399999991
+            "x": -735.8562566101529,
+            "y": -158.20915074921837
           }
         },
         "9": {
           "position": {
-            "x": -1671.062928046874,
-            "y": 112.43385925000032
+            "x": -574.2151146093734,
+            "y": -408.32368824999975
           }
         },
         "6": {
           "position": {
-            "x": -1771.976708169157,
-            "y": -119.87278776970098
+            "x": -1538.430840625998,
+            "y": -538.834109972395
           }
         },
         "5": {
@@ -345,10 +345,15 @@
         },
         "3": {
           "position": {
-            "x": -33.99762020991848,
-            "y": 23.525260531249828
+            "x": -1178.9837646756039,
+            "y": -557.1136270688282
           }
         }
+      },
+      "view_state": {
+        "h_scroll": -1116,
+        "v_scroll": -441,
+        "zoom": 0.5578466012364796
       }
     },
     "dcf": {
@@ -756,6 +761,24 @@
       },
       "bcf_db_io_connect": [
         {
+          "Connection ID": "1",
+          "Source Device": "RFIC",
+          "Source Pin": "RFFE_CLK",
+          "Source Sub Block": "RFFE_MASTER",
+          "Dest Device": "FEM_2G4",
+          "Dest Pin": "RFFE_CLK",
+          "Dest Sub Block": "RFFE_SLAVE"
+        },
+        {
+          "Connection ID": "2",
+          "Source Device": "RFIC",
+          "Source Pin": "RFFE_DATA",
+          "Source Sub Block": "RFFE_MASTER",
+          "Dest Device": "FEM_2G4",
+          "Dest Pin": "RFFE_DATA",
+          "Dest Sub Block": "RFFE_SLAVE"
+        },
+        {
           "Connection ID": "3",
           "Source Device": "RFIC",
           "Source Pin": "RFFE_CLK",
@@ -835,6 +858,15 @@
           "Dest Device": "RFIC",
           "Dest Pin": "RF_FB_2G4",
           "Dest Sub Block": "FEEDBACK"
+        },
+        {
+          "Connection ID": "12",
+          "Source Device": "FEM_2G4",
+          "Source Pin": "RF_OUT",
+          "Source Sub Block": "OUTPUT",
+          "Dest Device": "Coupler_2G4",
+          "Dest Pin": "RF_IN",
+          "Dest Sub Block": "INPUT"
         }
       ]
     },

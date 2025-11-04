@@ -72,6 +72,19 @@ class VisualBCFController(QObject):
         # Setup toolbar after everything else is initialized
         self._setup_toolbar()
 
+        # Restore view scroll and zoom from persisted visual properties (if present)
+        QTimer.singleShot(150, self._restore_view_state)
+
+        # Persist view state shortly after scrollbars change (debounced)
+        self._save_view_state_timer = QTimer(self)
+        self._save_view_state_timer.setSingleShot(True)
+        self._save_view_state_timer.setInterval(150)
+        try:
+            self.view.horizontalScrollBar().valueChanged.connect(self._schedule_save_view_state)
+            self.view.verticalScrollBar().valueChanged.connect(self._schedule_save_view_state)
+        except Exception:
+            pass
+
         logger.info("VisualBCFController initialized with own view and scene")
 
     def _setup_toolbar(self):
@@ -1026,6 +1039,8 @@ class VisualBCFController(QObject):
             # Force scene and viewport updates
             self.scene.update()
             self.view.viewport().update()
+            # Restore scroll/zoom after items are laid out
+            QTimer.singleShot(50, self._restore_view_state)
             self.operation_completed.emit(
                 "load_scene",
                 f"Scene loaded: {component_count} components, {connection_count} connections")
@@ -1079,3 +1094,48 @@ class VisualBCFController(QObject):
     def get_toolbar(self) -> FloatingToolbar:
         """Get the floating toolbar"""
         return self.floating_toolbar
+
+    # ---------------- View state persistence ----------------
+    def _restore_view_state(self):
+        try:
+            vp = self.data_model.rdb_manager.get_value("config.visual_bcf.view_state") or {}
+            if not vp:
+                return
+            h = vp.get("h_scroll", 0)
+            v = vp.get("v_scroll", 0)
+            z = vp.get("zoom", 1.0)
+            try:
+                if hasattr(self.view, 'set_zoom_factor'):
+                    self.view.set_zoom_factor(float(z))
+            except Exception:
+                pass
+            try:
+                self.view.horizontalScrollBar().setValue(int(h))
+                self.view.verticalScrollBar().setValue(int(v))
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+    def save_view_state(self):
+        try:
+            state = {
+                "h_scroll": int(self.view.horizontalScrollBar().value()),
+                "v_scroll": int(self.view.verticalScrollBar().value()),
+                "zoom": float(getattr(self.view, 'zoom_factor', 1.0)),
+            }
+            existing = self.data_model.rdb_manager.get_value("config.visual_bcf.view_state") or {}
+            existing.update(state)
+            self.data_model.rdb_manager.set_value("config.visual_bcf.view_state", existing)
+        except Exception:
+            pass
+
+    def _schedule_save_view_state(self, *args, **kwargs):
+        try:
+            if self._save_view_state_timer.isActive():
+                self._save_view_state_timer.stop()
+            self._save_view_state_timer.timeout.connect(self.save_view_state)
+            self._save_view_state_timer.start()
+        except Exception:
+            # Fallback: save immediately if timer wiring fails
+            self.save_view_state()

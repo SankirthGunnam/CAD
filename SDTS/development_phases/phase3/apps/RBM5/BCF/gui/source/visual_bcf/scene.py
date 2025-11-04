@@ -33,7 +33,7 @@ class ComponentScene(QGraphicsScene):
         self.preview_component = None  # Preview component that follows mouse
         
         # Initialize wire thread manager for async calculations
-        self.wire_thread_manager = SceneWireThreadManager(max_threads=10, parent=self)
+        # self.wire_thread_manager = SceneWireThreadManager(max_threads=10, parent=self)
         logger.info("Scene initialized with wire thread manager (max 10 threads)")
 
     def mousePressEvent(self, event):
@@ -257,3 +257,11 @@ class ComponentScene(QGraphicsScene):
         if hasattr(self, 'wire_thread_manager'):
             self.wire_thread_manager.cleanup()
             logger.info("Scene cleanup completed")
+
+    def get_component_at_position(self, position: QPointF) -> ComponentWithPins:
+        """Get the component at the specified position"""
+        items = self.items(position)
+        for item in items:
+            if isinstance(item, ComponentWithPins):
+                return item
+        return None

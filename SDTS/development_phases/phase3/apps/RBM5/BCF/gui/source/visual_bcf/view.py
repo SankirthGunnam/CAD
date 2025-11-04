@@ -51,6 +51,14 @@ class CustomGraphicsView(QGraphicsView):
             self.parent().status_updated.emit(
                 f"Zoom reset: {self.zoom_factor:.2f}x")
 
+    def set_zoom_factor(self, factor: float):
+        """Set absolute zoom factor (relative to 1.0)."""
+        if factor <= 0:
+            return
+        scale_factor = factor / self.zoom_factor
+        self.scale(scale_factor, scale_factor)
+        self.zoom_factor = factor
+
     def zoom_in(self):
         """Zoom in by a fixed amount"""
         if self.zoom_factor < self.zoom_max:

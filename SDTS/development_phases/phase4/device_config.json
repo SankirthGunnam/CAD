@@ -1,0 +1,36 @@
+{
+  "config": {
+    "device": {
+      "settings": [],
+      "properties": {}
+    },
+    "band": {
+      "settings": [],
+      "properties": {}
+    },
+    "board": {
+      "settings": [],
+      "properties": {}
+    },
+    "rcc": {
+      "settings": [],
+      "properties": {}
+    },
+    "visual_bcf": {
+      "components": [],
+      "connections": [],
+      "layout": {
+        "scene_rect": {
+          "x": -1000,
+          "y": -1000,
+          "width": 2000,
+          "height": 2000
+        },
+        "grid_settings": {
+          "enabled": true,
+          "size": 20
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1582 @@
+{
+  "components": {
+    "Main Processor": {
+      "type": "processor",
+      "category": "processing",
+      "description": "Main processing unit",
+      "pins": [
+        {
+          "id": "CLK",
+          "name": "Clock",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "RST",
+          "name": "Reset",
+          "type": "input",
+          "position": {"x": 0, "y": 40},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "DATA_OUT",
+          "name": "Data Output",
+          "type": "output",
+          "position": {"x": 120, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "DATA_IN",
+          "name": "Data Input",
+          "type": "input",
+          "position": {"x": 0, "y": 60},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 60, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 60, "y": 100},
+          "electrical_type": "ground"
+        },
+        {
+          "id": "GPIO_0",
+          "name": "GPIO 0",
+          "type": "bidirectional",
+          "position": {"x": 120, "y": 40},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_1",
+          "name": "GPIO 1",
+          "type": "bidirectional",
+          "position": {"x": 120, "y": 50},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_2",
+          "name": "GPIO 2",
+          "type": "bidirectional",
+          "position": {"x": 120, "y": 60},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_3",
+          "name": "GPIO 3",
+          "type": "bidirectional",
+          "position": {"x": 120, "y": 70},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_4",
+          "name": "GPIO 4",
+          "type": "bidirectional",
+          "position": {"x": 120, "y": 80},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2C_SCL",
+          "name": "I2C Clock",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 80},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2C_SDA",
+          "name": "I2C Data",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 90},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_CLK",
+          "name": "SPI Clock",
+          "type": "output",
+          "position": {"x": 0, "y": 100},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_MOSI",
+          "name": "SPI MOSI",
+          "type": "output",
+          "position": {"x": 0, "y": 110},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_MISO",
+          "name": "SPI MISO",
+          "type": "input",
+          "position": {"x": 0, "y": 120},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_CS",
+          "name": "SPI Chip Select",
+          "type": "output",
+          "position": {"x": 0, "y": 130},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "UART_TX",
+          "name": "UART Transmit",
+          "type": "output",
+          "position": {"x": 0, "y": 140},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "UART_RX",
+          "name": "UART Receive",
+          "type": "input",
+          "position": {"x": 0, "y": 150},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "PWM_0",
+          "name": "PWM 0",
+          "type": "output",
+          "position": {"x": 120, "y": 90},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "MIPI_CSI_TX_1",
+          "name": "MIPI CSI TX 1",
+          "type": "output",
+          "position": {"x": 120, "y": 100},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_CSI_TX_2",
+          "name": "MIPI CSI TX 2",
+          "type": "output",
+          "position": {"x": 120, "y": 110},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_CSI_TX_3",
+          "name": "MIPI CSI TX 3",
+          "type": "output",
+          "position": {"x": 120, "y": 120},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "RGMII_TXC",
+          "name": "RGMII TX Clock",
+          "type": "output",
+          "position": {"x": 120, "y": 130},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "RGMII_TXD_0",
+          "name": "RGMII TX Data 0",
+          "type": "output",
+          "position": {"x": 120, "y": 140},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "RGMII_RXD_0",
+          "name": "RGMII RX Data 0",
+          "type": "input",
+          "position": {"x": 0, "y": 160},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "USB_DM",
+          "name": "USB Data-",
+          "type": "bidirectional",
+          "position": {"x": 120, "y": 150},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "USB_DP",
+          "name": "USB Data+",
+          "type": "bidirectional",
+          "position": {"x": 120, "y": 160},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "DDR_DQ_0",
+          "name": "DDR Data 0",
+          "type": "bidirectional",
+          "position": {"x": 120, "y": 170},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2S_RX",
+          "name": "I2S Receive",
+          "type": "input",
+          "position": {"x": 0, "y": 170},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 120,
+        "height": 100,
+        "color": "#2196F3"
+      }
+    },
+    "Camera Sensor": {
+      "type": "sensor",
+      "category": "imaging",
+      "description": "Image sensor for camera",
+      "pins": [
+        {
+          "id": "MIPI_CLK_P",
+          "name": "MIPI Clock+",
+          "type": "output",
+          "position": {"x": 100, "y": 20},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_CLK_N",
+          "name": "MIPI Clock-",
+          "type": "output",
+          "position": {"x": 100, "y": 30},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_P",
+          "name": "MIPI Data0+",
+          "type": "output",
+          "position": {"x": 100, "y": 50},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_N",
+          "name": "MIPI Data0-",
+          "type": "output",
+          "position": {"x": 100, "y": 60},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "VCC",
+          "name": "Power",
+          "type": "power",
+          "position": {"x": 50, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 50, "y": 80},
+          "electrical_type": "ground"
+        },
+        {
+          "id": "MIPI_CSI_RX_0",
+          "name": "MIPI CSI RX 0",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "differential"
+        }
+      ],
+      "visual_properties": {
+        "width": 100,
+        "height": 80,
+        "color": "#4CAF50"
+      }
+    },
+    "Power Management IC": {
+      "type": "pmic",
+      "category": "power",
+      "description": "Power management integrated circuit",
+      "pins": [
+        {
+          "id": "VIN",
+          "name": "Voltage Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "power"
+        },
+        {
+          "id": "VOUT1",
+          "name": "Voltage Output 1",
+          "type": "output",
+          "position": {"x": 80, "y": 20},
+          "electrical_type": "power"
+        },
+        {
+          "id": "VOUT2",
+          "name": "Voltage Output 2",
+          "type": "output",
+          "position": {"x": 80, "y": 40},
+          "electrical_type": "power"
+        },
+        {
+          "id": "EN",
+          "name": "Enable",
+          "type": "input",
+          "position": {"x": 0, "y": 50},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 40, "y": 60},
+          "electrical_type": "ground"
+        },
+        {
+          "id": "ENABLE_PIN",
+          "name": "Enable Pin",
+          "type": "input",
+          "position": {"x": 0, "y": 70},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 80,
+        "height": 60,
+        "color": "#FF9800"
+      }
+    },
+    "Audio Codec": {
+      "type": "codec",
+      "category": "audio",
+      "description": "Audio codec for sound processing",
+      "pins": [
+        {
+          "id": "I2S_CLK",
+          "name": "I2S Clock",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2S_DATA",
+          "name": "I2S Data",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 40},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2S_WS",
+          "name": "I2S Word Select",
+          "type": "input",
+          "position": {"x": 0, "y": 60},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "AUDIO_OUT_L",
+          "name": "Audio Out Left",
+          "type": "output",
+          "position": {"x": 70, "y": 20},
+          "electrical_type": "analog"
+        },
+        {
+          "id": "AUDIO_OUT_R",
+          "name": "Audio Out Right",
+          "type": "output",
+          "position": {"x": 70, "y": 40},
+          "electrical_type": "analog"
+        },
+        {
+          "id": "I2S_TX",
+          "name": "I2S Transmit",
+          "type": "output",
+          "position": {"x": 70, "y": 60},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 70,
+        "height": 60,
+        "color": "#9C27B0"
+      }
+    },
+    "WiFi Module": {
+      "type": "wifi",
+      "category": "wireless",
+      "description": "WiFi communication module",
+      "pins": [
+        {
+          "id": "SPI_CLK",
+          "name": "SPI Clock",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_MOSI",
+          "name": "SPI MOSI",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_MISO",
+          "name": "SPI MISO",
+          "type": "output",
+          "position": {"x": 0, "y": 40},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_CS",
+          "name": "SPI Chip Select",
+          "type": "input",
+          "position": {"x": 0, "y": 50},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "ANT",
+          "name": "Antenna",
+          "type": "rf",
+          "position": {"x": 60, "y": 35},
+          "electrical_type": "rf"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 50,
+        "color": "#607D8B"
+      }
+    },
+    "Bluetooth Module": {
+      "type": "bluetooth",
+      "category": "wireless",
+      "description": "Bluetooth communication module",
+      "pins": [
+        {
+          "id": "UART_TX",
+          "name": "UART Transmit",
+          "type": "output",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "UART_RX",
+          "name": "UART Receive",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "UART_RTS",
+          "name": "UART RTS",
+          "type": "output",
+          "position": {"x": 0, "y": 40},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "UART_CTS",
+          "name": "UART CTS",
+          "type": "input",
+          "position": {"x": 0, "y": 50},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "ANT",
+          "name": "Antenna",
+          "type": "rf",
+          "position": {"x": 50, "y": 35},
+          "electrical_type": "rf"
+        }
+      ],
+      "visual_properties": {
+        "width": 50,
+        "height": 50,
+        "color": "#795548"
+      }
+    },
+    "Display Controller": {
+      "type": "display",
+      "category": "video",
+      "description": "Display controller for video output",
+      "pins": [
+        {
+          "id": "MIPI_CLK_P",
+          "name": "MIPI Clock+",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_CLK_N",
+          "name": "MIPI Clock-",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_P",
+          "name": "MIPI Data0+",
+          "type": "input",
+          "position": {"x": 0, "y": 50},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_N",
+          "name": "MIPI Data0-",
+          "type": "input",
+          "position": {"x": 0, "y": 60},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "BACKLIGHT",
+          "name": "Backlight Control",
+          "type": "output",
+          "position": {"x": 80, "y": 40},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "MIPI_DSI_RX_0",
+          "name": "MIPI DSI RX 0",
+          "type": "input",
+          "position": {"x": 0, "y": 70},
+          "electrical_type": "differential"
+        }
+      ],
+      "visual_properties": {
+        "width": 80,
+        "height": 60,
+        "color": "#E91E63"
+      }
+    },
+    "Memory Controller": {
+      "type": "memory",
+      "category": "storage",
+      "description": "Memory controller for DDR interface",
+      "pins": [
+        {
+          "id": "DDR_CLK_P",
+          "name": "DDR Clock+",
+          "type": "output",
+          "position": {"x": 90, "y": 20},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "DDR_CLK_N",
+          "name": "DDR Clock-",
+          "type": "output",
+          "position": {"x": 90, "y": 30},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "DDR_D0",
+          "name": "DDR Data0",
+          "type": "bidirectional",
+          "position": {"x": 90, "y": 50},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "DDR_A0",
+          "name": "DDR Address0",
+          "type": "output",
+          "position": {"x": 90, "y": 70},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power",
+          "type": "power",
+          "position": {"x": 45, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "DDR_DQ_0",
+          "name": "DDR Data 0",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 90,
+        "height": 80,
+        "color": "#00BCD4"
+      }
+    },
+    "GPS Module": {
+      "type": "gps",
+      "category": "navigation",
+      "description": "GPS navigation module",
+      "pins": [
+        {
+          "id": "UART_TX",
+          "name": "UART Transmit",
+          "type": "output",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "UART_RX",
+          "name": "UART Receive",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "PPS",
+          "name": "Pulse Per Second",
+          "type": "output",
+          "position": {"x": 60, "y": 25},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "ANT",
+          "name": "GPS Antenna",
+          "type": "rf",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "rf"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 40,
+        "color": "#CDDC39"
+      }
+    },
+    "Accelerometer": {
+      "type": "accelerometer",
+      "category": "sensor",
+      "description": "3-axis accelerometer sensor",
+      "pins": [
+        {
+          "id": "I2C_SCL",
+          "name": "I2C Clock",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2C_SDA",
+          "name": "I2C Data",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "INT",
+          "name": "Interrupt",
+          "type": "output",
+          "position": {"x": 40, "y": 25},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "INT_PIN",
+          "name": "Interrupt Pin",
+          "type": "output",
+          "position": {"x": 40, "y": 35},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 40,
+        "height": 30,
+        "color": "#FF5722"
+      }
+    },
+    "Gyroscope": {
+      "type": "gyroscope",
+      "category": "sensor",
+      "description": "3-axis gyroscope sensor",
+      "pins": [
+        {
+          "id": "I2C_SCL",
+          "name": "I2C Clock",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2C_SDA",
+          "name": "I2C Data",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "INT",
+          "name": "Interrupt",
+          "type": "output",
+          "position": {"x": 40, "y": 25},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "INT_PIN",
+          "name": "Interrupt Pin",
+          "type": "output",
+          "position": {"x": 40, "y": 35},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 40,
+        "height": 30,
+        "color": "#3F51B5"
+      }
+    },
+    "Magnetometer": {
+      "type": "magnetometer",
+      "category": "sensor",
+      "description": "3-axis magnetometer sensor",
+      "pins": [
+        {
+          "id": "I2C_SCL",
+          "name": "I2C Clock",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2C_SDA",
+          "name": "I2C Data",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "DRDY",
+          "name": "Data Ready",
+          "type": "output",
+          "position": {"x": 40, "y": 25},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "INT_PIN",
+          "name": "Interrupt Pin",
+          "type": "output",
+          "position": {"x": 40, "y": 35},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 40,
+        "height": 30,
+        "color": "#8BC34A"
+      }
+    },
+    "Temperature Sensor": {
+      "type": "temperature",
+      "category": "sensor",
+      "description": "Digital temperature sensor",
+      "pins": [
+        {
+          "id": "I2C_SCL",
+          "name": "I2C Clock",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 15},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2C_SDA",
+          "name": "I2C Data",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 25},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "ALERT",
+          "name": "Temperature Alert",
+          "type": "output",
+          "position": {"x": 30, "y": 20},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 30,
+        "height": 25,
+        "color": "#FF9800"
+      }
+    },
+    "Flash Memory": {
+      "type": "flash",
+      "category": "storage",
+      "description": "Flash memory storage",
+      "pins": [
+        {
+          "id": "SPI_CLK",
+          "name": "SPI Clock",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_MOSI",
+          "name": "SPI MOSI",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_MISO",
+          "name": "SPI MISO",
+          "type": "output",
+          "position": {"x": 0, "y": 40},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "SPI_CS",
+          "name": "SPI Chip Select",
+          "type": "input",
+          "position": {"x": 0, "y": 50},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 50,
+        "height": 50,
+        "color": "#795548"
+      }
+    },
+    "Ethernet Controller": {
+      "type": "ethernet",
+      "category": "networking",
+      "description": "Ethernet network controller",
+      "pins": [
+        {
+          "id": "RGMII_TXC",
+          "name": "RGMII TX Clock",
+          "type": "output",
+          "position": {"x": 80, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "RGMII_TXD0",
+          "name": "RGMII TX Data0",
+          "type": "output",
+          "position": {"x": 80, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "RGMII_TXD1",
+          "name": "RGMII TX Data1",
+          "type": "output",
+          "position": {"x": 80, "y": 40},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "RGMII_RXC",
+          "name": "RGMII RX Clock",
+          "type": "input",
+          "position": {"x": 80, "y": 60},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "RGMII_TXD_0",
+          "name": "RGMII TX Data 0",
+          "type": "output",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "RGMII_RXD_0",
+          "name": "RGMII RX Data 0",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 80,
+        "height": 60,
+        "color": "#607D8B"
+      }
+    },
+    "USB Hub Controller": {
+      "type": "usb",
+      "category": "connectivity",
+      "description": "USB hub controller",
+      "pins": [
+        {
+          "id": "USB_DM0",
+          "name": "USB Data- Port0",
+          "type": "bidirectional",
+          "position": {"x": 70, "y": 20},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "USB_DP0",
+          "name": "USB Data+ Port0",
+          "type": "bidirectional",
+          "position": {"x": 70, "y": 30},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "USB_DM1",
+          "name": "USB Data- Port1",
+          "type": "bidirectional",
+          "position": {"x": 70, "y": 50},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "USB_DP1",
+          "name": "USB Data+ Port1",
+          "type": "bidirectional",
+          "position": {"x": 70, "y": 60},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "USB_DM",
+          "name": "USB Data-",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "USB_DP",
+          "name": "USB Data+",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "differential"
+        }
+      ],
+      "visual_properties": {
+        "width": 70,
+        "height": 60,
+        "color": "#009688"
+      }
+    },
+    "Touch Controller": {
+      "type": "touch",
+      "category": "input",
+      "description": "Touch screen controller",
+      "pins": [
+        {
+          "id": "I2C_SCL",
+          "name": "I2C Clock",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "I2C_SDA",
+          "name": "I2C Data",
+          "type": "bidirectional",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "INT",
+          "name": "Touch Interrupt",
+          "type": "output",
+          "position": {"x": 50, "y": 25},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "INT_PIN",
+          "name": "Interrupt Pin",
+          "type": "output",
+          "position": {"x": 50, "y": 35},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 50,
+        "height": 40,
+        "color": "#E91E63"
+      }
+    },
+    "LED Driver": {
+      "type": "led_driver",
+      "category": "output",
+      "description": "LED driver controller",
+      "pins": [
+        {
+          "id": "PWM1",
+          "name": "PWM Channel 1",
+          "type": "output",
+          "position": {"x": 40, "y": 15},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "PWM2",
+          "name": "PWM Channel 2",
+          "type": "output",
+          "position": {"x": 40, "y": 25},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "PWM3",
+          "name": "PWM Channel 3",
+          "type": "output",
+          "position": {"x": 40, "y": 35},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "EN",
+          "name": "Enable",
+          "type": "input",
+          "position": {"x": 0, "y": 25},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "PWM_IN",
+          "name": "PWM Input",
+          "type": "input",
+          "position": {"x": 0, "y": 35},
+          "electrical_type": "digital"
+        }
+      ],
+      "visual_properties": {
+        "width": 40,
+        "height": 30,
+        "color": "#FFC107"
+      }
+    },
+    "Secondary Camera": {
+      "type": "camera",
+      "category": "imaging",
+      "description": "Secondary camera sensor",
+      "pins": [
+        {
+          "id": "MIPI_CLK_P",
+          "name": "MIPI Clock+",
+          "type": "output",
+          "position": {"x": 90, "y": 20},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_CLK_N",
+          "name": "MIPI Clock-",
+          "type": "output",
+          "position": {"x": 90, "y": 30},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_P",
+          "name": "MIPI Data0+",
+          "type": "output",
+          "position": {"x": 90, "y": 50},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_N",
+          "name": "MIPI Data0-",
+          "type": "output",
+          "position": {"x": 90, "y": 60},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_CSI_RX_0",
+          "name": "MIPI CSI RX 0",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "differential"
+        }
+      ],
+      "visual_properties": {
+        "width": 90,
+        "height": 70,
+        "color": "#4CAF50"
+      }
+    },
+    "Depth Sensor": {
+      "type": "depth_sensor",
+      "category": "imaging",
+      "description": "Depth sensing camera",
+      "pins": [
+        {
+          "id": "MIPI_CLK_P",
+          "name": "MIPI Clock+",
+          "type": "output",
+          "position": {"x": 100, "y": 20},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_CLK_N",
+          "name": "MIPI Clock-",
+          "type": "output",
+          "position": {"x": 100, "y": 30},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_P",
+          "name": "MIPI Data0+",
+          "type": "output",
+          "position": {"x": 100, "y": 50},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_N",
+          "name": "MIPI Data0-",
+          "type": "output",
+          "position": {"x": 100, "y": 60},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "IR_LED",
+          "name": "IR LED Control",
+          "type": "output",
+          "position": {"x": 100, "y": 80},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "MIPI_CSI_RX_0",
+          "name": "MIPI CSI RX 0",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "differential"
+        }
+      ],
+      "visual_properties": {
+        "width": 100,
+        "height": 80,
+        "color": "#9C27B0"
+      }
+    },
+    "Thermal Camera": {
+      "type": "thermal_camera",
+      "category": "imaging",
+      "description": "Thermal imaging camera",
+      "pins": [
+        {
+          "id": "MIPI_CLK_P",
+          "name": "MIPI Clock+",
+          "type": "output",
+          "position": {"x": 110, "y": 20},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_CLK_N",
+          "name": "MIPI Clock-",
+          "type": "output",
+          "position": {"x": 110, "y": 30},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_P",
+          "name": "MIPI Data0+",
+          "type": "output",
+          "position": {"x": 110, "y": 50},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "MIPI_D0_N",
+          "name": "MIPI Data0-",
+          "type": "output",
+          "position": {"x": 110, "y": 60},
+          "electrical_type": "differential"
+        },
+        {
+          "id": "TEMP_SENSE",
+          "name": "Temperature Sense",
+          "type": "output",
+          "position": {"x": 110, "y": 80},
+          "electrical_type": "analog"
+        },
+        {
+          "id": "MIPI_CSI_RX_0",
+          "name": "MIPI CSI RX 0",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "differential"
+        }
+      ],
+      "visual_properties": {
+        "width": 110,
+        "height": 80,
+        "color": "#FF5722"
+      }
+    },
+    "GPIO Bank 0": {
+      "type": "gpio_bank",
+      "category": "gpio",
+      "description": "GPIO bank 0 controller",
+      "pins": [
+        {
+          "id": "GPIO0",
+          "name": "GPIO 0",
+          "type": "bidirectional",
+          "position": {"x": 80, "y": 10},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO1",
+          "name": "GPIO 1",
+          "type": "bidirectional",
+          "position": {"x": 80, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO2",
+          "name": "GPIO 2",
+          "type": "bidirectional",
+          "position": {"x": 80, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO3",
+          "name": "GPIO 3",
+          "type": "bidirectional",
+          "position": {"x": 80, "y": 40},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO4",
+          "name": "GPIO 4",
+          "type": "bidirectional",
+          "position": {"x": 80, "y": 50},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO5",
+          "name": "GPIO 5",
+          "type": "bidirectional",
+          "position": {"x": 80, "y": 60},
+          "electrical_type": "digital"
+        }
+    ],
+    "visual_properties": {
+        "width": 80,
+        "height": 60,
+        "color": "#009688"
+      }
+    },
+    "GPIO Bank 0": {
+      "type": "gpio_bank",
+      "category": "gpio",
+      "description": "GPIO Bank 0 - 8 GPIO pins",
+      "pins": [
+        {
+          "id": "GPIO_IN_0",
+          "name": "GPIO Input 0",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_IN_1",
+          "name": "GPIO Input 1",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT_0",
+          "name": "GPIO Output 0",
+          "type": "output",
+          "position": {"x": 80, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT_1",
+          "name": "GPIO Output 1",
+          "type": "output",
+          "position": {"x": 80, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 40, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 40, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 80,
+        "height": 60,
+        "color": "#4CAF50"
+      }
+    },
+    "GPIO Bank 1": {
+      "type": "gpio_bank",
+      "category": "gpio",
+      "description": "GPIO Bank 1 - 8 GPIO pins",
+      "pins": [
+        {
+          "id": "GPIO_IN_0",
+          "name": "GPIO Input 0",
+          "type": "input",
+          "position": {"x": 0, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_IN_1",
+          "name": "GPIO Input 1",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT_0",
+          "name": "GPIO Output 0",
+          "type": "output",
+          "position": {"x": 80, "y": 20},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT_1",
+          "name": "GPIO Output 1",
+          "type": "output",
+          "position": {"x": 80, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 40, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 40, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 80,
+        "height": 60,
+        "color": "#9E9E9E"
+      }
+    },
+    "Power Control GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Power Control GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#FF9800"
+      }
+    },
+    "Sensor Enable GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Sensor Enable GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#4CAF50"
+      }
+    },
+    "LED Control GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "LED Control GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#FFEB3B"
+      }
+    },
+    "Reset GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Reset GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#F44336"
+      }
+    },
+    "Interrupt GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Interrupt GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#9C27B0"
+      }
+    },
+    "Status GPIO": {
+      "type": "gpio_single",
+      "category": "gpio",
+      "description": "Status GPIO pin",
+      "pins": [
+        {
+          "id": "GPIO_IN",
+          "name": "GPIO Input",
+          "type": "input",
+          "position": {"x": 0, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "GPIO_OUT",
+          "name": "GPIO Output",
+          "type": "output",
+          "position": {"x": 60, "y": 30},
+          "electrical_type": "digital"
+        },
+        {
+          "id": "VCC",
+          "name": "Power Supply",
+          "type": "power",
+          "position": {"x": 30, "y": 0},
+          "electrical_type": "power"
+        },
+        {
+          "id": "GND",
+          "name": "Ground",
+          "type": "ground",
+          "position": {"x": 30, "y": 60},
+          "electrical_type": "ground"
+        }
+      ],
+      "visual_properties": {
+        "width": 60,
+        "height": 60,
+        "color": "#607D8B"
+      }
+    }
+  }
+}

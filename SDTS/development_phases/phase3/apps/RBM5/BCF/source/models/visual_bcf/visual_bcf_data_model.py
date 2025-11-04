@@ -283,7 +283,7 @@ class VisualBCFDataModel(QObject):
 
             # Emit update signal
             self.component_updated.emit(component_id, self.rdb_manager[paths.VISUAL_PROPERTIES][component_id])
-            logger.info("Updated component position: %s", component_id)
+            # logger.info("Updated component position: %s", component_id)
             return True
         except Exception as e:
             logger.error("Error updating component position: %s", e)
