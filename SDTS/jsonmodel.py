@@ -6,8 +6,8 @@ import json
 import sys
 from typing import Any
 
-from PySide6.QtWidgets import QTreeView, QApplication, QHeaderView, QMainWindow
-from PySide6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt, QFileInfo
+from PySide6.QtWidgets import QTreeView, QApplication, QHeaderView, QMainWindow, QMessageBox
+from PySide6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt, QFileInfo, Slot
 from PySide6.QtGui import QCloseEvent
 
 
@@ -218,6 +218,19 @@ class JsonModel(QAbstractItemModel):
                                 else:
                                     # New key, store as string
                                     self.document[dict_row][item.key] = str(value)
+                                
+                                # Update tree item to reflect the change
+                                item.value = str(self.document[dict_row][item.key])
+                                
+                                # Special case: If the key being edited is "id", update the parent dict item's key
+                                if item.key == "id":
+                                    # Update the parent dict item's key to show the new id
+                                    new_id = self.document[dict_row].get("id", dict_row)
+                                    dict_item.key = new_id
+                                    
+                                    # Emit dataChanged for the parent item (column 0) so it updates the display
+                                    parent_index = self.index(dict_row, 0, QModelIndex())
+                                    self.dataChanged.emit(parent_index, parent_index, [Qt.ItemDataRole.DisplayRole])
 
                 self.dataChanged.emit(index, index, [Qt.ItemDataRole.EditRole])
 
@@ -397,9 +410,101 @@ class JsonModel(QAbstractItemModel):
         """Get the current file path"""
         return self._file_path
 
+    def _update_tree_from_document(self):
+        """Update the tree structure from the current document"""
+        self.beginResetModel()
+        self._rootItem = TreeItem.load(self.document)
+        self._rootItem.value_type = type(self.document)
+        self.endResetModel()
+
+    def insertRow(self, row: int, parent: QModelIndex = QModelIndex(), item_data: dict = None) -> bool:
+        """Insert a new row at the specified position.
+        
+        For a list of dictionaries, inserts a new dictionary at the given row.
+        
+        Args:
+            row: Position to insert the new item
+            parent: Parent index (should be invalid for top-level items in a list)
+            item_data: Dictionary data for the new item. If None, creates an empty dict.
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not isinstance(self.document, list):
+            return False
+        
+        if row < 0 or row > len(self.document):
+            return False
+        
+        # Prepare new item data
+        new_item = item_data.copy() if item_data else {'id': len(self.document), 'type': 'New Item'}
+        
+        # Insert into document
+        self.document.insert(row, new_item)
+        
+        # Update tree structure
+        self._update_tree_from_document()
+        
+        return True
+
+    def removeRow(self, row: int, parent: QModelIndex = QModelIndex()) -> bool:
+        """Remove a row at the specified position.
+        
+        For a list of dictionaries, removes the dictionary at the given row.
+        
+        Args:
+            row: Position of the item to remove
+            parent: Parent index (should be invalid for top-level items in a list)
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not isinstance(self.document, list):
+            return False
+        
+        if row < 0 or row >= len(self.document):
+            return False
+        
+        # Remove from document
+        self.document.pop(row)
+        
+        # Update tree structure
+        self._update_tree_from_document()
+        
+        return True
+
+    def addItem(self, item_data: dict = None) -> bool:
+        """Add a new item to the end of the list.
+        
+        Convenience method that calls insertRow at the end.
+        
+        Args:
+            item_data: Dictionary data for the new item. If None, creates an empty dict.
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not isinstance(self.document, list):
+            return False
+        
+        return self.insertRow(len(self.document), QModelIndex(), item_data)
+
+    def removeItem(self, row: int) -> bool:
+        """Remove an item at the specified row.
+        
+        Convenience method that calls removeRow.
+        
+        Args:
+            row: Position of the item to remove
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        return self.removeRow(row, QModelIndex())
+
 
 class JsonTreeViewWindow(QMainWindow):
-    """Window with autosave functionality on close"""
+    """Window with autosave functionality on close and insert/delete operations"""
     
     def __init__(self, model: JsonModel, file_path: str = None):
         super().__init__()
@@ -415,10 +520,113 @@ class JsonTreeViewWindow(QMainWindow):
         self.view.setModel(model)
         self.view.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.view.setAlternatingRowColors(True)
+        self.view.setEditTriggers(QTreeView.EditTrigger.DoubleClicked | QTreeView.EditTrigger.SelectedClicked | QTreeView.EditTrigger.EditKeyPressed)
         self.setCentralWidget(self.view)
         
+        # Create menu bar with actions
+        self._create_menu_bar()
+        
         self.setWindowTitle("JSON Tree View" + (f" - {file_path}" if file_path else ""))
-        self.resize(500, 300)
+        self.resize(500, 600)
+    
+    def _create_menu_bar(self):
+        """Create menu bar with file and edit operations"""
+        menubar = self.menuBar()
+        
+        # File menu
+        file_menu = menubar.addMenu("&File")
+        save_action = file_menu.addAction("&Save")
+        save_action.setShortcut("Ctrl+S")
+        save_action.triggered.connect(self.save_file)
+        
+        file_menu.addSeparator()
+        exit_action = file_menu.addAction("E&xit")
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+        
+        # Edit menu
+        edit_menu = menubar.addMenu("&Edit")
+        
+        add_action = edit_menu.addAction("&Add Item")
+        add_action.setShortcut("Ctrl+A")
+        add_action.triggered.connect(self.add_item)
+        
+        insert_action = edit_menu.addAction("&Insert Item")
+        insert_action.setShortcut("Ctrl+I")
+        insert_action.triggered.connect(self.insert_item)
+        
+        remove_action = edit_menu.addAction("&Remove Item")
+        remove_action.setShortcut("Ctrl+R")
+        remove_action.triggered.connect(self.remove_item)
+    
+    @Slot()
+    def save_file(self):
+        """Save the current document"""
+        if self.model.save_to_json():
+            QMessageBox.information(self, "Success", "File saved successfully")
+        else:
+            QMessageBox.warning(self, "Error", "Failed to save file")
+    
+    @Slot()
+    def add_item(self):
+        """Add a new item at the end of the list"""
+        if self.model.addItem():
+            # Expand to show new item
+            index = self.model.index(self.model.rowCount() - 1, 0)
+            self.view.expand(index)
+            self.view.setCurrentIndex(index)
+            QMessageBox.information(self, "Success", "Item added successfully")
+        else:
+            QMessageBox.warning(self, "Error", "Failed to add item. Document must be a list.")
+    
+    @Slot()
+    def insert_item(self):
+        """Insert a new item at the current selection"""
+        current_index = self.view.currentIndex()
+        if current_index.isValid():
+            # Get the top-level row
+            top_level_index = current_index
+            while top_level_index.parent().isValid():
+                top_level_index = top_level_index.parent()
+            
+            row = top_level_index.row()
+            if self.model.insertRow(row):
+                # Expand to show new item
+                index = self.model.index(row, 0)
+                self.view.expand(index)
+                self.view.setCurrentIndex(index)
+                QMessageBox.information(self, "Success", "Item inserted successfully")
+            else:
+                QMessageBox.warning(self, "Error", "Failed to insert item. Document must be a list.")
+        else:
+            # No selection, add at the end
+            self.add_item()
+    
+    @Slot()
+    def remove_item(self):
+        """Remove the selected item"""
+        current_index = self.view.currentIndex()
+        if current_index.isValid():
+            # Get the top-level row
+            top_level_index = current_index
+            while top_level_index.parent().isValid():
+                top_level_index = top_level_index.parent()
+            
+            row = top_level_index.row()
+            reply = QMessageBox.question(
+                self, 
+                "Confirm Delete", 
+                f"Are you sure you want to delete item at row {row}?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                if self.model.removeItem(row):
+                    QMessageBox.information(self, "Success", "Item removed successfully")
+                else:
+                    QMessageBox.warning(self, "Error", "Failed to remove item")
+        else:
+            QMessageBox.warning(self, "No Selection", "Please select an item to remove")
     
     def closeEvent(self, event: QCloseEvent):
         """Override closeEvent to autosave before closing"""
