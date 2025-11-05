@@ -1,8 +1,12 @@
 [
   {
+    "id": 3,
+    "type": "New Item"
+  },
+  {
     "id": "1001",
     "type": "Regular",
-    "id group1": "2001",
+    "id group1": "2020",
     "type group1": "Chocolate",
     "id group2": "2002",
     "type group2": "Vanilla"
@@ -11,7 +15,7 @@
     "id": "1002",
     "type": "Blueberry",
     "id group1": "3001",
-    "type group1": "Strawberry",
+    "type group1": "Strawberry123",
     "id group2": "3002",
     "type group2": "Raspberry"
   },
