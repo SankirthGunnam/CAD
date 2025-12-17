@@ -14,3 +14,7 @@ Thumbs.db
 .venv/
 .vscode/
 venv/
+
+# OmniParser: do not commit >2GB BLIP2 shards (GitHub LFS limit)
+OmniParser/weights/icon_caption_blip2/pytorch_model-00001-of-00002.bin
+OmniParser/weights/icon_caption_blip2/pytorch_model-00002-of-00002.bin

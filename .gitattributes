@@ -1,0 +1,2 @@
+# Track large OmniParser weights with Git LFS
+OmniParser/weights/** filter=lfs diff=lfs merge=lfs -text
