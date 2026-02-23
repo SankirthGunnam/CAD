@@ -1,5 +1,5 @@
 # SANKIRTH GUNNAM  
-**Staff Engineer | AI & Embedded Systems Architect**  
+**Staff Engineer | AI & Embedded Systems**  
 Bangalore, India  
 +91 9663274719  
 sankirthgunnam@gmail.com
@@ -86,7 +86,7 @@ Staff Engineer with 7+ years of experience in semiconductor software, RF automat
 ## TECHNICAL SKILLS
 
 **Programming Languages**
-- C, C++, Python, Java, SQL, HTML/CSS
+- C, C++, Python, HTML/CSS, Javascript
 
 **AI/ML Stack**
 - PyTorch
