@@ -2,8 +2,7 @@
 **Staff Engineer | AI & Embedded Systems Architect**  
 Bangalore, India  
 +91 9663274719  
-sankirthgunnam@gmail.com  
-LinkedIn: [Add LinkedIn URL]
+sankirthgunnam@gmail.com
 
 ---
 
